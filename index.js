@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 var program = require('commander')
+var port = process.env.PORT || 8080
 
 program
   .version(require('./package.json').version)
@@ -13,8 +14,22 @@ program
   .action(function () {
     var devServer = require('express')()
     devServer.use( require('./server') )
-    console.log('Starting dev server on port 8080')
-    devServer.listen(process.env.PORT || 8080)
+    console.log('Starting dev server on port', port)
+    devServer.listen(port)
+  })
+
+//
+// Productio mode
+//
+program
+  .command('start')
+  .action(function () {
+    process.env.NODE_ENV = 'production'
+
+    var devServer = require('express')()
+    devServer.use( require('./server') )
+    console.log('Starting production server on port', port)
+    devServer.listen(port)
   })
 
 //

@@ -1,10 +1,21 @@
 var fs = require('fs-extra')
+var fm = require('html-frontmatter')
 var Path = require('path')
 var Bluebird = require('bluebird')
 var Bundle = require('./bundle')
+var Layouts = require('./layouts')
+
+
+var styleBundles = {}
+var scriptBundles = {}
+var sourceDir = process.env.FREELANCE_SOURCE_DIR || `${process.cwd()}/src`
+
 
 var reshape = require('reshape')({
   plugins: [
+    Layouts.reshapePlugin({
+      root: sourceDir,
+    }),
     require('reshape-include')(),
     Bundle.reshapePlugin({
       resolveScript: function (path) {
@@ -12,7 +23,7 @@ var reshape = require('reshape')({
         scriptBundles[resolved] = true
         return resolved.replace(sourceDir, '')
       },
-      resolveStyles: function (path) {
+      resolveStyle: function (path) {
         var resolved = resolveAsset(path)
         styleBundles[resolved] = true
         return resolved.replace(sourceDir, '')
@@ -25,10 +36,6 @@ var reshape = require('reshape')({
 var router = require('express').Router()
 module.exports = router
 
-
-var styleBundles = {}
-var scriptBundles = {}
-var sourceDir = process.env.FREELANCE_SOURCE_DIR || `${process.cwd()}/src`
 
 router.get('/*', function (req, res) {
 
@@ -49,8 +56,15 @@ router.get('/*', function (req, res) {
       res.set({ 'Content-Type': 'application/javascript' })
       res.send(result)
     }
+    else if ( styleBundles[filename] ) {
+      var result = yield Bundle.bundleStyle(filename)
+      res.set({ 'Content-Type': 'text/css' })
+      res.send(result)
+    }
     else if ( filename.match(/\.html$/) && fs.existsSync(filename) ) {
-      var result = yield reshape.process(yield fs.readFile(filename, 'utf8'))
+      var html = yield fs.readFile(filename, 'utf8')
+      var frontMatter = fm(html)
+      var result = yield reshape.process(html, { frontMatter: frontMatter })
       res.set({ 'Content-Type': 'text/html' })
       res.send(result.output())
     }
