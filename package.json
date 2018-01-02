@@ -1,0 +1,25 @@
+{
+  "name": "freelance",
+  "version": "0.1.0",
+  "description": "An engine for building freelance static websites",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "lance": "./index.js"
+  },
+  "author": "Gilbert",
+  "license": "ISC",
+  "dependencies": {
+    "bluebird": "^3.5.1",
+    "browserify": "^14.5.0",
+    "commander": "^2.12.2",
+    "express": "^4.16.2",
+    "fs-extra": "^5.0.0",
+    "reshape": "^0.4.1",
+    "reshape-content": "^0.2.0",
+    "reshape-include": "^1.0.0",
+    "reshape-plugin-util": "^0.2.1"
+  }
+}
