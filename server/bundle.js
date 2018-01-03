@@ -71,6 +71,7 @@ exports.bundleScript = function (file) {
 // Style bundling
 //
 var postcss = require('postcss')([
+  require("postcss-import")(),
   require('postcss-cssnext')
 ])
 

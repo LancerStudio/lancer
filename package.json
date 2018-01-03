@@ -20,6 +20,7 @@
     "html-frontmatter": "^1.6.1",
     "postcss": "^6.0.15",
     "postcss-cssnext": "^3.0.2",
+    "postcss-import": "^11.0.0",
     "reshape": "^0.4.1",
     "reshape-content": "^0.2.0",
     "reshape-include": "^1.0.0",
