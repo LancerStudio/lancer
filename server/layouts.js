@@ -15,8 +15,17 @@ exports.reshapePlugin = function (options) {
 
 function interpolateContentBlocks (tree, options, ctx, layoutFile) {
 
+  if ( layoutFile[0] !== '_' ) {
+    // TODO: BETTER ERROR MESSAGE
+    throw new ctx.PluginError({
+      message: "Layout file names must start with an underscore ("+layoutFile+")",
+      plugin: 'freelance-layouts',
+      location: tree[0].location,
+      filename: '/src/' + layoutFile,
+    })
+  }
+
   // Get the layout file contents and parse it
-  console.log("hmm", options, layoutFile)
   var layoutPath = Path.resolve(options.root, layoutFile)
   console.log("Loading layout", layoutPath)
   var layoutHtml = fs.readFileSync(layoutPath, options.encoding || 'utf8')
