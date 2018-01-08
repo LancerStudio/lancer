@@ -8,8 +8,8 @@ var Layouts = require('./layouts')
 
 var styleBundles = {}
 var scriptBundles = {}
-var sourceDir = process.env.FREELANCE_SOURCE_DIR || `${process.cwd()}/src`
-var staticDir = process.env.FREELANCE_STATIC_DIR || `${process.cwd()}/static`
+var sourceDir = process.env.FREELANCE_SOURCE_DIR || (process.cwd() + '/src')
+var staticDir = process.env.FREELANCE_STATIC_DIR || (process.cwd() + '/static')
 
 
 var reshape = require('reshape')({
@@ -50,7 +50,7 @@ router.get('/*', function (req, res) {
       console.log('[FL Server] GET', path, '\n        -->', filename.replace(sourceDir, ''))
     }
     catch (err) {
-      console.log(` >> Access denied (${path})`)
+      console.log(' >> Access denied', path)
       return res.sendStatus(404)
     }
 
@@ -72,7 +72,7 @@ router.get('/*', function (req, res) {
       res.send(result.output())
     }
     else {
-      console.log(` >> Access denied (${path})`)
+      console.log(' >> Access denied', path)
       res.sendStatus(404)
     }
 

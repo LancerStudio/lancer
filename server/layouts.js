@@ -52,7 +52,7 @@ function interpolateContentBlocks (tree, options, ctx, layoutFile) {
 
       if ( ! layoutBlockNodes[blockName] ) {
         throw new ctx.PluginError({
-          message: `Block "${blockName}" doesn't exist in the layout template`,
+          message: 'Block "'+blockName+'" doesn\'t exist in the layout template',
           plugin: 'freelance-layouts',
           location: node.location,
         })
@@ -115,7 +115,7 @@ function mergeExtendsAndLayout (layoutBlockNodes, templateTree, ctx) {
   // but not in the layout template, so we throw an error
   for (let templateBlockName in templateContentNodes) {
     throw new ctx.PluginError({
-      message: `Block "${templateBlockName}" doesn't exist in the layout template`,
+      message: 'Block "'+templateBlockName+'" doesn\'t exist in the layout template',
       plugin: 'freelance-layouts',
       location: templateContentNodes[templateBlockName].location
     })

@@ -23,7 +23,7 @@ exports.reshapePlugin = function (options) {
         delete node.attrs.bundle
 
         if ( ! bundle.content ) {
-          console.log(`[bundle] ERROR: Invalid ${type} bundle attribute:`, bundle)
+          console.log('[bundle] ERROR: Invalid '+type+' bundle attribute:', bundle)
         }
         else {
           try {
@@ -35,7 +35,7 @@ exports.reshapePlugin = function (options) {
             }
           }
           catch (err) {
-            console.log(`[bundle] WARNING: Could not resolve ${type} path:`, bundle.content)
+            console.log('[bundle] WARNING: Could not resolve '+type+'} path:', bundle.content)
           }
         }
       }

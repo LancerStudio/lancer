@@ -38,14 +38,14 @@ program
 program
   .command('*')
   .action(function(){
-    exec(`lance --help`)
+    exec('lance --help')
   })
 
 //
 // No arguments
 //
 if(process.argv.length === 2) {
-  exec(`lance --help`)
+  exec('lance --help')
 }
 
 //
