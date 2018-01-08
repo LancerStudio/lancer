@@ -9,6 +9,7 @@ var Layouts = require('./layouts')
 var styleBundles = {}
 var scriptBundles = {}
 var sourceDir = process.env.FREELANCE_SOURCE_DIR || `${process.cwd()}/src`
+var staticDir = process.env.FREELANCE_STATIC_DIR || `${process.cwd()}/static`
 
 
 var reshape = require('reshape')({
@@ -32,10 +33,12 @@ var reshape = require('reshape')({
   ]
 })
 
-
-var router = require('express').Router()
+var express = require('express')
+var router = express.Router()
 module.exports = router
 
+
+router.use( express.static(staticDir) )
 
 router.get('/*', function (req, res) {
 
