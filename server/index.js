@@ -90,6 +90,9 @@ function resolveAsset (path) {
   if ( filename[filename.length-1] === '/' ) {
     filename += 'index.html'
   }
+  else if ( Path.basename(filename).indexOf('.') === -1 ) {
+    filename += '.html'
+  }
 
   if ( filename.indexOf(sourceDir) !== 0 ) {
     throw new Error('Access denied')
