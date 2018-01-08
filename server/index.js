@@ -94,7 +94,7 @@ function resolveAsset (path) {
     filename += '.html'
   }
 
-  if ( filename.indexOf(sourceDir) !== 0 ) {
+  if ( filename.indexOf(sourceDir) !== 0 || Path.basename(filename)[0] === '_' ) {
     throw new Error('Access denied')
   }
   return filename
