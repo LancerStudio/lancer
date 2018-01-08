@@ -19,7 +19,7 @@ exports.reshapePlugin = function (options) {
       var type = node.name
       var bundle = node.attrs && node.attrs.bundle && node.attrs.bundle[0]
 
-      if ( type === 'script' || type === 'link' ) {
+      if ( (type === 'script' || type === 'link') && bundle ) {
         delete node.attrs.bundle
 
         if ( ! bundle.content ) {
