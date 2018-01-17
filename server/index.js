@@ -41,6 +41,8 @@ module.exports = router
 
 router.use( express.static(staticDir) )
 
+require('./plugins')(sourceDir, router)
+
 router.get('/*', function (req, res) {
 
   Bluebird.coroutine(function * () {
