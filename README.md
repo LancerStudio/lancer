@@ -1,6 +1,10 @@
 # Freelance.js
 
-Freelance.js is a set of tools designed to make it quick to get started on and complete client freelance projects. Freelance.js is optimized for mostly-static content. It does NOT cater to fully-JS-rendered apps.
+Freelance.js is a set of tools designed to make it quick to get started on and complete client freelance projects. Freelance.js is optimized for mostly-static content. It does NOT cater to fully-JS-rendered apps. Its goals are:
+
+- Make it quick and easy to start a new project
+- Make way for straightforward development
+- Support tools that make client projects **low-to-maintenance-free**.
 
 ## Getting Started
 
@@ -149,4 +153,14 @@ If you haven't already, you should take a quick look at the [features page](http
 ```css
 @import "common/layout.css";
 @import "common/buttons.css";
+```
+
+## Publishing to Production
+
+After you've committed your project to git:
+
+```bash
+$ heroku apps:create my-project
+$ git push heroku master
+$ heroku open
 ```
