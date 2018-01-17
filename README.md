@@ -10,8 +10,8 @@ To start a project from scratch:
 $ mkdir my-proj && cd my-proj
 $ npm init -y
 $ npm install freelance
-$ mkdir src
-$ echo 'It works!' > src/index.html
+$ mkdir client
+$ echo 'It works!' > client/index.html
 $ lance dev
 ```
 
@@ -21,11 +21,11 @@ If `lance dev` didn't work, you need to add `./node_modules/.bin` to the beginni
 
 ## Basics
 
-Lance supports two folders: `src/` and `static/`. Take the following example:
+Lance requires your content to be in a `client/` folder. Take the following example:
 
 
 ```txt
-src/
+client/
   js/
     app.js
   product/
@@ -34,16 +34,14 @@ src/
   _layout.html
   index.html
   about-us.html
-static/
-  logo.png
 ```
 
-Any `.html` file in `src/` is accessible via the root path. For example:
+Any `.html` file in `client/` is accessible via the root path. For example:
 
-- `/about-us` in the browser maps to `src/about-us.html`
-- `/product/pricing` maps to `src/product/pricing.html`
-- Both `/` and `/index.html` in the browser map to `src/index.html`
-- Both `/product` and `/product/index.html` in the browser map to `src/product/index.html`
+- `/about-us` in the browser maps to `client/about-us.html`
+- `/product/pricing` maps to `client/product/pricing.html`
+- Both `/` and `/index.html` in the browser map to `client/index.html`
+- Both `/product` and `/product/index.html` in the browser map to `client/product/index.html`
 
 However, there are protections. Files that start with an underscore cannot be accessed directly by the browser. JavaScript and CSS files cannot be accessed either unless they are specifically bundled by a tag (see next section).
 
@@ -55,7 +53,7 @@ Applying this to the example:
 
 ### Bundling JS & CSS
 
-JavaScript and CSS files in `src/` are not immediately accessible. However, you can put them on a page using the special attribute `bundle` on script tags and link tags:
+JavaScript and CSS files in `client/` are not immediately accessible. However, you can put them on a page using the special attribute `bundle` on script tags and link tags:
 
 ```html
 <script bundle="/js/family-pic.js"></script>
@@ -68,7 +66,7 @@ JavaScript is bundled using Browserify, and CSS is bundled using PostCSS.
 
 ### Static Content
 
-Simply create a `static/` folder (NOT `src/static/`) in your project. Any file in that folder will be publically accessible by the browser. This is good for things like small images, pdfs, etc.
+Simply create a `client/static/` folder in your project. Any file in that folder will be publically accessible by the browser. This is good for things like small images, pdfs, etc.
 
 ## HTML
 
@@ -78,7 +76,7 @@ If you need to update content dynamically, you should probably use JavaScript to
 
 ### Layouts
 
-Take the following `src/_layout.html` file:
+Take the following `client/_layout.html` file:
 
 ```html
 <html>
@@ -101,7 +99,7 @@ Take the following `src/_layout.html` file:
 
 Notice how there are three `<block>` tags in that file. The one with `name="content"` is required in a layout, whereas the other two are optional.
 
-To use a layout, reference it at the top of your file. Take the following `src/index.html` as an example:
+To use a layout, reference it at the top of your file. Take the following `client/index.html` as an example:
 
 ```html
 <!--

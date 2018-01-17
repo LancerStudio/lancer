@@ -8,26 +8,27 @@ var Layouts = require('./layouts')
 
 var styleBundles = {}
 var scriptBundles = {}
-var sourceDir = process.env.FREELANCE_SOURCE_DIR || (process.cwd() + '/src')
-var staticDir = process.env.FREELANCE_STATIC_DIR || (process.cwd() + '/static')
+var sourceDir = process.env.FREELANCE_SOURCE_DIR || process.cwd()
+var clientDir = sourceDir + '/client'
+var staticDir = process.env.FREELANCE_STATIC_DIR || (clientDir + '/static')
 
 
 var reshape = require('reshape')({
   plugins: [
     Layouts.reshapePlugin({
-      root: sourceDir,
+      root: clientDir,
     }),
     require('reshape-include')(),
     Bundle.reshapePlugin({
       resolveScript: function (path) {
         var resolved = resolveAsset(path)
         scriptBundles[resolved] = true
-        return resolved.replace(sourceDir, '')
+        return resolved.replace(clientDir, '')
       },
       resolveStyle: function (path) {
         var resolved = resolveAsset(path)
         styleBundles[resolved] = true
-        return resolved.replace(sourceDir, '')
+        return resolved.replace(clientDir, '')
       },
     }),
   ]
@@ -47,7 +48,7 @@ router.get('/*', function (req, res) {
 
     try {
       var filename = resolveAsset(req.path)
-      console.log('[FL Server] GET', path, '\n        -->', filename.replace(sourceDir, ''))
+      console.log('[Lance] GET', path, '\n        -->', filename.replace(clientDir, ''))
     }
     catch (err) {
       console.log(' >> Access denied', path)
@@ -78,7 +79,7 @@ router.get('/*', function (req, res) {
 
   })()
     .catch(function (err) {
-      console.log('[FL Server] Error:\n', err)
+      console.log('[Lance] Error:\n', err)
       res.sendStatus(500)
     })
 
@@ -86,7 +87,7 @@ router.get('/*', function (req, res) {
 
 
 function resolveAsset (path) {
-  var filename = Path.join(sourceDir, path)
+  var filename = Path.join(clientDir, path)
   if ( filename[filename.length-1] === '/' ) {
     filename += 'index.html'
   }
@@ -94,7 +95,7 @@ function resolveAsset (path) {
     filename += '.html'
   }
 
-  if ( filename.indexOf(sourceDir) !== 0 || Path.basename(filename)[0] === '_' ) {
+  if ( filename.indexOf(clientDir) !== 0 || Path.basename(filename)[0] === '_' ) {
     throw new Error('Access denied')
   }
   return filename
