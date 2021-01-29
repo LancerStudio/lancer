@@ -70,7 +70,7 @@ JavaScript is bundled using Browserify, and CSS is bundled using PostCSS.
 
 ### Static Content
 
-Simply create a `client/static/` folder in your project. Any file in that folder will be publically accessible by the browser. This is good for things like small images, pdfs, etc.
+Simply create a `client/static/` folder in your project. Any file in that folder will be publically accessible by the browser. This is good for small images, pdfs, etc.
 
 ## HTML
 
@@ -163,4 +163,13 @@ After you've committed your project to git:
 $ heroku apps:create my-project
 $ git push heroku master
 $ heroku open
+```
+
+
+## Developing
+
+```
+$ npm install
+$ npm test  # or npm test-watch
+$ npm link  # for running locally in your own project
 ```

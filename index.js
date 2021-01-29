@@ -13,23 +13,23 @@ program
   .command('dev')
   .action(function () {
     var devServer = require('express')()
-    devServer.use( require('./server') )
+    devServer.use( require('./dist/server').default )
     console.log('Starting dev server on port', port)
     devServer.listen(port)
   })
 
 //
-// Productio mode
+// Production mode
 //
 program
   .command('start')
   .action(function () {
     process.env.NODE_ENV = 'production'
 
-    var devServer = require('express')()
-    devServer.use( require('./server') )
+    var server = require('express')()
+    server.use( require('./dist/server').default )
     console.log('Starting production server on port', port)
-    devServer.listen(port)
+    server.listen(port)
   })
 
 //
