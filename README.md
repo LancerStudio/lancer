@@ -1,10 +1,12 @@
-# Freelance.js
+# Lancer
 
-Freelance.js is a set of tools designed to make it quick to get started on and complete client freelance projects. Freelance.js is optimized for mostly-static content. It does NOT cater to fully-JS-rendered apps. Its goals are:
+Lancer is a radically simple tool for building content-focused websites. It helps you:
 
-- Make it quick and easy to start a new project
-- Make way for straightforward development
-- Support tools that make client projects **low-to-maintenance-free**.
+- Start a **working** new project without zero manual setup
+- Provide your non-techical colleagues an easy-to-use UI for editing content and uploading files
+- End up with an extremely low-touch, maintainable codebase.
+
+Lancer DOES NOT cater to fully-JS-rendered apps. If you're building a full-fledged web app, consider Ruby on Rails or Next.js.
 
 ## Getting Started
 
@@ -64,7 +66,7 @@ JavaScript and CSS files in `client/` are not immediately accessible. However, y
 <link rel="stylesheet" type="text/css" bundle="/styles/app.css">
 ```
 
-Note how the script tag uses `bundle=` instead of `src=`, and the link tag uses `bundle=` instead of `href=`. This is how Freelance.js detects an asset *bundle* instead of a simple asset *file*.
+Note how the script tag uses `bundle=` instead of `src=`, and the link tag uses `bundle=` instead of `href=`. This is how Lancer detects an asset *bundle* instead of a simple asset *file*.
 
 JavaScript is bundled using Browserify, and CSS is bundled using PostCSS.
 
@@ -74,7 +76,7 @@ Simply create a `client/static/` folder in your project. Any file in that folder
 
 ## HTML
 
-Freelance.js gives you foundational layout and asset bundling functionality.
+Lancer gives you foundational layout and asset bundling functionality.
 
 If you need to update content dynamically, you should probably use JavaScript to do so.
 
@@ -132,7 +134,7 @@ Tips:
 
 ## CSS
 
-Freelance.js uses [CSS Next](http://cssnext.io/), a tool for converting future standards into cross-browser CSS. The keyword is **standards**. Unlike SASS or LESS, the features CSS Next makes available to you will eventually be built into all browsers.
+Lancer uses [CSS Next](http://cssnext.io/), a tool for converting future standards into cross-browser CSS. The keyword is **standards**. Unlike SASS or LESS, the features CSS Next makes available to you will eventually be built into all browsers.
 
 If you haven't already, you should take a quick look at the [features page](http://cssnext.io/features/), which will show you the syntax for said features. For example, nesting selectors [by the spec](http://tabatkins.github.io/specs/css-nesting/) looks a bit different coming from LESS or SASS:
 
@@ -172,4 +174,5 @@ $ heroku open
 $ npm install
 $ npm test  # or npm test-watch
 $ npm link  # for running locally in your own project
+$ npm build
 ```

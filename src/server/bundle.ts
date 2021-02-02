@@ -59,12 +59,18 @@ var postcss = require('postcss')([
 
 
 const styleCache: Record<string, { mtimeMs: number, css: string }> = {}
+let tailwindConfigMtimeMs = 0
 
 export async function bundleStyle(file: string): Promise<string | null> {
-  const stat = await fs.stat(file)
+  const twStat = await fs.stat(path.join(sourceDir, 'tailwind.config.js'))
+  const styleStat = await fs.stat(file)
   const prev = styleCache[file]
 
-  if (prev && stat.mtimeMs - prev.mtimeMs === 0) {
+  if (
+    prev &&
+    styleStat.mtimeMs - prev.mtimeMs === 0 &&
+    twStat.mtimeMs - tailwindConfigMtimeMs === 0
+  ) {
     return prev.css
   }
   const css = await fs.readFile(file, 'utf8')
@@ -75,9 +81,10 @@ export async function bundleStyle(file: string): Promise<string | null> {
       map: { inline: ! isProd },
     })
     styleCache[file] = {
-      mtimeMs: stat.mtimeMs,
+      mtimeMs: styleStat.mtimeMs,
       css: result.css,
     }
+    tailwindConfigMtimeMs = twStat.mtimeMs
     return result.css
   }
   catch(error) {

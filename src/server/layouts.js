@@ -19,7 +19,7 @@ function interpolateContentBlocks (tree, options, ctx, layoutFile) {
     // TODO: BETTER ERROR MESSAGE
     throw new ctx.PluginError({
       message: "Layout file names must start with an underscore ("+layoutFile+")",
-      plugin: 'freelance-layouts',
+      plugin: 'lancer-layouts',
       location: tree[0].location,
       filename: '/src/' + layoutFile,
     })
@@ -54,7 +54,7 @@ function interpolateContentBlocks (tree, options, ctx, layoutFile) {
       if ( ! blockName ) {
         throw new ctx.PluginError({
           message: "content-for tag has no 'name' attribute",
-          plugin: 'freelance-layouts',
+          plugin: 'lancer-layouts',
           location: node.location,
         })
       }
@@ -62,7 +62,7 @@ function interpolateContentBlocks (tree, options, ctx, layoutFile) {
       if ( ! layoutBlockNodes[blockName] ) {
         throw new ctx.PluginError({
           message: 'Block "'+blockName+'" doesn\'t exist in the layout template',
-          plugin: 'freelance-layouts',
+          plugin: 'lancer-layouts',
           location: node.location,
         })
       }
@@ -125,7 +125,7 @@ function mergeExtendsAndLayout (layoutBlockNodes, templateTree, ctx) {
   for (let templateBlockName in templateContentNodes) {
     throw new ctx.PluginError({
       message: 'Block "'+templateBlockName+'" doesn\'t exist in the layout template',
-      plugin: 'freelance-layouts',
+      plugin: 'lancer-layouts',
       location: templateContentNodes[templateBlockName].location
     })
   }
@@ -182,7 +182,7 @@ function getNodes (type, tree = [], ctx) {
       if (!node.attrs || !node.attrs.name) {
         throw new ctx.PluginError({
           message: "'"+type+"' element is missing a 'name' attribute",
-          plugin: 'freelance-layouts',
+          plugin: 'lancer-layouts',
           location: node.location
         })
       }

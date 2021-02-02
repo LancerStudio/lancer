@@ -94,9 +94,14 @@ export function Env<E extends string, Envs extends E[]>(validEnvs: Envs) {
     else return v
   }
 
+  const envs = validEnvs.reduce((all, name) => {
+    all[name] = name === env
+    return all
+  }, {} as any) as Record<Env, boolean>
 
   return {
     name: env as Env,
     branch,
+    ...envs,
   }
 }

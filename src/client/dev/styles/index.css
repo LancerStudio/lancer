@@ -1,0 +1,84 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+@import "./prosemirror.css";
+
+
+[data-t-name]:hover {
+  outline: 2px solid #0f0;
+  cursor: pointer;
+}
+
+.Spinner {
+  width: 40px;
+  height: 40px;
+  background-color: #333;
+
+  margin: 100px auto;
+  -webkit-animation: sk-rotateplane 1.2s infinite ease-in-out;
+  animation: sk-rotateplane 1.2s infinite ease-in-out;
+}
+
+@-webkit-keyframes sk-rotateplane {
+  0% { -webkit-transform: perspective(120px) }
+  50% { -webkit-transform: perspective(120px) rotateY(180deg) }
+  100% { -webkit-transform: perspective(120px) rotateY(180deg)  rotateX(180deg) }
+}
+
+@keyframes sk-rotateplane {
+  0% { 
+    transform: perspective(120px) rotateX(0deg) rotateY(0deg);
+    -webkit-transform: perspective(120px) rotateX(0deg) rotateY(0deg) 
+  } 50% { 
+    transform: perspective(120px) rotateX(-180.1deg) rotateY(0deg);
+    -webkit-transform: perspective(120px) rotateX(-180.1deg) rotateY(0deg) 
+  } 100% { 
+    transform: perspective(120px) rotateX(-180deg) rotateY(-179.9deg);
+    -webkit-transform: perspective(120px) rotateX(-180deg) rotateY(-179.9deg);
+  }
+}
+
+.Loading {
+  color: transparent !important;
+  min-height: .8rem;
+  pointer-events: none;
+  position: relative;
+}
+.Loading.Loading--lg {
+  min-height: 2rem;
+}
+.Loading::after {
+  animation: loading-spin .5s infinite linear;
+  background: 0 0;
+  border: .1rem solid #fff;
+  border-radius: 50%;
+  border-right-color: transparent;
+  border-top-color: transparent;
+  content: "";
+  display: block;
+  height: .8rem;
+  left: 50%;
+  margin-left: -.4rem;
+  margin-top: -.4rem;
+  opacity: 1;
+  padding: 0;
+  position: absolute;
+  top: 50%;
+  width: .8rem;
+  z-index: 1;
+}
+.Loading.Loading--lg::after {
+  height: 1.6rem;
+  margin-left: -.8rem;
+  margin-top: -.8rem;
+  width: 1.6rem;
+}
+@keyframes loading-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
