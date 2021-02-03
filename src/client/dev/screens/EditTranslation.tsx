@@ -1,4 +1,5 @@
 import { useState } from "react"
+import TextareaAutosize from 'react-autosize-textarea'
 
 import { ProcTypes, Rpc } from "../lib/rpc-client"
 import { usePromise } from "../lib/use-promise"
@@ -76,11 +77,16 @@ export function EditTranslation({ name, locale: initialLocale, mode, onClose }: 
       </div>
 
       {mode === 'plaintext' &&
-        <input
-          type="text"
+        <TextareaAutosize
           value={content}
-          onChange={e => setContent(e.target.value)}
+          onChange={e => setContent(e.currentTarget.value.replace(/[\n\r]/g, ''))}
+          onKeyPress={e => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+            }
+          }}
           className="mt-3 block w-full border border-gray-400 rounded-sm focus:ring-0 focus:border-indigo-400"
+          style={{ maxHeight: '50vh' }}
         />
       }
 
