@@ -62,8 +62,8 @@ export function EnterExit(props: Props) {
      (state === 'enter-before' || state === 'enter-go' || state === 'shown') && props.enter || null,
 
      (state === 'leave-before') && props.leaveFrom || null,
-     (state === 'leave-go' || state === 'shown') && props.leaveTo || null,
-     (state === 'leave-before' || state === 'leave-go' || state === 'shown') && props.leave || null,
+     (state === 'leave-go' || state === 'hidden') && props.leaveTo || null,
+     (state === 'leave-before' || state === 'leave-go' || state === 'hidden') && props.leave || null,
   ].join(' ')
 
   return (
