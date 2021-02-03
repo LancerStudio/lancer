@@ -1,13 +1,15 @@
 import { existsSync, promises as fs } from 'fs'
 import path from 'path'
-import express from 'express'
+import express, { req } from 'express'
+import glob from 'glob'
 
 import * as Dev from './dev'
 import * as Bundle from './bundle'
 import * as i18n from './i18n'
 import IncludePlugin from './posthtml-plugins/include'
-import { clientDir, staticDir, site, env, filesDir, PostHtmlCtx } from './config'
+import { clientDir, staticDir, site, env, filesDir, PostHtmlCtx, sourceDir } from './config'
 import { Translation } from './models'
+import { resolveFile } from './files'
 
 require('express-async-errors')
 // var fm = require('html-frontmatter')
@@ -34,7 +36,17 @@ const posthtml = (ctx: PostHtmlCtx) => require('posthtml')([
 
   require('posthtml-expressions')({
     scopeTags: ['context'],
-    locals: { site }
+    locals: {
+      site,
+      globFiles(pattern: string) {
+        const files = glob.sync(pattern, {
+          cwd: filesDir
+        }).map(file => `/files/${file}`)
+        files.sort((a, b) => a.localeCompare(b))
+        console.log("???", files)
+        return files
+      }
+    }
   }),
 
   i18n.posthtmlPlugin({ Translation, ctx, site }),
@@ -55,9 +67,8 @@ router.get('/*', async (req, res) => {
   const path = req.path
 
   try {
-    console.log('[Lancer] GET', path)
+    console.log('\n[Lancer] GET', req.url)
     var filename = resolveAsset(req.path)
-    console.log('         -->', req.path)
   }
   catch (err) {
     console.log('         -->', err.message)
@@ -66,19 +77,31 @@ router.get('/*', async (req, res) => {
   }
 
   if ( scriptBundles[filename] ) {
+    console.log('         -->', filename.replace(sourceDir+'/', ''), '(bundle)')
     const result = await Bundle.bundleScript(filename)
     res.set({ 'Content-Type': 'application/javascript' })
     res.send(result)
   }
   else if ( styleBundles[filename] ) {
+    console.log('         -->', filename.replace(sourceDir+'/', ''), '(bundle)')
     const result = await Bundle.bundleStyle(filename)
     res.set({ 'Content-Type': 'text/css' })
     res.send(result === null ? '!error' : result)
   }
   else if ( filename.startsWith(filesDir) ) {
-    res.sendFile(filename)
+    const file = await resolveFile(filename, {
+      preview: queryStringVal('preview')
+    })
+    if (file) {
+      console.log('         -->', file.replace(sourceDir+'/', ''))
+      res.sendFile(file)
+    }
+    else {
+      res.sendStatus(404)
+    }
   }
   else if ( filename.match(/\.html$/) && existsSync(filename) ) {
+    console.log('         -->', filename.replace(sourceDir+'/', ''))
     const html = await fs.readFile(filename, 'utf8')
     // const frontMatter = fm(html)
     // const result = await reshape.process(html, { frontMatter: frontMatter })
@@ -98,6 +121,11 @@ router.get('/*', async (req, res) => {
     if (env.development) {
       Dev.handle404(filename)
     }
+  }
+
+  function queryStringVal(key: string): string | undefined {
+    let val = req.query[key]
+    return typeof val === 'string' ? val : undefined
   }
 })
 

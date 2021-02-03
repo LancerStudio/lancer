@@ -4,6 +4,7 @@ Lancer is a radically simple tool for building content-focused websites. It help
 
 - Start a **working** new project without zero manual setup
 - Provide your non-techical colleagues an easy-to-use UI for editing content and uploading files
+- No-hassle on-the-fly image resizing
 - End up with an extremely low-touch, maintainable codebase.
 
 Lancer DOES NOT cater to fully-JS-rendered apps. If you're building a full-fledged web app, consider Ruby on Rails or Next.js.
@@ -72,13 +73,17 @@ JavaScript is bundled using Browserify, and CSS is bundled using PostCSS.
 
 ### Static Content
 
-Simply create a `client/static/` folder in your project. Any file in that folder will be publically accessible by the browser. This is good for small images, pdfs, etc.
+Simply create a `client/public/` folder in your project. Any file in that folder will be publically accessible by the browser. This is good for small images, pdfs, etc.
 
 ## HTML
 
 Lancer gives you foundational layout and asset bundling functionality.
 
 If you need to update content dynamically, you should probably use JavaScript to do so.
+
+### Basic Logic
+
+See docs for [posthtml-expressions](https://github.com/posthtml/posthtml-expressions).
 
 ### Layouts
 
