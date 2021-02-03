@@ -59,9 +59,10 @@ export function EditTranslation({ name, locale: initialLocale, mode, onClose }: 
           <div
             key={loc}
             className={`${
-              loc === locale ? 'bg-blue-500 dark:bg-gray-100 text-white dark:text-gray-800' :
-              isSet ? 'cursor-pointer bg-green-600 text-green-100' :
-              'cursor-pointer dark:bg-gray-600 hover:bg-blue-300 dark:hover:bg-gray-600 text-gray-700'
+              loc === locale ? 'bg-blue-500 dark:bg-gray-200 text-white dark:text-gray-900' :
+              // !isSet ? 'cursor-pointer dark:bg-gray-600 hover:bg-blue-300 dark:hover:bg-gray-600 text-gray-700' :
+              !isSet ? 'cursor-pointer text-red-700 dark:text-red-500' :
+              'cursor-pointer text-gray-700 dark:text-gray-400'
             } uppercase flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium`}
             onClick={() => {
               if (locale !== loc) {
