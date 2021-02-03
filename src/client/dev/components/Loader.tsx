@@ -1,7 +1,9 @@
 
 type Props = {
-  size?: number
+  className?: string
 }
-export function Loader({ size }: Props) {
-  return <div className="Spinner"></div>
+export function Loader({ className }: Props) {
+  return <div
+    className={`Loading Loading--custom-color ${className}`}
+  ></div>
 }

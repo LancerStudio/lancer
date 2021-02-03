@@ -40,10 +40,12 @@
 }
 
 .Loading {
-  color: transparent !important;
   min-height: .8rem;
   pointer-events: none;
   position: relative;
+}
+button.Loading {
+  color: transparent !important;
 }
 .Loading.Loading--lg {
   min-height: 2rem;
@@ -67,6 +69,10 @@
   top: 50%;
   width: .8rem;
   z-index: 1;
+}
+.Loading.Loading--custom-color::after {
+  border-left-color: currentColor;
+  border-bottom-color: currentColor;
 }
 .Loading.Loading--lg::after {
   height: 1.6rem;

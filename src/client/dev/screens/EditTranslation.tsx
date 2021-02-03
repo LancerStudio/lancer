@@ -1,7 +1,8 @@
+import { useState } from "react"
+
 import { ProcTypes, Rpc } from "../lib/rpc-client"
 import { usePromise } from "../lib/use-promise"
 import { useToasts } from "../lib/toast"
-import { useState } from "react"
 import { Editor } from '../../prosemirror/Editor'
 import { Loader } from "../components/Loader"
 import { Button } from "../components/Button"
@@ -12,7 +13,8 @@ type Props = {
   onClose: () => void
   mode: 'plaintext' | 'inline' | 'block'
 }
-export function EditTranslation({ name, locale, mode, onClose }: Props) {
+export function EditTranslation({ name, locale: initialLocale, mode, onClose }: Props) {
+  const [locale, setLocale] = useState(initialLocale)
   const [content, setContent] = useState('')
   const { quickToast } = useToasts()
 
@@ -21,15 +23,27 @@ export function EditTranslation({ name, locale, mode, onClose }: Props) {
     if (result.t) {
       setContent(result.t.value)
     }
+    else if (content) {
+      // Scenario:
+      // - User has this screen already open
+      // - User clicks on another translation
+      // - Translation has no content
+      setContent('')
+    }
     return result
-  }, { invoke: true })
+  }, { invoke: true, deps: [locale] })
 
   const update = usePromise(Rpc.updateTranslation)
 
   const wrap = (content: (data: ProcTypes['getTranslation']) => React.ReactNode) => (
     <div className="p-6 sm:p-10 sm:m-8 rounded-sm bg-gray-100 dark:bg-blue-900 text-blue-800 shadow-xl w-full max-w-4xl">
-      <h2 className="-mt-1 font-header text-xl sm:text-2xl dark:text-blue-200">Edit Translation</h2>
-      {req.isLoading ?
+      <h2 className="font-header text-xl sm:text-2xl dark:text-blue-200">
+        Edit Translation
+        {req.isLoading && req.data &&
+          <Loader className="ml-2 text-primary-500 inline-block h-4 w-4" />
+        }
+      </h2>
+      {req.isLoading && !req.data ?
         <Loader />
         : req.error
         ? <div>An error occured.</div>
@@ -49,6 +63,11 @@ export function EditTranslation({ name, locale, mode, onClose }: Props) {
               isSet ? 'cursor-pointer bg-green-600 text-green-100' :
               'cursor-pointer dark:bg-gray-600 hover:bg-blue-300 dark:hover:bg-gray-600 text-gray-700'
             } uppercase flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium`}
+            onClick={() => {
+              if (locale !== loc) {
+                setLocale(loc)
+              }
+            }}
           >
             {loc}
           </div>
@@ -94,16 +113,18 @@ export function EditTranslation({ name, locale, mode, onClose }: Props) {
           onClick={async () => {
             const result = await update.call({ name, locale, value: content, currentVersion: t?.version || null })
             if (result.success === false) {
-              quickToast('error', 'Error: Unable to save.')
+              quickToast('error', `Error: Unable to save ${locale.toUpperCase()}.`)
               return
             }
             const updated = await req.call()
-            quickToast('success', 'Saved successfully.')
+            quickToast('success', `Saved ${locale.toUpperCase()} successfully.`)
             const elem = document.querySelector(`[data-t-name="${name}"][data-t-locale="${locale}"]`)
             if (elem) {
               elem.innerHTML = updated.t!.value
             }
-            onClose()
+            if (locale === initialLocale) {
+              onClose()
+            }
           }}
         />
       </div>
