@@ -78,6 +78,7 @@ export function EditTranslation({ name, locale: initialLocale, mode, onClose }: 
 
       {mode === 'plaintext' &&
         <TextareaAutosize
+          autoFocus
           value={content}
           onChange={e => setContent(e.currentTarget.value.replace(/[\n\r]/g, ''))}
           onKeyPress={e => {
