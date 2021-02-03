@@ -13,11 +13,10 @@ export function posthtmlPlugin({ Translation, site, ctx: { locale } }: PostHtmlO
     if (!locale) throw new Error('no_locale_set')
 
     tree.match(matchHelper('t'), function(node: any) {
-      console.log("NODE", node)
       node.tag = 'span'
       node.attrs = node.attrs || {}
 
-      const name = node.content[0]
+      const name = node.content[0].trim()
       const mode = node.attrs.rich ? 'inline' : 'plaintext'
       const t = Translation.get(name, locale, { fallback: site.locales[0] })
 

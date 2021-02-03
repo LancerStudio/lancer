@@ -43,7 +43,6 @@ const posthtml = (ctx: PostHtmlCtx) => require('posthtml')([
           cwd: filesDir
         }).map(file => `/files/${file}`)
         files.sort((a, b) => a.localeCompare(b))
-        console.log("???", files)
         return files
       }
     }
