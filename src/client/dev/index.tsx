@@ -1,13 +1,13 @@
 import { render } from 'react-dom'
 import { useEffect, useState } from 'react'
 
-import { Notification, Props as NotifProps } from './notification'
+import { Notification } from './notification'
 import { useNavigation } from './lib/navigation'
 import { EditFile } from './screens/EditFile'
 import { ProcTypes, Rpc } from './lib/rpc-client'
 import { Lancer } from './global'
 import { EnterExit } from './components/EnterExit'
-import { ToastContainer, ToastProvider } from './lib/toast'
+import { ToastContainer, ToastProvider, useToasts } from './lib/toast'
 
 type DevStatus = ProcTypes['getDevStatus']
 
@@ -15,45 +15,45 @@ function DevApp() {
   const [status, setStatus] = useState<DevStatus>({
     missingFiles: {}
   })
-  const [notif, setNotif] = useState<null | NotifProps['content']>(null)
+  const { addToast } = useToasts()
   const [closing, setClosing] = useState(false)
   const nav = useNavigation()
-
-  // useEffect(() => {
-  //   nav.push(() => <EditFile filePath="/files/home/header-bg.jpg" onClose={close} />)
-  // }, [])
 
   useEffect(() => {
     return Lancer.emitter.on('status-update', (update: DevStatus) => {
       for (let path in update.missingFiles) {
         if (!status.missingFiles[path]) {
-          setNotif({
-            type: 'warning',
-            title: 'Missing File Detected',
-            body: (close) => <>
-              <p>You're requesting <code className="text-gray-900">{path}</code> in your code, but no file exists at that location.</p>
-              <div className="h-3"></div>
-              <button
-                className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                onClick={() => {
-                  nav.push(() => <EditFile filePath={path} onClose={close} />)
-                }}
-              >
-                Upload File
-              </button>
-              <button
-                onClick={close}
-                className="ml-3 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                Ignore Forever
-              </button>
-            </>
-          })    
+          addToast(({ id, close }) =>
+            <Notification
+              key={id}
+              closeToast={close}
+              type="warning"
+              title="Missing File Detected"
+              body={close => <>
+                <p>You're requesting <code className="text-gray-900">{path}</code> in your code, but no file exists at that location.</p>
+                <div className="h-3"></div>
+                <button
+                  className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  onClick={() => {
+                    nav.push(() => <EditFile filePath={path} onClose={close} />)
+                  }}
+                >
+                  Upload File
+                </button>
+                <button
+                  onClick={close}
+                  className="ml-3 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Ignore Forever
+                </button>
+              </>}
+            />
+          )
         }
       }    
       setStatus(update)
     })
-  }, [setStatus, setNotif])
+  }, [setStatus])
   
 
   return <div className="Lancer">

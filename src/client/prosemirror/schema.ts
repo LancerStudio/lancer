@@ -1,8 +1,13 @@
 import {Schema} from "prosemirror-model"
 
-const pDOM = ["p", 0], blockquoteDOM = ["blockquote", 0], hrDOM = ["hr"],
-      preDOM = ["pre", ["code", 0]], brDOM = ["br"],
-      olDOM = ["ol", 0], ulDOM = ["ul", 0], liDOM = ["li", 0]
+const pDOM = ["p", 0] as const
+    , blockquoteDOM = ["blockquote", 0] as const
+    // , hrDOM = ["hr"]
+    // , preDOM = ["pre", ["code", 0]]
+    , brDOM = ["br"] as const
+    , olDOM = ["ol", 0] as const
+    , ulDOM = ["ul", 0] as const
+    , liDOM = ["li", 0] as const
 
 // :: Object
 // [Specs](#model.NodeSpec) for the nodes defined in this schema.
@@ -51,7 +56,7 @@ export const nodes = {
                {tag: "h4", attrs: {level: 4}},
                {tag: "h5", attrs: {level: 5}},
                {tag: "h6", attrs: {level: 6}}],
-    toDOM(node) { return ["h" + node.attrs.level, 0] }
+    toDOM(node: any) { return ["h" + node.attrs.level, 0] as const }
   },
 
   // :: NodeSpec A code listing. Disallows marks or non-text inline
@@ -107,11 +112,11 @@ export const nodes = {
     content: "list_item+",
     group: "block",
     attrs: {order: {default: 1}},
-    parseDOM: [{tag: "ol", getAttrs(dom) {
+    parseDOM: [{tag: "ol", getAttrs(dom: any) {
       return {order: dom.hasAttribute("start") ? +dom.getAttribute("start") : 1}
     }}],
-    toDOM(node) {
-      return node.attrs.order == 1 ? olDOM : ["ol", {start: node.attrs.order}, 0]
+    toDOM(node: any) {
+      return node.attrs.order == 1 ? olDOM : ["ol", {start: node.attrs.order}, 0] as const
     }
   },
 
@@ -130,7 +135,9 @@ export const nodes = {
   },
 }
 
-const emDOM = ["em", 0], strongDOM = ["strong", 0], codeDOM = ["code", 0]
+const emDOM = ["em", 0] as const
+    , strongDOM = ["strong", 0] as const
+    // , codeDOM = ["code", 0] as const
 
 // :: Object [Specs](#model.MarkSpec) for the marks in the schema.
 export const marks = {
@@ -163,8 +170,8 @@ export const marks = {
                // This works around a Google Docs misbehavior where
                // pasted content will be inexplicably wrapped in `<b>`
                // tags with a font-weight normal.
-               {tag: "b", getAttrs: node => node.style.fontWeight != "normal" && null},
-               {style: "font-weight", getAttrs: value => /^(bold(er)?|[5-9]\d{2,})$/.test(value) && null}],
+               {tag: "b", getAttrs: (node: any) => node.style.fontWeight != "normal" && null},
+               {style: "font-weight", getAttrs: (value: any) => /^(bold(er)?|[5-9]\d{2,})$/.test(value) && null}],
     toDOM() { return strongDOM }
   },
 

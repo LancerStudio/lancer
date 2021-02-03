@@ -136,5 +136,5 @@ export function EditTranslation({ name, locale: initialLocale, mode, onClose }: 
         />
       </div>
     </div>
-  )
+  ))
 }

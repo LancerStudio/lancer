@@ -1,8 +1,9 @@
 import {wrapIn, setBlockType, chainCommands, toggleMark, exitCode,
-        joinUp, joinDown, lift, selectParentNode} from "prosemirror-commands"
+        joinUp, joinDown, lift, selectParentNode, Keymap, Command} from "prosemirror-commands"
 import {wrapInList, splitListItem, liftListItem, sinkListItem} from "prosemirror-schema-list"
 import {undo, redo} from "prosemirror-history"
 import {undoInputRule} from "prosemirror-inputrules"
+import {Schema} from "prosemirror-model"
 
 const mac = typeof navigator != "undefined" ? /Mac/.test(navigator.platform) : false
 
@@ -34,9 +35,9 @@ const mac = typeof navigator != "undefined" ? /Mac/.test(navigator.platform) : f
 // You can suppress or map these bindings by passing a `mapKeys`
 // argument, which maps key names (say `"Mod-B"` to either `false`, to
 // remove the binding, or a new key name string.
-export function buildKeymap(schema, mapKeys?: object) {
-  let keys = {}, type
-  function bind(key, cmd) {
+export function buildKeymap(schema: Schema, mapKeys?: Record<string, string | false>) {
+  let keys = {} as Keymap, type
+  function bind(key: string, cmd: Command) {
     if (mapKeys) {
       let mapped = mapKeys[key]
       if (mapped === false) return
@@ -75,7 +76,7 @@ export function buildKeymap(schema, mapKeys?: object) {
     bind("Ctrl->", wrapIn(type))
   if (type = schema.nodes.hard_break) {
     let br = type, cmd = chainCommands(exitCode, (state, dispatch) => {
-      dispatch(state.tr.replaceSelectionWith(br.create()).scrollIntoView())
+      dispatch!(state.tr.replaceSelectionWith(br.create()).scrollIntoView())
       return true
     })
     // bind("Mod-Enter", cmd)
@@ -96,7 +97,7 @@ export function buildKeymap(schema, mapKeys?: object) {
   if (type = schema.nodes.horizontal_rule) {
     let hr = type
     bind("Mod-_", (state, dispatch) => {
-      dispatch(state.tr.replaceSelectionWith(hr.create()).scrollIntoView())
+      dispatch!(state.tr.replaceSelectionWith(hr.create()).scrollIntoView())
       return true
     })
   }

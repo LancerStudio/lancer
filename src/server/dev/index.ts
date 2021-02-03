@@ -15,9 +15,6 @@ export function mount(router: Router) {
   })  
 
   router.get('/lancer/dev.css', async (_req, res) => {
-    // const result = await Bundle.bundleStyle(path.join(__dirname, '../../client/dev/style.css'))
-    // res.set({ 'Content-Type': 'text/css' })
-    // res.send(result)
     res.sendFile( path.join(__dirname, '../../client/dev/style.css') )
   })  
 
