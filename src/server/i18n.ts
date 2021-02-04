@@ -1,14 +1,13 @@
-import { env, PostHtmlCtx, SiteConfig } from "./config"
+import { env, PostHtmlCtx } from "./config"
 import { TranslationModel } from "./models/translation"
 
 var matchHelper = require('posthtml-match-helper')
 
 type PostHtmlOptions = {
-  site: SiteConfig
   ctx: PostHtmlCtx
   Translation: TranslationModel
 }
-export function posthtmlPlugin({ Translation, site, ctx: { locale } }: PostHtmlOptions) {
+export function posthtmlPlugin({ Translation, ctx: { site, locale } }: PostHtmlOptions) {
   return function interpolateI18n(tree: any) {
     if (!locale) throw new Error('no_locale_set')
 

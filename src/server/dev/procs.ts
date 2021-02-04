@@ -1,7 +1,7 @@
 import { existsSync, statSync } from "fs"
 
 import {z, rpc} from './rpc'
-import { filesDir, site } from "../config"
+import { filesDir, siteConfig } from "../config"
 import { missingFiles } from "./state"
 import { Translation } from "../models"
 
@@ -33,6 +33,7 @@ export const getTranslation = rpc(
     locale: z.string(),
   }),
   async function ({ name, locale }) {
+    const site = siteConfig()
     const existing = Translation.localesFor(name)
     return {
       t: Translation.get(name, locale),

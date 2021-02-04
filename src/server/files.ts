@@ -1,7 +1,9 @@
 import path from 'path'
-import { existsSync, promises as fs, statSync } from 'fs'
 import sharp from 'sharp'
-import { env, filesDir, previewsDir, site } from "./config"
+import isEqual from 'lodash/isEqual'
+import { existsSync, promises as fs, statSync } from 'fs'
+
+import { env, filesDir, previewsDir, SiteConfig } from "./config"
 
 
 const SUPPORTED_EXTS = [
@@ -18,9 +20,10 @@ const DISALLOWED_CHARS = '.'
 const DISALLOWED_RE = new RegExp(`[${DISALLOWED_CHARS}]`)
 
 type Options = {
+  site: SiteConfig
   preview?: string
 }
-export async function resolveFile(file: string, { preview }: Options): Promise<string | false> {
+export async function resolveFile(file: string, { site, preview }: Options): Promise<string | false> {
   const ext = path.extname(file).toLocaleLowerCase()
 
   if (!preview) {
@@ -50,11 +53,19 @@ export async function resolveFile(file: string, { preview }: Options): Promise<s
       `.preview-${preview}${ext}`
     )
 
-  if (!existsSync(previewFile) || statSync(previewFile).ctimeMs < statSync(file).ctimeMs) {
+  const previewConfigFile = previewFile + '.json'
+
+  if (
+    !existsSync(previewFile) ||
+    !existsSync(previewConfigFile) ||
+    statSync(previewFile).ctimeMs < statSync(file).ctimeMs ||
+    !isEqual(require(previewConfigFile), previewConfig)
+  ) {
     await fs.mkdir(path.dirname(previewFile), { recursive: true })
     await sharp(file)
       .resize(previewConfig)
       .toFile(previewFile)
+    await fs.writeFile(previewConfigFile, JSON.stringify(previewConfig))
   }
 
   return previewFile

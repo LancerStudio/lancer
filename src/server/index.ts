@@ -1,19 +1,18 @@
 import { existsSync, promises as fs } from 'fs'
 import path from 'path'
-import express, { req } from 'express'
+import express from 'express'
 import glob from 'glob'
 
 import * as Dev from './dev'
 import * as Bundle from './bundle'
 import * as i18n from './i18n'
 import IncludePlugin from './posthtml-plugins/include'
-import { clientDir, staticDir, site, env, filesDir, PostHtmlCtx, sourceDir } from './config'
+import { clientDir, staticDir, siteConfig, env, filesDir, PostHtmlCtx, sourceDir } from './config'
 import { Translation } from './models'
 import { resolveFile } from './files'
 
 require('express-async-errors')
-// var fm = require('html-frontmatter')
-// var Layouts = require('./layouts')
+
 
 const styleBundles: Record<string, boolean> = {}
 const scriptBundles: Record<string, boolean> = {}
@@ -37,7 +36,7 @@ const posthtml = (ctx: PostHtmlCtx) => require('posthtml')([
   require('posthtml-expressions')({
     scopeTags: ['context'],
     locals: {
-      site,
+      site: ctx.site,
       globFiles(pattern: string) {
         const files = glob.sync(pattern, {
           cwd: filesDir
@@ -48,7 +47,7 @@ const posthtml = (ctx: PostHtmlCtx) => require('posthtml')([
     }
   }),
 
-  i18n.posthtmlPlugin({ Translation, ctx, site }),
+  i18n.posthtmlPlugin({ Translation, ctx }),
 ])
 
 const router = express.Router()
@@ -89,6 +88,7 @@ router.get('/*', async (req, res) => {
   }
   else if ( filename.startsWith(filesDir) ) {
     const file = await resolveFile(filename, {
+      site: siteConfig(),
       preview: queryStringVal('preview')
     })
     if (file) {
@@ -104,7 +104,8 @@ router.get('/*', async (req, res) => {
     const html = await fs.readFile(filename, 'utf8')
     // const frontMatter = fm(html)
     // const result = await reshape.process(html, { frontMatter: frontMatter })
-    const result = await posthtml({ locale: req.params.locale || site.locales[0] }).process(html)
+    const site = siteConfig()
+    const result = await posthtml({ site, locale: req.params.locale || site.locales[0] }).process(html)
     res.set({ 'Content-Type': 'text/html' })
     res.send(result.html)
   }

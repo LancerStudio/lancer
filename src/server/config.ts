@@ -1,6 +1,8 @@
-import { existsSync, mkdirSync } from 'fs'
 import path from 'path'
+import { existsSync, mkdirSync } from 'fs'
+
 import { read, Env } from '../lib/config'
+import { requireLatest } from './lib/fs'
 
 export const env = Env(['test', 'development', 'production'])
 
@@ -20,18 +22,29 @@ export const staticDir = read('LANCER_STATIC_DIR', joinp(clientDir, '/public'))
 export const previewsDir = joinp(cacheDir, '/previews')
 
 export type PostHtmlCtx = {
+  site: SiteConfig
   locale?: string
 }
 
 export type SiteConfig = {
   name: string
   locales: string[]
-  imagePreviews?: Record<string, object> | ((sharp: typeof import('sharp')) => Record<string, object>)
+  imagePreviews: Record<string, object> | ((sharp: typeof import('sharp')) => Record<string, object>)
 }
-export const site: SiteConfig = (() => {
-  try { return require(`${sourceDir}/site.config.js`) }
-  catch (e) { return {} }
-})()
+export const siteConfig: () => SiteConfig = () => {
+  const defaults: SiteConfig = {
+    name: 'Missing site.config.js',
+    locales: [],
+    imagePreviews: {},
+  }
+  try {
+    const config = requireLatest(`${sourceDir}/site.config.js`)
+    return { ...defaults, ...config }
+  }
+  catch (e) {
+    return defaults
+  }
+}
 
 function joinp(dir1: string, dir2: string) {
   const dir = path.join(dir1, dir2)
