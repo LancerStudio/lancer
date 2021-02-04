@@ -65,7 +65,11 @@ router.get('/*', async (req, res) => {
     // const frontMatter = fm(html)
     // const result = await reshape.process(html, { frontMatter: frontMatter })
     const site = siteConfig()
-    const result = await render({ site, locale: req.params.locale || site.locales[0] }).process(html)
+    const result = await render({
+      site,
+      cache: {},
+      locale: req.params.locale || site.locales[0]
+    }).process(html)
     res.set({ 'Content-Type': 'text/html' })
     res.send(result.html)
   }

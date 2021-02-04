@@ -31,6 +31,7 @@
     "express-async-errors": "^3.1.1",
     "glob": "^7.1.6",
     "html-frontmatter": "^1.6.1",
+    "image-size": "^0.9.3",
     "nanoevents": "^5.1.10",
     "postcss": "^8.2.4",
     "postcss-import": "^14.0.0",

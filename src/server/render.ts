@@ -1,5 +1,6 @@
 import path from 'path'
 import glob from 'glob'
+import imageSize from 'image-size'
 
 import * as Bundle from './bundle'
 import * as i18n from './i18n'
@@ -12,6 +13,30 @@ export const validScriptBundles: Record<string, boolean> = {}
 
 
 export function render(ctx: PostHtmlCtx) {
+  const locals = {
+    site: ctx.site,
+
+    globFiles(pattern: string) {
+      const files = glob.sync(pattern, {
+        cwd: filesDir
+      })
+      .map(file => ({
+        src: `/files/${file}`,
+        file: path.join(filesDir, file),
+      }))
+      files.sort((a, b) => a.file.localeCompare(b.file))
+      return files
+    },
+
+    getDims(imageFile: string) {
+      const key = `getDims:${imageFile}`
+      if (!ctx.cache[key]) {
+        ctx.cache[key] = imageSize(imageFile)
+      }
+      const dims = ctx.cache[key]
+      return { ...dims, asString: `${dims.width}x${dims.height}` }
+    },
+  }
   return require('posthtml')([
     Bundle.posthtmlPlugin({
       resolveScript: function (scriptPath: string) {
@@ -30,16 +55,7 @@ export function render(ctx: PostHtmlCtx) {
 
     require('posthtml-expressions')({
       scopeTags: ['context'],
-      locals: {
-        site: ctx.site,
-        globFiles(pattern: string) {
-          const files = glob.sync(pattern, {
-            cwd: filesDir
-          }).map(file => `/files/${file}`)
-          files.sort((a, b) => a.localeCompare(b))
-          return files
-        }
-      }
+      locals,
     }),
 
     i18n.posthtmlPlugin({ Translation, ctx }),

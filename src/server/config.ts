@@ -23,6 +23,9 @@ export const previewsDir = joinp(cacheDir, '/previews')
 
 export type PostHtmlCtx = {
   site: SiteConfig
+  /** Simple object for caching within the request. */
+  cache: Record<string, any>
+  /** The locale calculated from the request */
   locale?: string
 }
 
