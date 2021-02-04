@@ -34,7 +34,15 @@ export function render(ctx: PostHtmlCtx) {
         ctx.cache[key] = imageSize(imageFile)
       }
       const dims = ctx.cache[key]
-      return { ...dims, asString: `${dims.width}x${dims.height}` }
+      /** 6 and 8 are specified by EXIF */
+      const isRotated = dims.orientation === 6 || dims.orientation === 8
+      const [w, h] = isRotated ? [dims.height, dims.width] : [dims.width, dims.height]
+      return {
+        type: dims.type,
+        width: w,
+        height: h,
+        asString: `${w}x${h}`
+      }
     },
   }
   return require('posthtml')([
