@@ -4,6 +4,7 @@ import isEqual from 'lodash/isEqual'
 import { existsSync, promises as fs, statSync } from 'fs'
 
 import { env, filesDir, previewsDir, SiteConfig } from "./config"
+import { requireLatest } from './lib/fs'
 
 
 const SUPPORTED_EXTS = [
@@ -59,7 +60,7 @@ export async function resolveFile(file: string, { site, preview }: Options): Pro
     !existsSync(previewFile) ||
     !existsSync(previewConfigFile) ||
     statSync(previewFile).ctimeMs < statSync(file).ctimeMs ||
-    !isEqual(require(previewConfigFile), previewConfig)
+    !isEqual(requireLatest(previewConfigFile), previewConfig)
   ) {
     await fs.mkdir(path.dirname(previewFile), { recursive: true })
     await sharp(file)
