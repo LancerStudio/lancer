@@ -1,54 +1,14 @@
 import { existsSync, promises as fs } from 'fs'
-import path from 'path'
 import express from 'express'
-import glob from 'glob'
 
 import * as Dev from './dev'
 import * as Bundle from './bundle'
-import * as i18n from './i18n'
-import IncludePlugin from './posthtml-plugins/include'
-import { clientDir, staticDir, siteConfig, env, filesDir, PostHtmlCtx, sourceDir } from './config'
-import { Translation } from './models'
+import { staticDir, siteConfig, env, filesDir, sourceDir } from './config'
 import { resolveFile } from './files'
+import { render, resolveAsset, validScriptBundles, validStyleBundles } from './render'
 
 require('express-async-errors')
 
-
-const styleBundles: Record<string, boolean> = {}
-const scriptBundles: Record<string, boolean> = {}
-
-const posthtml = (ctx: PostHtmlCtx) => require('posthtml')([
-  Bundle.posthtmlPlugin({
-    resolveScript: function (scriptPath: string) {
-      var resolved = resolveAsset(scriptPath)
-      scriptBundles[resolved] = true
-      return resolved.replace(clientDir, '')
-    },
-    resolveStyle: function (stylePath: string) {
-      var resolved = resolveAsset(stylePath)
-      styleBundles[resolved] = true
-      return resolved.replace(clientDir, '')
-    },
-  }),
-
-  IncludePlugin({ root: clientDir, encoding: 'utf8' }),
-
-  require('posthtml-expressions')({
-    scopeTags: ['context'],
-    locals: {
-      site: ctx.site,
-      globFiles(pattern: string) {
-        const files = glob.sync(pattern, {
-          cwd: filesDir
-        }).map(file => `/files/${file}`)
-        files.sort((a, b) => a.localeCompare(b))
-        return files
-      }
-    }
-  }),
-
-  i18n.posthtmlPlugin({ Translation, ctx }),
-])
 
 const router = express.Router()
 export default router
@@ -74,13 +34,13 @@ router.get('/*', async (req, res) => {
     return
   }
 
-  if ( scriptBundles[filename] ) {
+  if ( validScriptBundles[filename] ) {
     console.log('         -->', filename.replace(sourceDir+'/', ''), '(bundle)')
     const result = await Bundle.bundleScript(filename)
     res.set({ 'Content-Type': 'application/javascript' })
     res.send(result)
   }
-  else if ( styleBundles[filename] ) {
+  else if ( validStyleBundles[filename] ) {
     console.log('         -->', filename.replace(sourceDir+'/', ''), '(bundle)')
     const result = await Bundle.bundleStyle(filename)
     res.set({ 'Content-Type': 'text/css' })
@@ -105,7 +65,7 @@ router.get('/*', async (req, res) => {
     // const frontMatter = fm(html)
     // const result = await reshape.process(html, { frontMatter: frontMatter })
     const site = siteConfig()
-    const result = await posthtml({ site, locale: req.params.locale || site.locales[0] }).process(html)
+    const result = await render({ site, locale: req.params.locale || site.locales[0] }).process(html)
     res.set({ 'Content-Type': 'text/html' })
     res.send(result.html)
   }
@@ -128,25 +88,3 @@ router.get('/*', async (req, res) => {
     return typeof val === 'string' ? val : undefined
   }
 })
-
-
-function resolveAsset (assetPath: string) {
-  var filename = assetPath.startsWith('/files/')
-    ? path.join(filesDir, assetPath.replace('/files/', ''))
-    : path.join(clientDir, assetPath)
-
-  if ( filename[filename.length-1] === '/' ) {
-    filename += 'index.html'
-  }
-  else if ( path.basename(filename).indexOf('.') === -1 ) {
-    filename += '.html'
-  }
-
-  if ( !filename.startsWith(filesDir) && !filename.startsWith(clientDir) ) {
-    throw new Error('Access denied')
-  }
-  if ( path.basename(filename)[0] === '_' ) {
-    throw new Error('Access denied (partial)')
-  }
-  return filename
-}

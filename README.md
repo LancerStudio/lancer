@@ -137,6 +137,12 @@ Tips:
 - Layout file names are required to start with an underscore.
 - `<block>` tags do not work within the following tags: `title`, `style`, `script`, `iframe`, `xmp`, `noscript`, `noframes`, `noembed`.
 
+### Resizing Images
+
+TODO
+
+https://sharp.pixelplumbing.com/api-resize#resize
+
 ## CSS
 
 Lancer uses [CSS Next](http://cssnext.io/), a tool for converting future standards into cross-browser CSS. The keyword is **standards**. Unlike SASS or LESS, the features CSS Next makes available to you will eventually be built into all browsers.
