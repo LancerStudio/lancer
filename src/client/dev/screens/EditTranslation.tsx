@@ -70,7 +70,7 @@ export function EditTranslation({ name, locale: initialLocale, rich, multiline, 
       {req.isLoading && !req.data ?
         <Loader />
         : req.error
-        ? <div>An error occured.</div>
+        ? <div>An error occured. <Button title="Close" onClick={onClose} /></div>
         : content(req.data!)
       }
     </div>
