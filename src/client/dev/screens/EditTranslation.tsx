@@ -12,9 +12,10 @@ type Props = {
   name: string
   locale: string
   onClose: () => void
-  mode: 'plaintext' | 'inline' | 'block'
+  rich?: boolean
+  multiline: boolean
 }
-export function EditTranslation({ name, locale: initialLocale, mode, onClose }: Props) {
+export function EditTranslation({ name, locale: initialLocale, rich, multiline, onClose }: Props) {
   const [locale, setLocale] = useState(initialLocale)
   const [content, setContent] = useState('')
   const { quickToast } = useToasts()
@@ -22,7 +23,7 @@ export function EditTranslation({ name, locale: initialLocale, mode, onClose }: 
   const req = usePromise(async () => {
     const result = await Rpc.getTranslation({ name, locale })
     if (result.t) {
-      setContent(result.t.value)
+      setContent(multiline ? result.t.value : result.t.value.replace(NL, ' '))
     }
     else if (content) {
       // Scenario:
@@ -76,28 +77,29 @@ export function EditTranslation({ name, locale: initialLocale, mode, onClose }: 
         )}
       </div>
 
-      {mode === 'plaintext' &&
+      {rich ? <>
+        <Editor
+          content={content}
+          onChange={setContent}
+          className="mt-4"
+          multiline={!!multiline}
+        />
+      </> : <>
         <TextareaAutosize
           autoFocus
           value={content}
-          onChange={e => setContent(e.currentTarget.value.replace(/[\n\r]/g, ''))}
+          onChange={({ currentTarget: { value } }) => {
+            setContent(multiline ? value : value.replace(NL, ''))
+          }}
           onKeyPress={e => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' && !multiline) {
               e.preventDefault()
             }
           }}
           className="mt-3 block w-full border border-gray-400 rounded-sm focus:ring-0 focus:border-indigo-400"
           style={{ maxHeight: '50vh' }}
         />
-      }
-
-      {mode === 'block' &&
-        <Editor
-          content={content}
-          onChange={setContent}
-          className="mt-4"
-        />
-      }
+      </>}
 
       <div className="mt-3 flex justify-end">
         <Button
@@ -139,3 +141,5 @@ export function EditTranslation({ name, locale: initialLocale, mode, onClose }: 
     </div>
   ))
 }
+
+const NL = /[\n\r]/g

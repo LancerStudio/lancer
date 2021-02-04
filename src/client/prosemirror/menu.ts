@@ -1,4 +1,7 @@
-import {wrapItem, Dropdown, DropdownSubmenu, liftItem, icons, MenuItem, MenuItemSpec} from "prosemirror-menu"
+//
+// Taken and modified from https://github.com/ProseMirror/prosemirror-example-setup/blob/6bd92b0712bf389cfe7ec26904230f959643e60b/src/menu.js
+//
+import {wrapItem, Dropdown, joinUpItem, liftItem, icons, MenuItem, MenuItemSpec, blockTypeItem} from "prosemirror-menu"
 import {undo, redo} from "prosemirror-history"
 import {EditorState} from "prosemirror-state"
 import {toggleMark} from "prosemirror-commands"
@@ -7,14 +10,14 @@ import {Schema, MarkType, NodeType} from "prosemirror-model"
 
 // Helpers to create specific types of items
 
-// function canInsert(state, nodeType) {
-//   let $from = state.selection.$from
-//   for (let d = $from.depth; d >= 0; d--) {
-//     let index = $from.index(d)
-//     if ($from.node(d).canReplaceWith(index, index, nodeType)) return true
-//   }
-//   return false
-// }
+function canInsert(state: EditorState, nodeType: NodeType) {
+  let $from = state.selection.$from
+  for (let d = $from.depth; d >= 0; d--) {
+    let index = $from.index(d)
+    if ($from.node(d).canReplaceWith(index, index, nodeType)) return true
+  }
+  return false
+}
 
 // function insertImageItem(nodeType) {
 //   return new MenuItem({
@@ -196,9 +199,10 @@ const customIcons = {
 //   : An array of arrays of menu elements for use as the full menu
 //     for, for example the [menu bar](https://github.com/prosemirror/prosemirror-menu#user-content-menubar).
 type Options = {
+  multiline: boolean
   submitButton?: boolean
 }
-export function buildMenuItems(schema: Schema<any>, options: Options) {
+export function buildMenuItems(schema: Schema<any>, {multiline, submitButton}: Options) {
   let r: any = {}, type
   if (type = schema.marks.strong)
     r.toggleStrong = markItem(type, {title: "Toggle strong style", icon: customIcons.strong})
@@ -252,46 +256,56 @@ export function buildMenuItems(schema: Schema<any>, options: Options) {
     icon: customIcons.submit,
     class: 'prosemirror-send-icon'
   })
-  // if (type = schema.nodes.paragraph)
-  //   r.makeParagraph = blockTypeItem(type, {
-  //     title: "Change to paragraph",
-  //     label: "Plain"
-  //   })
+  if (type = schema.nodes.paragraph) {
+    r.makeParagraph = blockTypeItem(type, {
+      title: "Change to paragraph",
+      label: "Plain"
+    })
+  }
   // if (type = schema.nodes.code_block)
   //   r.makeCodeBlock = blockTypeItem(type, {
   //     title: "Change to code block",
   //     label: "Code"
   //   })
-  // if (type = schema.nodes.heading)
-  //   for (let i = 1; i <= 10; i++)
-  //     r["makeHead" + i] = blockTypeItem(type, {
-  //       title: "Change to heading " + i,
-  //       label: "Level " + i,
-  //       attrs: {level: i}
-  //     })
-  // if (type = schema.nodes.horizontal_rule) {
-  //   let hr = type
-  //   r.insertHorizontalRule = new MenuItem({
-  //     title: "Insert horizontal rule",
-  //     label: "Horizontal rule",
-  //     enable(state) { return canInsert(state, hr) },
-  //     run(state, dispatch) { dispatch(state.tr.replaceSelectionWith(hr.create())) }
-  //   })
-  // }
+  if (type = schema.nodes.heading) {
+    for (let i = 1; i <= 4; i++) {
+      r["makeHead" + i] = blockTypeItem(type, {
+        title: "Change to heading " + i,
+        label: "Header " + i,
+        attrs: {level: i}
+      })
+    }
+  }
+  if (type = schema.nodes.horizontal_rule) {
+    let hr = type
+    r.insertHorizontalRule = new MenuItem({
+      title: "Insert horizontal rule",
+      label: "Horizontal rule",
+      enable(state) { return canInsert(state, hr) },
+      run(state, dispatch) { dispatch(state.tr.replaceSelectionWith(hr.create())) }
+    })
+  }
 
   let cut = <T>(arr: T[]) => arr.filter(x => x)
-  // r.insertMenu = new Dropdown(cut([r.insertImage, r.insertHorizontalRule]), {label: "Insert"})
-  r.typeMenu = new Dropdown(cut([r.makeParagraph, r.makeCodeBlock, r.makeHead1 && new DropdownSubmenu(cut([
-    r.makeHead1, r.makeHead2, r.makeHead3, r.makeHead4, r.makeHead5, r.makeHead6
-  ]), {label: "Heading"})]), {label: "Type..."})
+  r.insertMenu = new Dropdown(cut([r.insertImage, r.insertHorizontalRule]), {label: "Insert"})
+  r.typeMenu = new Dropdown(cut([
+    r.makeParagraph,
+    r.makeCodeBlock,
+    r.makeHead1,
+    r.makeHead2,
+    r.makeHead3,
+    r.makeHead4,
+  ]), {label: "Type..."})
 
   // r.inlineMenu = [cut([r.toggleStrong, r.toggleEm, r.toggleCode, r.toggleLink])]
-  // r.blockMenu = [cut([r.wrapBulletList, r.wrapOrderedList, r.wrapBlockQuote, joinUpItem, liftItem])]
+  r.blockMenu = [cut([r.wrapBulletList, r.wrapOrderedList, joinUpItem, liftItem])]
   // r.fullMenu = r.inlineMenu.concat([[r.insertMenu, r.typeMenu]], [[r.undo, r.redo]], r.blockMenu)
   // r.fullMenu = [].concat(r.inlineMenu.concat(r.blockMenu), [[r.undo, r.redo]])
   r.fullMenu = [
-    cut([r.toggleStrong, r.toggleEm, r.wrapBlockQuote, liftItem]),
-    [r.undo, r.redo].concat(options.submitButton ? [r.submit] : [])
+    ...(multiline ? r.blockMenu : []),
+    cut([r.toggleStrong, r.toggleEm, r.wrapBlockQuote, !multiline && liftItem]),
+    [r.insertMenu, r.typeMenu],
+    [r.undo, r.redo].concat(submitButton ? [r.submit] : [])
   ]
 
   return r

@@ -33,6 +33,7 @@ export {buildMenuItems, buildKeymap, buildInputRules}
 //
 type Options = {
   schema: Schema
+  multiline: boolean
   floatingMenu?: boolean
   submitButton?: boolean
 }
@@ -57,6 +58,7 @@ export function setup(options: Options) {
       content: buildMenuItems(
         options.schema,
         {
+          multiline: options.multiline,
           submitButton: options.submitButton !== false,
         }
       ).fullMenu,

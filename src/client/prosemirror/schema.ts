@@ -2,8 +2,8 @@ import {Schema} from "prosemirror-model"
 
 const pDOM = ["p", 0] as const
     , blockquoteDOM = ["blockquote", 0] as const
-    // , hrDOM = ["hr"]
-    // , preDOM = ["pre", ["code", 0]]
+    , hrDOM = ["hr"] as const
+    // , preDOM = ["pre", ["code", 0]] as const
     , brDOM = ["br"] as const
     , olDOM = ["ol", 0] as const
     , ulDOM = ["ul", 0] as const
@@ -36,11 +36,11 @@ export const nodes = {
   },
 
   // :: NodeSpec A horizontal rule (`<hr>`).
-  // horizontal_rule: {
-  //   group: "block",
-  //   parseDOM: [{tag: "hr"}],
-  //   toDOM() { return hrDOM }
-  // },
+  horizontal_rule: {
+    group: "block",
+    parseDOM: [{tag: "hr"}],
+    toDOM() { return hrDOM }
+  },
 
   // :: NodeSpec A heading textblock, with a `level` attribute that
   // should hold the number 1 to 6. Parsed and serialized as `<h1>` to
@@ -144,17 +144,17 @@ export const marks = {
   // :: MarkSpec A link. Has `href` and `title` attributes. `title`
   // defaults to the empty string. Rendered and parsed as an `<a>`
   // element.
-  // link: {
-  //   attrs: {
-  //     href: {},
-  //     title: {default: null}
-  //   },
-  //   inclusive: false,
-  //   parseDOM: [{tag: "a[href]", getAttrs(dom) {
-  //     return {href: dom.getAttribute("href"), title: dom.getAttribute("title")}
-  //   }}],
-  //   toDOM(node) { let {href, title} = node.attrs; return ["a", {href, title}, 0] }
-  // },
+  link: {
+    attrs: {
+      href: {},
+      title: {default: null}
+    },
+    inclusive: false,
+    parseDOM: [{tag: "a[href]", getAttrs(dom: any) {
+      return {href: dom.getAttribute("href"), title: dom.getAttribute("title")}
+    }}],
+    toDOM(node: any) { let {href, title} = node.attrs; return ["a", {href, title}, 0] as const }
+  },
 
   // :: MarkSpec An emphasis mark. Rendered as an `<em>` element.
   // Has parse rules that also match `<i>` and `font-style: italic`.

@@ -45,7 +45,7 @@ export const usePromise = <T, Args extends any[]>(
         When component will be unmounted, `unmounted` will become false and state setter
         functions will not be envoked on unmounted component.
       */
-      return () => { console.log("DISMOUNT"); unmounted = true }
+      return () => { unmounted = true }
     }, deps)
   }
 

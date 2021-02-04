@@ -12,16 +12,21 @@ export function posthtmlPlugin({ Translation, ctx: { site, locale } }: PostHtmlO
     if (!locale) throw new Error('no_locale_set')
 
     tree.match(matchHelper('t'), function(node: any) {
-      node.tag = 'span'
       node.attrs = node.attrs || {}
 
+      const rich = node.attrs.rich == null ? false : true
+      const multiline = node.attrs.multiline == null ? false : true
+      delete node.attrs.rich
+      delete node.attrs.multiline
+
+      node.tag = multiline ? 'div' : 'span'
+
       const name = node.content[0].trim()
-      const mode = node.attrs.rich ? 'inline' : 'plaintext'
       const t = Translation.get(name, locale, { fallback: site.locales[0] })
 
       node.content = tree.parser(t?.value || `<u style="cursor: pointer">${name}</u>`)
       if (env.development) {
-        node.attrs.ondblclick = `Lancer.editTranslation('${name}', '${locale}', '${mode}')`
+        node.attrs.ondblclick = `Lancer.editTranslation('${name}', '${locale}', { multiline: ${multiline}, rich: ${rich} })`
         node.attrs['data-t-name'] = name
         node.attrs['data-t-locale'] = locale
       }

@@ -6,9 +6,9 @@ const emitter = createNanoEvents()
 
 export const Lancer = {
   emitter,
-  editTranslation(name: string, locale: string, mode: 'plaintext' | 'inline' | 'block') {
+  editTranslation(name: string, locale: string, opts: { multiline: boolean, rich: boolean }) {
     emitter.emit('navigate', (nav: AnimatedNav) =>
-      <EditTranslation name={name} locale={locale} mode={mode} onClose={() => nav.close()} />
+      <EditTranslation name={name} locale={locale} onClose={() => nav.close()} {...opts} />
     )
   }
 }

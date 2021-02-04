@@ -10,6 +10,7 @@ type Options = {
   content: string
   onChange: (content: string) => void
   className?: string
+  multiline: boolean
   submitButton?: boolean
 }
 export function Editor(options: Options) {
@@ -37,6 +38,7 @@ export function Editor(options: Options) {
       doc: DOMParser.fromSchema(schemaLongform).parse(temp),
       plugins: setup({
         schema: schemaLongform,
+        multiline: options.multiline,
         submitButton: !!options.submitButton,
       })
     })
