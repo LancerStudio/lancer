@@ -63,6 +63,7 @@ export async function resolveFile(file: string, { site, preview }: Options): Pro
   ) {
     await fs.mkdir(path.dirname(previewFile), { recursive: true })
     await sharp(file)
+      .withMetadata()
       .resize(previewConfig)
       .toFile(previewFile)
     await fs.writeFile(previewConfigFile, JSON.stringify(previewConfig))
