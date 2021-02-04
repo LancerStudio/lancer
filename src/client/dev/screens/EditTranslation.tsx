@@ -41,6 +41,7 @@ export function EditTranslation({ name, locale: initialLocale, rich, multiline, 
     <div className="p-6 sm:p-10 sm:m-8 rounded-sm bg-gray-100 dark:bg-blue-900 text-blue-800 shadow-xl w-full max-w-4xl">
       <h2 className="font-header text-xl sm:text-2xl dark:text-blue-200">
         Edit Translation
+        <span className="ml-2 text-xs text-gray-500">{name}</span>
         {req.isLoading && req.data &&
           <Loader className="ml-2 text-primary-500 inline-block h-4 w-4" />
         }
