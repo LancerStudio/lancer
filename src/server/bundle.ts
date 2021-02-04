@@ -1,6 +1,10 @@
-import { existsSync, promises as fs, statSync } from 'fs'
 import path from 'path'
+import cloneDeep from 'lodash/cloneDeep'
+import set from 'lodash/set'
+import { existsSync, promises as fs, statSync } from 'fs'
+
 import { sourceDir } from './config'
+import { requireLatest } from './lib/fs'
 
 var isProd = process.env.NODE_ENV === 'production'
 var matchHelper = require('posthtml-match-helper')
@@ -48,9 +52,8 @@ export function bundleScript(file: string) {
 //
 const styleCache: Record<string, { mtimeMs: number, css: string }> = {}
 const styleDepRecord: Record<string, { file: string, mtimeMs: number }[]> = {}
-let tailwindConfigMtimeMs = 0
 
-var postcss = (rootFile: string) => require('postcss')([
+var postcss = (rootFile: string, twConfig: any) => require('postcss')([
   require("postcss-import")({
     path: [
       // Add this lib's node_modules so it can find tailwind
@@ -66,12 +69,17 @@ var postcss = (rootFile: string) => require('postcss')([
       return require('postcss-import/lib/load-content')(filename)
     }
   }),
-  require('tailwindcss')( path.join(sourceDir, 'tailwind.config.js') ),
+  require('tailwindcss')(
+    // Build in some plugins
+    set(cloneDeep(twConfig), 'plugins', (twConfig.plugins || []).concat([
+      require('@tailwindcss/typography')
+    ]))
+  ),
   require('autoprefixer'),
 ])
 
 export async function bundleStyle(file: string): Promise<string | null> {
-  const twStat = await fs.stat(path.join(sourceDir, 'tailwind.config.js'))
+  const twConfig = requireLatest(path.join(sourceDir, 'tailwind.config.js'))
   const styleStat = await fs.stat(file)
   const prev = styleCache[file]
   const deps = styleDepRecord[file]
@@ -79,7 +87,7 @@ export async function bundleStyle(file: string): Promise<string | null> {
   if (
     prev &&
     styleStat.mtimeMs - prev.mtimeMs === 0 &&
-    twStat.mtimeMs - tailwindConfigMtimeMs === 0 &&
+    !twConfig.fresh &&
     (
       !deps ||
       deps.every(dep => existsSync(dep.file) && statSync(dep.file).mtimeMs === dep.mtimeMs)
@@ -90,7 +98,7 @@ export async function bundleStyle(file: string): Promise<string | null> {
   const css = await fs.readFile(file, 'utf8')
   try {
     styleDepRecord[file] = []
-    const result = await postcss(file).process(css, {
+    const result = await postcss(file, twConfig).process(css, {
       from: file,
       to: file,
       map: { inline: ! isProd },
@@ -99,7 +107,6 @@ export async function bundleStyle(file: string): Promise<string | null> {
       mtimeMs: styleStat.mtimeMs,
       css: result.css,
     }
-    tailwindConfigMtimeMs = twStat.mtimeMs
     return result.css
   }
   catch(error) {

@@ -60,7 +60,7 @@ export async function resolveFile(file: string, { site, preview }: Options): Pro
     !existsSync(previewFile) ||
     !existsSync(previewConfigFile) ||
     statSync(previewFile).ctimeMs < statSync(file).ctimeMs ||
-    !isEqual(requireLatest(previewConfigFile), previewConfig)
+    !isEqual(requireLatest(previewConfigFile).module, previewConfig)
   ) {
     await fs.mkdir(path.dirname(previewFile), { recursive: true })
     await sharp(file)

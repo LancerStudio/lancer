@@ -41,7 +41,7 @@ export const siteConfig: () => SiteConfig = () => {
     imagePreviews: {},
   }
   try {
-    const config = requireLatest(`${sourceDir}/site.config.js`)
+    const config = requireLatest(`${sourceDir}/site.config.js`).module
     return { ...defaults, ...config }
   }
   catch (e) {
