@@ -47,11 +47,16 @@ export async function resolveFile(file: string, { site, preview }: Options): Pro
     throw new Error(`No such imagePreview (${preview})`)
   }
 
+  const toFormat = previewConfig.toFormat as string | undefined
+  if (toFormat && !SUPPORTED_EXTS.includes(`.${toFormat}`)) {
+    throw new Error(`Unsupported preview toFormat: '${SUPPORTED_EXTS}'\n  Supported formats: ${SUPPORTED_EXTS.join(', ')}`)
+  }
+
   const previewFile = file
     .replace(filesDir, previewsDir)
     .replace(
       new RegExp(`${path.extname(file)}$`),
-      `.preview-${preview}${ext}`
+      `.preview-${preview}${ toFormat ? `.${toFormat}` : ext }`
     )
 
   const previewConfigFile = previewFile + '.json'
@@ -63,10 +68,14 @@ export async function resolveFile(file: string, { site, preview }: Options): Pro
     !isEqual(requireLatest(previewConfigFile).module, previewConfig)
   ) {
     await fs.mkdir(path.dirname(previewFile), { recursive: true })
-    await sharp(file)
-      .withMetadata()
-      .resize(previewConfig)
-      .toFile(previewFile)
+
+    let plan = sharp(file).withMetadata()
+
+    if (toFormat) {
+      plan = plan.toFormat(toFormat)
+    }
+
+    await plan.resize(previewConfig).toFile(previewFile)
     await fs.writeFile(previewConfigFile, JSON.stringify(previewConfig))
   }
 

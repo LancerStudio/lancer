@@ -32,7 +32,7 @@ export type PostHtmlCtx = {
 export type SiteConfig = {
   name: string
   locales: string[]
-  imagePreviews: Record<string, object> | ((sharp: typeof import('sharp')) => Record<string, object>)
+  imagePreviews: Record<string, POJO<any>> | ((sharp: typeof import('sharp')) => Record<string, POJO<any>>)
 }
 export const siteConfig: () => SiteConfig = () => {
   const defaults: SiteConfig = {
