@@ -59,7 +59,7 @@ export async function resolveFile(file: string, { site, preview }: Options): Pro
   if (
     !existsSync(previewFile) ||
     !existsSync(previewConfigFile) ||
-    statSync(previewFile).ctimeMs < statSync(file).ctimeMs ||
+    isNewer(file, previewFile) ||
     !isEqual(requireLatest(previewConfigFile).module, previewConfig)
   ) {
     await fs.mkdir(path.dirname(previewFile), { recursive: true })
@@ -71,4 +71,10 @@ export async function resolveFile(file: string, { site, preview }: Options): Pro
   }
 
   return previewFile
+}
+
+function isNewer(file1: string, file2: string) {
+  const stat1 = statSync(file1)
+  const stat2 = statSync(file2)
+  return stat1.ctimeMs > stat2.ctimeMs || stat1.mtimeMs > stat2.mtimeMs
 }
