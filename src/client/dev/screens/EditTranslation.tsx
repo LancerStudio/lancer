@@ -37,6 +37,27 @@ export function EditTranslation({ name, locale: initialLocale, rich, multiline, 
 
   const update = usePromise(Rpc.updateTranslation)
 
+
+  async function save() {
+    if (update.isLoading) return
+
+    const result = await update.call({ name, locale, value: content, currentVersion: req.data?.t?.version || null })
+    if (result.success === false) {
+      quickToast('error', `Error: Unable to save ${locale.toUpperCase()}.`)
+      return
+    }
+    const updated = await req.call()
+    quickToast('success', `Saved ${locale.toUpperCase()} successfully.`)
+    const elem = document.querySelector(`[data-t-name="${name}"][data-t-locale="${locale}"]`)
+    if (elem) {
+      elem.innerHTML = updated.t!.value
+    }
+    if (locale === initialLocale) {
+      onClose()
+    }
+  }
+
+
   const wrap = (content: (data: ProcTypes['getTranslation']) => React.ReactNode) => (
     <div className="p-6 sm:p-10 sm:m-8 rounded-sm bg-gray-100 dark:bg-blue-900 text-blue-800 shadow-xl w-full max-w-4xl">
       <h2 className="font-header text-xl sm:text-2xl dark:text-blue-200">
@@ -93,6 +114,9 @@ export function EditTranslation({ name, locale: initialLocale, rich, multiline, 
             setContent(multiline ? value : value.replace(NL, ''))
           }}
           onKeyPress={e => {
+            if (e.key === 'Enter' && (e.altKey)) {
+              save()
+            }
             if (e.key === 'Enter' && !multiline) {
               e.preventDefault()
             }
@@ -121,22 +145,7 @@ export function EditTranslation({ name, locale: initialLocale, rich, multiline, 
           title="Save"
           color="primary"
           className="ml-3"
-          onClick={async () => {
-            const result = await update.call({ name, locale, value: content, currentVersion: t?.version || null })
-            if (result.success === false) {
-              quickToast('error', `Error: Unable to save ${locale.toUpperCase()}.`)
-              return
-            }
-            const updated = await req.call()
-            quickToast('success', `Saved ${locale.toUpperCase()} successfully.`)
-            const elem = document.querySelector(`[data-t-name="${name}"][data-t-locale="${locale}"]`)
-            if (elem) {
-              elem.innerHTML = updated.t!.value
-            }
-            if (locale === initialLocale) {
-              onClose()
-            }
-          }}
+          onClick={save}
         />
       </div>
     </div>

@@ -26,9 +26,11 @@ export function posthtmlPlugin({ Translation, ctx: { site, locale } }: PostHtmlO
 
       node.content = tree.parser(t?.value || `<u style="cursor: pointer">${name}</u>`)
       if (env.development) {
-        node.attrs.ondblclick = `Lancer.editTranslation('${name}', '${locale}', { multiline: ${multiline}, rich: ${rich} })`
+        node.attrs.onclick = `Lancer.onTranslationClick(event)`
         node.attrs['data-t-name'] = name
         node.attrs['data-t-locale'] = locale
+        node.attrs['data-t-multiline'] = multiline
+        node.attrs['data-t-rich'] = rich
       }
       return node
     })
