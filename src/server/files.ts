@@ -1,5 +1,5 @@
 import path from 'path'
-import { existsSync, promises as fs } from 'fs'
+import { existsSync, promises as fs, statSync } from 'fs'
 import sharp from 'sharp'
 import { env, filesDir, previewsDir, site } from "./config"
 
@@ -50,8 +50,7 @@ export async function resolveFile(file: string, { preview }: Options): Promise<s
       `.preview-${preview}${ext}`
     )
 
-  if (!existsSync(previewFile)) {
-    console.log("GOGOGO", previewConfig)
+  if (!existsSync(previewFile) || statSync(previewFile).ctimeMs < statSync(file).ctimeMs) {
     await fs.mkdir(path.dirname(previewFile), { recursive: true })
     await sharp(file)
       .resize(previewConfig)
