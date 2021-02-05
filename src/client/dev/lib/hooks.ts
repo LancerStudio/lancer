@@ -7,19 +7,19 @@ export function useKeyValueState<Value>(initialState: Record<string, Value> = {}
   return [
     state,
     (key: string, value: Value) => {
-      setState({
+      setState(state => ({
         ...state,
         [key]: value
-      })
+      }))
     },
     (key: string, values: Partial<Value>) => {
-      setState({
+      setState(state => ({
         ...state,
         [key]: {
           ...state[key],
           ...values,
         } as any
-      })
+      }))
     }
   ] as const
 }
