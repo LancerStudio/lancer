@@ -20,7 +20,6 @@ export function Editor(options: Options) {
 
   useEffect(() => {
     if (options.content !== lastContent) {
-      console.log("UPDATE FROM OUTSIDE", options.content)
       viewRef.current?.updateState(createState(options.content))
       setLastContent(options.content)
     }
@@ -54,7 +53,6 @@ export function Editor(options: Options) {
   }, 230)
 
   useEffect(() => {
-    console.log('...',editorRef.current, viewRef.current)
     if (editorRef.current && !viewRef.current) {
       const editorElem = editorRef.current
 
@@ -79,7 +77,6 @@ export function Editor(options: Options) {
 
   useEffect(() => {
     return () => {
-      console.log("DESTROY")
       viewRef.current?.destroy()
     }
   }, [])

@@ -45,16 +45,36 @@ export const getTranslation = rpc(
   }
 )
 
-export const updateTranslation = rpc(
-  z.object({
-    name: z.string(),
-    locale: z.string(),
-    value: z.string(),
-    currentVersion: z.number().or(z.null()),
-  }),
-  async function ({ name, locale, value, currentVersion }) {
+export const updateTranslations = rpc(
+  z.array(
+    z.object({
+      name: z.string(),
+      locale: z.string(),
+      value: z.string(),
+      version: z.number().optional(),
+      meta: z.object({
+        rich: z.boolean().optional(),
+        multiline: z.boolean().optional(),
+      }).optional(),
+    }),
+  ),
+  async function (updates) {
     return {
-      success: Translation.set(name, locale, value, currentVersion),
+      results: updates.map((update) => {
+        const result = Translation.set(update)
+        const current = Translation.get(update.name, update.locale)!
+        if (result) {
+          return {
+            type: 'success' as const,
+            current,
+          }
+        }
+        return {
+          type: 'failure' as const,
+          failed: update,
+          current,
+        }
+      })
     }
   }
 )

@@ -2,8 +2,20 @@ import { DB } from "../lib/db";
 
 const table = 'lance_translations'
 
-type Meta = {
-  mode?: 'plaintext' | 'inline' | 'block'
+type TranslationRow = {
+  locale: string
+  name: string
+  value: string
+  version: number
+  meta: string
+}
+type TranslationObj = _<Assign<TranslationRow, {
+  meta: TranslationMeta
+}>>
+
+type TranslationMeta = {
+  rich?: boolean
+  multiline?: boolean
 }
 
 export class TranslationModel {
@@ -23,8 +35,8 @@ export class TranslationModel {
     return result
   }
 
-  private _get(name: string, locale: string) {
-    const row = this.db.get<{ locale: string, name: string, value: string, version: number, meta: string }>(`
+  private _get(name: string, locale: string): TranslationObj | null {
+    const row = this.db.get<TranslationRow>(`
       SELECT locale, name, value, version, meta FROM ${table}
       WHERE locale = ? AND name = ?
       ORDER BY version DESC
@@ -32,17 +44,21 @@ export class TranslationModel {
     `, locale, name)
     return row && {
       ...row,
-      meta: JSON.parse(row.meta) as Meta,
+      meta: JSON.parse(row.meta) as TranslationMeta,
     }
   }
 
-  set(name: string, locale: string, value: string, currentVersion: number | null, meta: Meta = {}) {
-    currentVersion = Math.max(currentVersion || 0, 0)
+  // set(name: string, locale: string, value: string, currentVersion: number | null, meta: Meta = {}) {
+  set(row: PartialBy<TranslationObj, 'version' | 'meta'>) {
     try {
       this.db.run(`
         INSERT INTO ${table} (locale, name, value, version, meta)
         VALUES (:locale, :name, :value, :version, :meta)
-      `, { locale, name, value, version: currentVersion +1, meta: JSON.stringify(meta) })
+      `, {
+        ...row,
+        version: Math.max(row.version || 0, 0) + 1,
+        meta: JSON.stringify(row.meta || {}),
+      })
       return true
     }
     catch (err) {

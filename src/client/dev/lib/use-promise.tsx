@@ -63,6 +63,9 @@ export const usePromise = <T, Args extends any[]>(
     },
     set(value: T) {
       setData(value)
+    },
+    update(values: Partial<T>) {
+      setData({ ...data, ...values } as any)
     }
   }
 }

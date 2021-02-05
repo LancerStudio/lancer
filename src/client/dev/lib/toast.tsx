@@ -9,12 +9,18 @@ type Toast = (props: ToastProps) => React.ReactNode
 
 type ToastStack = {
   id: number
+  key?: string
   toast: Toast
 }[]
 
+type QuickToastOptions = {
+  key?: string
+  timed?: number | boolean
+}
+
 const ToastContext = createContext({
   toasts: [] as ToastStack,
-  addToast(_toast: Toast): void { throw new Error('No <ToastProvider> provided') },
+  addToast: (() => {}) as ((toast: Toast) => void) & ((key: string | undefined, toast: Toast) => void),
   removeToast(_id: number): void { throw new Error('No <ToastProvider> provided') },
 })
 
@@ -22,14 +28,14 @@ export function useToasts() {
   const ctx = useContext(ToastContext)
   return {
     ...ctx,
-    quickToast(type: NotificationProps['type'], text: string) {
-      ctx.addToast(({ id, close }) =>
+    quickToast(type: NotificationProps['type'], text: string, { timed=true, key }: QuickToastOptions = {}) {
+      ctx.addToast(key, ({ id, close }) =>
         <Notification
           key={id}
           closeToast={close}
           type={type}
           title={text}
-          timed
+          timed={timed}
         />
       )
 
@@ -37,19 +43,22 @@ export function useToasts() {
   }
 }
 
+let idCounter = 100
 export function ToastProvider({ children }: { children: React.ReactNode }) {
-  const [idCounter, setIdCounter] = useState(100)
   const [stack, setStack] = useState<ToastStack>([])
 
   const context = {
     toasts: stack,
-    addToast(toast: Toast) {
-      const newStack = stack.concat({ id: idCounter, toast })
-      setStack(newStack)
-      setIdCounter(idCounter + 1)
+    addToast(a: string | Toast | undefined, b?: Toast) {
+      const [key, toast] = !a || typeof a === 'string' ? [a, b!] as const : [undefined, a] as const
+      setStack(stack =>
+        (key ? stack.filter(t => t.key !== key) : stack)
+          .concat({ id: idCounter, key, toast })
+      )
+      idCounter += 1
     },
     removeToast(id: number) {
-      setStack(stack.filter(item => item.id !== id))
+      setStack(stack => stack.filter(item => item.id !== id))
     },
   }
 
