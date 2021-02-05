@@ -39,18 +39,21 @@ export function EditTranslation({ name, locale: initialLocale, rich, multiline, 
   const { quickToast } = useToasts()
 
   const req = usePromise(async () => {
-    const result = await Rpc.getTranslation({ name, locale: loadingLocale })
+    const [t, locales] = await Promise.all([
+      Rpc.getTranslation({ name, locale: loadingLocale }),
+      Rpc.getLocales({ name })
+    ])
     const local = drafts[loadingLocale]
 
     if (!local) {
-      setDraft(loadingLocale, createDraft(name, loadingLocale, result.t?.value || '', meta))
+      setDraft(loadingLocale, createDraft(name, loadingLocale, t?.value || '', meta))
     }
 
-    if (result.t && !local) {
+    if (t && !local) {
       setDraft(loadingLocale, {
         t: {
-          ...result.t,
-          value: multiline ? result.t.value : result.t.value.replace(NL, ' '),
+          ...t,
+          value: multiline ? t.value : t.value.replace(NL, ' '),
           //
           // We store the meta to send to the server on save;
           // it'll be useful to know how this translation value was edited by the user,
@@ -58,20 +61,20 @@ export function EditTranslation({ name, locale: initialLocale, rich, multiline, 
           //
           meta: meta,
         },
-        originalValue: result.t.value,
+        originalValue: t.value,
       })
     }
-    else if (result.t) {
+    else if (t) {
       setConflict(loadingLocale, {
-        value: result.t.value,
-        version: result.t.version,
+        value: t.value,
+        version: t.version,
       })
     }
 
     if (locale !== loadingLocale) {
       setLocale(loadingLocale)
     }
-    return result
+    return { t, locales }
   }, { invoke: true, deps: [loadingLocale] })
 
   const update = usePromise(Rpc.updateTranslations)
@@ -110,10 +113,13 @@ export function EditTranslation({ name, locale: initialLocale, rich, multiline, 
         onClose()
       }
     }
+
+    const locales = await Rpc.getLocales({ name })
+    req.update({ locales })
   }
 
 
-  const wrapLoader = (content: (data: ProcTypes['getTranslation']) => React.ReactNode) => (
+  const wrapLoader = (content: (data: ProcTypes['getLocales']) => React.ReactNode) => (
     <div className="p-6 sm:p-10 sm:m-8 rounded-sm bg-gray-100 dark:bg-blue-900 text-blue-800 shadow-xl w-full max-w-4xl">
       <h2 className="font-header text-xl sm:text-2xl dark:text-blue-200">
         Edit Translation
@@ -126,7 +132,7 @@ export function EditTranslation({ name, locale: initialLocale, rich, multiline, 
         <Loader />
         : req.error
         ? <div>An error occured. <Button title="Close" onClick={onClose} /></div>
-        : content(req.data!)
+        : content(req.data!.locales)
       }
     </div>
   )
@@ -136,7 +142,7 @@ export function EditTranslation({ name, locale: initialLocale, rich, multiline, 
   const dirty = Object.values(drafts).some(draft => draft.t.value !== draft.originalValue)
 
 
-  return wrapLoader(({ locales }) => (
+  return wrapLoader(locales => (
     <div className="mt-3 sm:mt-4">
       <div className="flex flex-wrap space-x-1">
         {Object.entries(locales).map(([loc, isSet]) =>

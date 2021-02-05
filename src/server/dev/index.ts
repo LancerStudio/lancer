@@ -12,11 +12,11 @@ export function mount(router: Router) {
     const result = await Bundle.bundleScript(path.join(__dirname, '../../client/dev'))
     res.set({ 'Content-Type': 'application/javascript' })
     res.send(result)
-  })  
+  })
 
   router.get('/lancer/dev.css', async (_req, res) => {
     res.sendFile( path.join(__dirname, '../../client/dev/style.css') )
-  })  
+  })
 
   router.post('/lancer/rpc/:method', async (req, res) => {
     const procs: any = await import('./procs')
@@ -27,8 +27,9 @@ export function mount(router: Router) {
     }
     try {
       const result = await method(req.body)
-      // console.log(`[rpc][${method}]`, result)
-      res.send(result)
+      // console.log(`[rpc][${req.params.method}]`, result)
+      res.set({ 'Content-Type': 'application/json' })
+      res.status(200).send(JSON.stringify(result))
     }
     catch (err) {
       // console.log(`[rpc][${method}]`, err)

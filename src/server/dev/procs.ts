@@ -27,21 +27,27 @@ export const getFileInfo = rpc(
   }
 )
 
+export const getLocales = rpc(
+  z.object({
+    name: z.string(),
+  }),
+  async function ({ name }) {
+    const site = siteConfig()
+    const existing = await Translation.localesFor(name)
+    return site.locales.reduce((all, loc) => {
+      all[loc] = existing.includes(loc)
+      return all
+    }, {} as Record<string, boolean>)
+  }
+)
+
 export const getTranslation = rpc(
   z.object({
     name: z.string(),
     locale: z.string(),
   }),
   async function ({ name, locale }) {
-    const site = siteConfig()
-    const existing = Translation.localesFor(name)
-    return {
-      t: Translation.get(name, locale),
-      locales: site.locales.reduce((all, loc) => {
-        all[loc] = existing.includes(loc)
-        return all
-      }, {} as Record<string, boolean>)
-    }
+    return Translation.get(name, locale)
   }
 )
 
