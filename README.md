@@ -176,6 +176,16 @@ If you haven't already, you should take a quick look at the [features page](http
 @import "common/buttons.css";
 ```
 
+## Internationalization (i18n)
+
+TODO
+
+```
+<t>my.key_name</t>
+```
+
+`hreflang` attributes are added according to [Google's recommendations](https://developers.google.com/search/docs/advanced/crawling/localized-versions)
+
 ## Publishing to Production
 
 After you've committed your project to git:
@@ -195,3 +205,8 @@ $ npm test  # or npm test-watch
 $ npm link  # for running locally in your own project
 $ npm build
 ```
+
+### Internal Notes
+
+- [Scaling sqlite3 to 4m queries per second on a single server](https://blog.expensify.com/2018/01/08/scaling-sqlite-to-4m-qps-on-a-single-server/)
+- [How Browser Language Redirect Affects Google Indexing](https://wpml.org/documentation/getting-started-guide/language-setup/automatic-redirect-based-on-browser-language/how-browser-language-redirect-affects-google-indexing/)

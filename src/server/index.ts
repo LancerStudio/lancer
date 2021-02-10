@@ -7,6 +7,7 @@ import { staticDir, siteConfig, env, filesDir, sourceDir } from './config'
 import { resolveFile } from './files'
 import { render, resolveAsset, validScriptBundles, validStyleBundles } from './render'
 import { checkTempPassword, mountSession } from './lib/session'
+import { ensureLocale } from './i18n'
 
 require('express-async-errors')
 
@@ -23,12 +24,12 @@ if (env.development) {
   Dev.mount(router)
 }
 
-router.get('/*', checkTempPassword(), async (req, res) => {
-  const path = req.path
+router.get('/*', ensureLocale(), checkTempPassword(), async (req, res) => {
+  const path = req.locale ? req.path.replace(`/${req.locale}`, '') : req.path
 
   try {
     console.log('\n[Lancer] GET', req.url)
-    var filename = resolveAsset(req.path)
+    var filename = resolveAsset(path)
   }
   catch (err) {
     console.log('         -->', err.message)
@@ -70,7 +71,8 @@ router.get('/*', checkTempPassword(), async (req, res) => {
     const result = await render({
       site,
       cache: {},
-      locale: req.params.locale || site.locales[0]
+      locale: req.params.locale || site.locales[0]!,
+      reqPath: path,
     }).process(html)
     res.set({ 'Content-Type': 'text/html' })
     res.send(result.html)

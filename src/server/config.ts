@@ -41,7 +41,9 @@ export type PostHtmlCtx = {
   /** Simple object for caching within the request. */
   cache: Record<string, any>
   /** The locale calculated from the request */
-  locale?: string
+  locale: string
+  /** The value of the relevant req.path, EXCLUDING locale */
+  reqPath: string
 }
 
 export type SiteConfig = {
@@ -52,16 +54,19 @@ export type SiteConfig = {
 export const siteConfig: () => SiteConfig = () => {
   const defaults: SiteConfig = {
     name: 'Missing site.config.js',
-    locales: [],
+    locales: ['en'],
     imagePreviews: {},
   }
-  try {
-    const config = requireLatest(`${sourceDir}/site.config.js`).module
-    return { ...defaults, ...config }
+  const config = {
+    ...defaults,
+    ...requireLatest(`${sourceDir}/site.config.js`).module
   }
-  catch (e) {
-    return defaults
+
+  if (!config.locales || !Array.isArray(config.locales) || !config.locales.length) {
+    throw new Error(`site.config.js must specify at least one locale.`)
   }
+
+  return config
 }
 
 function joinp(dir1: string, dir2: string) {
