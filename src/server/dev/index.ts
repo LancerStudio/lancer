@@ -4,7 +4,7 @@ import startCase from 'lodash/startCase'
 import express, { Router } from "express"
 
 import * as Bundle from '../bundle'
-import { env, filesDir } from '../config'
+import { env, filesDir, siteConfig } from '../config'
 import { missingFiles } from './state'
 import routes from '../../shared/routes'
 import { requireUser, checkTempPassword } from '../lib/session'
@@ -77,11 +77,12 @@ export function mount(router: Router) {
       return res.redirect('/')
     }
 
+    const site = siteConfig()
     const pageName = last(route.link().split('/'))!
 
     res.set({ 'Content-Type': 'text/html' })
     res.send(`<!DOCTYPE html>
-      <title>${startCase(pageName)} | Lancer | {{ site.name }}</title>
+      <title>${startCase(pageName)} | Lancer | ${site.name}</title>
       <link rel="stylesheet" href="/lancer.css?unscoped=1">
       <div class="bg-gray-200" id="app"></div>
       <script src="/lancer/${pageName}.js"></script>
