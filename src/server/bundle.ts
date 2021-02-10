@@ -98,7 +98,7 @@ export async function bundleStyle(file: string): Promise<string | null> {
   const css = await fs.readFile(file, 'utf8')
   try {
     styleDepRecord[file] = []
-    const result = await postcss(file, twConfig).process(css, {
+    const result = await postcss(file, twConfig.module).process(css, {
       from: file,
       to: file,
       map: { inline: ! isProd },
