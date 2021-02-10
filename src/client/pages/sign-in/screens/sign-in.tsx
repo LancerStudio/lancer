@@ -54,7 +54,7 @@ export function SignIn() {
                   name="email"
                   autoComplete="email"
                   required
-                  className={`rounded-none rounded-t-md ${textInputClass({ noRounded: true })}`}
+                  className={`rounded-none rounded-t-md ${textInputClass({ noRounded: true, noBorder: true })}`}
                   placeholder="Email Address"
                   value={email}
                   onChange={e => setEmail(e.currentTarget.value)}
@@ -69,8 +69,7 @@ export function SignIn() {
                   autoComplete="current-password"
                   required
                   placeholder="Password"
-                  className={`rounded-none rounded-b-md ${textInputClass({ noRounded: true })}`}
-                  // className="bg-gray-50 appearance-none rounded-none relative block w-full px-3 py-2 border-none placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-gray-600 focus:border-gray-600 focus:z-10"
+                  className={`rounded-none rounded-b-md ${textInputClass({ noRounded: true, noBorder: true })}`}
                   value={password}
                   onChange={e => setPassword(e.currentTarget.value)}
                 />

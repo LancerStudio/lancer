@@ -96,7 +96,7 @@ module.exports = {
   purge: [
     './src/client/dev/**/*',
   ],
-  darkMode: 'media', // or 'media' or 'class'
+  // darkMode: 'media', // or 'media' or 'class'
   theme: {
     extend: {
       colors: exportedColors.map(c => c.swatches).reduce((a,b) => a.concat(b), []).reduce((out, row) => {
@@ -122,7 +122,7 @@ module.exports = {
   },
   variants: {
     extend: {
-      typography: ['dark']
+      // typography: ['dark']
     }
   },
   plugins: [

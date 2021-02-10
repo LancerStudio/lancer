@@ -8,6 +8,7 @@ import { Editor } from '../../prosemirror/Editor'
 import { Loader } from "../components/Loader"
 import { Button } from "../components/Button"
 import { useKeyValueState } from "../lib/hooks"
+import { textInputClass } from "../../lib/ui"
 
 type Draft = {
   t: ItemType<ProcParams['updateTranslations']>
@@ -121,8 +122,8 @@ export function EditTranslation({ name, locale: initialLocale, rich, multiline, 
 
 
   const wrapLoader = (content: (data: ProcResults['getLocales']) => React.ReactNode) => (
-    <div className="p-6 sm:p-10 sm:m-8 rounded-sm bg-gray-100 dark:bg-blue-900 text-blue-800 shadow-xl w-full max-w-4xl">
-      <h2 className="font-header text-xl sm:text-2xl dark:text-blue-200">
+    <div className="p-6 sm:p-10 sm:m-8 rounded-lg bg-gray-200 text-gray-800 shadow-xl w-full max-w-4xl">
+      <h2 className="font-header text-lg sm:text-2xl">
         Edit Translation
         <span className="ml-2 text-xs text-gray-500">{name}</span>
         {req.isLoading && req.data &&
@@ -150,10 +151,9 @@ export function EditTranslation({ name, locale: initialLocale, rich, multiline, 
           <div
             key={loc}
             className={`${
-              loc === locale ? 'bg-blue-500 dark:bg-gray-200 text-white dark:text-gray-900' :
-              // !isSet ? 'cursor-pointer dark:bg-gray-600 hover:bg-blue-300 dark:hover:bg-gray-600 text-gray-700' :
-              !isSet ? 'cursor-pointer text-red-700 dark:text-red-500' :
-              'cursor-pointer text-gray-700 dark:text-gray-400'
+              loc === locale ? 'bg-gray-800 text-white' :
+              !isSet ? 'cursor-pointer text-red-700' :
+              'cursor-pointer text-gray-700'
             } uppercase flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium`}
             onClick={() => {
               if (locale !== loc) {
@@ -190,7 +190,7 @@ export function EditTranslation({ name, locale: initialLocale, rich, multiline, 
               e.preventDefault()
             }
           }}
-          className="mt-3 block w-full border border-gray-400 rounded-sm focus:ring-0 focus:border-indigo-400"
+          className={`mt-3 block w-full text-sm sm:text-base ${textInputClass()}`}
           style={{ maxHeight: '50vh' }}
         />
       </>}

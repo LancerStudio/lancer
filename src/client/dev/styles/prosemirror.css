@@ -90,10 +90,10 @@ li.ProseMirror-selectednode:after {
 
 .ProseMirror-menu-dropdown-menu, .ProseMirror-menu-submenu {
   position: absolute;
-  background: white;
   color: #666;
   border: 1px solid #aaa;
   padding: 2px;
+  @apply bg-white rounded-sm;
 }
 
 .ProseMirror-menu-dropdown-menu {
@@ -134,7 +134,6 @@ li.ProseMirror-selectednode:after {
 }
 
 .ProseMirror-menu-active {
-  background: #eee;
   border-radius: 4px;
 }
 
@@ -157,13 +156,13 @@ li.ProseMirror-selectednode:after {
   -moz-box-sizing: border-box;
   box-sizing: border-box;
   overflow: visible;
-  /* @apply py-1 px-1 bg-gray-100; */
+  /* apply py-1 px-1 bg-gray-100; */
   @apply py-1 px-1;
 }
 
 @media (prefers-color-scheme: dark) {
   .ProseMirror-menubar {
-    /* @apply bg-blue-800; */
+    /* apply bg-blue-800; */
   }
 }
 
@@ -190,14 +189,14 @@ li.ProseMirror-selectednode:after {
 }
 .ProseMirror-icon.ProseMirror-menu-active {
   border-radius: 4px;
-  @apply text-indigo-500;
+  @apply text-gray-800;
 }
 @media (prefers-color-scheme: dark) {
   .ProseMirror-icon {
-    @apply text-gray-300;
+    /* apply text-gray-300; */
   }
   .ProseMirror-icon.ProseMirror-menu-active {
-    @apply text-gray-300 bg-gray-800;
+    /* apply text-gray-300 bg-gray-800; */
   }
 }
 
@@ -343,17 +342,20 @@ li.ProseMirror-selectednode:after {
 }
 
 .ProseMirror-menubar-wrapper {
-  @apply border rounded-sm border-gray-400;
+  @apply border rounded-md border-gray-400 bg-gray-50;
+}
+.ProseMirror-menubar-wrapper:focus-within {
+  @apply border-gray-600 ring-gray-600;
 }
 @media (prefers-color-scheme: dark) {
   .ProseMirror-menubar-wrapper {
-    @apply border-gray-700;
+    /* apply border-gray-700; */
   }
 }
 .ProseMirror {
   max-height: 50vh;
   overflow-x: auto;
-  /* @apply py-2.5 px-6 mx-auto bg-white rounded-b; */
+  /* apply py-2.5 px-6 mx-auto bg-white rounded-b; */
   @apply py-2.5 px-6 mx-auto;
 }
 @media (min-width: 1024px) {
@@ -363,7 +365,7 @@ li.ProseMirror-selectednode:after {
 }
 @media (prefers-color-scheme: dark) {
   .ProseMirror {
-    /* @apply bg-blue-800; */
+    /* apply bg-blue-800; */
   }
 }
 
@@ -383,9 +385,9 @@ li.ProseMirror-selectednode:after {
 
 @media (prefers-color-scheme: dark) {
   .prosemirror-send-icon {
-    @apply text-yellow-500;
+    /* apply text-yellow-500; */
   }
   .prosemirror-send-icon.ProseMirror-menu-disabled {
-    @apply text-gray-500;
+    /* apply text-gray-500; */
   }
 }

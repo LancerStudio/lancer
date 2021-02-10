@@ -87,7 +87,7 @@ export function UpdateTempPass() {
               type="password"
               name="password"
               id="password"
-              className={`pr-10 ${textInputClass({ hasError: passwordError })}`}
+              className={`pr-10 ${textInputClass({ hasError: passwordError, noBorder: true })}`}
               aria-invalid={passwordError}
               aria-describedby="password-error"
               value={password}
