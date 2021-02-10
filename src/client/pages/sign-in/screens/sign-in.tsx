@@ -30,7 +30,7 @@ export function SignIn() {
         <div className="flex flex-col items-center">
           <img src="/lancer/logo-icon.svg" className="h-24" />
 
-          <h2 className="mt-1.5 font-header font-bold text-6xl text-gray-900 text-center">
+          <h2 className="mt-1.5 font-header-alt font-bold text-6xl text-gray-900 text-center">
             Lancer
           </h2>
 

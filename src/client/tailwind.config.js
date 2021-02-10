@@ -115,7 +115,8 @@ module.exports = {
       }),
 
       fontFamily: {
-        header: [`'Montserrat Alternates', sans-serif`]
+        header: [`'Montserrat', sans-serif`],
+        'header-alt': [`'Montserrat Alternates', 'Montserrat', sans-serif`],
       }
     },
   },

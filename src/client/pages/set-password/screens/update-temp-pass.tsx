@@ -71,7 +71,7 @@ export function UpdateTempPass() {
         <div className="flex flex-col items-center">
           <img src="/lancer/logo-icon.svg" className="h-24" />
 
-          <h1 className="mt-3 font-header font-bold text-4xl text-gray-900 text-center">
+          <h1 className="mt-3 font-header-alt font-bold text-4xl text-gray-900 text-center">
             Set Password
           </h1>
 
