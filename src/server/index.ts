@@ -69,7 +69,7 @@ router.get('/*', ensureLocale(), checkTempPassword(), async (req, res) => {
     const result = await render({
       site,
       cache: {},
-      locale: req.params.locale || site.locales[0]!,
+      locale: req.locale!,
       reqPath: path,
     }).process(html)
     res.set({ 'Content-Type': 'text/html' })

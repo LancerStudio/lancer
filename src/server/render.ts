@@ -16,6 +16,18 @@ export function render(ctx: PostHtmlCtx) {
   const locals = {
     site: ctx.site,
 
+    page: {
+      path: ctx.reqPath,
+      locale: ctx.locale,
+      fullPath: `/${ctx.locale}${ctx.reqPath}`,
+    },
+
+    pathFor(locale: string, path?: string) {
+      return `/${locale}${path || ctx.reqPath}`
+    },
+
+    getLang: i18n.getLang,
+
     globFiles(pattern: string) {
       const files = glob.sync(pattern, {
         cwd: filesDir
