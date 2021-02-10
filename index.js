@@ -67,10 +67,10 @@ program
 // User Management
 //
 program
-  .command('user:create <type> <email>')
+  .command('users:create <type> <email>')
   .option('-p, --password <password>', 'A temporary password')
   .option('-n, --name <name>', 'The name of the user')
-  .action((type, email, options, more) => {
+  .action((type, email, options) => {
     if (type !== 'client' && type !== 'dev') {
       throw new Error(`Invalid type: '${type}' (must be 'client' or 'dev')`)
     }
