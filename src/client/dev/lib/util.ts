@@ -14,3 +14,7 @@ export function debounce<F extends (...args: any[]) => any>(func: F, wait: numbe
 	}
 	return f
 }
+
+export function last<T>(array: T[]) {
+	return array[array.length-1]
+}

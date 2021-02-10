@@ -3,7 +3,7 @@ type Procs = typeof import('../../../server/dev/procs')
 
 export const Rpc = makeRpcClient<Procs>('/lancer/rpc')
 export type ProcParams = ParamsTypeObject<Procs>
-export type ProcTypes = UnPromisifiedObject<ReturnTypeObject<Procs>>
+export type ProcResults = UnPromisifiedObject<ReturnTypeObject<Procs>>
 
 type NoContextWithUnexpected<F> =
   F extends (params: infer T, ctx?: any) => infer U

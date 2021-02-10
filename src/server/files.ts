@@ -72,7 +72,7 @@ export async function resolveFile(file: string, { site, preview }: Options): Pro
     let plan = sharp(file).withMetadata()
 
     if (toFormat) {
-      plan = plan.toFormat(toFormat)
+      plan = plan.toFormat(toFormat as any)
     }
 
     await plan.resize(previewConfig).toFile(previewFile)

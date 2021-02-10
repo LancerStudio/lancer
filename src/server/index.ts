@@ -6,6 +6,7 @@ import * as Bundle from './bundle'
 import { staticDir, siteConfig, env, filesDir, sourceDir } from './config'
 import { resolveFile } from './files'
 import { render, resolveAsset, validScriptBundles, validStyleBundles } from './render'
+import { checkTempPass, mountSession } from './lib/session'
 
 require('express-async-errors')
 
@@ -15,13 +16,14 @@ export default router
 
 
 router.use( express.static(staticDir) )
+mountSession(router)
 router.use( require('body-parser').json() )
 
 if (env.development) {
   Dev.mount(router)
 }
 
-router.get('/*', async (req, res) => {
+router.get('/*', checkTempPass(), async (req, res) => {
   const path = req.path
 
   try {

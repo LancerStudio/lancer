@@ -1,6 +1,6 @@
 import { DB } from "../lib/db";
 
-const table = 'lance_translations'
+const table = 'lancer_translations'
 
 type TranslationRow = {
   locale: string
@@ -8,6 +8,7 @@ type TranslationRow = {
   value: string
   version: number
   meta: string
+  created_at: number
 }
 type TranslationObj = _<Assign<TranslationRow, {
   meta: TranslationMeta
@@ -49,15 +50,16 @@ export class TranslationModel {
   }
 
   // set(name: string, locale: string, value: string, currentVersion: number | null, meta: Meta = {}) {
-  set(row: PartialBy<TranslationObj, 'version' | 'meta'>) {
+  set(row: PartialBy<TranslationObj, 'version' | 'meta' | 'created_at'>) {
     try {
       this.db.run(`
-        INSERT INTO ${table} (locale, name, value, version, meta)
-        VALUES (:locale, :name, :value, :version, :meta)
+        INSERT INTO ${table} (locale, name, value, version, meta, created_at)
+        VALUES (:locale, :name, :value, :version, :meta, :created_at)
       `, {
         ...row,
         version: Math.max(row.version || 0, 0) + 1,
         meta: JSON.stringify(row.meta || {}),
+        created_at: Math.floor((row.created_at || Date.now()) / 1000)
       })
       return true
     }

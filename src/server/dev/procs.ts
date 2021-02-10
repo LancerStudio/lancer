@@ -1,14 +1,34 @@
 import { existsSync, statSync } from "fs"
+import { Request } from 'express'
 
 import {z, rpc} from './rpc'
 import { filesDir, siteConfig } from "../config"
 import { missingFiles } from "./state"
-import { Translation } from "../models"
+import { Translation, User } from "../models"
+import { ProcAuthError } from "./errors"
+
+const ok = <T>(data: T) => ({ type: 'success', data } as const)
+const bad = <C extends string, D>(code: C, data: D) => ({ type: 'error', code, data } as const)
+
+type RpcContext = {
+  req: Request
+}
 
 export const getDevStatus = rpc(
   z.object({}),
   async function () {
     return { missingFiles }
+  }
+)
+
+export const getSiteInfo = rpc(
+  z.object({}),
+  async function () {
+    const site = siteConfig()
+    return {
+      name: site.name,
+      locales: site.locales,
+    }
   }
 )
 
@@ -70,17 +90,51 @@ export const updateTranslations = rpc(
         const result = Translation.set(update)
         const current = Translation.get(update.name, update.locale)!
         if (result) {
-          return {
-            type: 'success' as const,
-            current,
-          }
+          return ok({ current })
         }
-        return {
-          type: 'failure' as const,
-          failed: update,
-          current,
-        }
+        return bad('fail', { current, failed: update })
       })
     }
   }
 )
+
+export const signIn = rpc(
+  z.object({
+    email: z.string(),
+    password: z.string(),
+  }),
+  async function ({ email, password }, { req }: RpcContext) {
+    const user = User.findByEmail(email)
+    if (!user || !(await User.verify(user.id, password))) {
+      return bad('invalid', { message: 'Bad email/password' })
+    }
+    req.session.user_id = user.id
+    return ok(null)
+  }
+)
+
+export const updatePassword = rpc(
+  z.object({
+    currentPassword: z.string().optional(),
+    newPassword: z.string(),
+  }),
+  async function ({ newPassword }, { req }: RpcContext) {
+    const user = requireUser(req)
+    if (!user.password_temporary) {
+      // TODO: Check if currentPassword is correct
+    }
+    User.updatePassword(user.id, newPassword)
+    return ok({ returnTo: req.session.returnTo || '/' })
+  }
+)
+
+
+//
+// Helpers
+//
+function requireUser(req: RpcContext['req']) {
+  if (!req.user) {
+    throw new ProcAuthError()
+  }
+  return req.user
+}

@@ -1,9 +1,9 @@
 import { useState } from "react"
 import TextareaAutosize from 'react-autosize-textarea'
 
-import { ProcParams, ProcTypes, Rpc } from "../lib/rpc-client"
+import { ProcParams, ProcResults, Rpc } from "../lib/rpc-client"
 import { usePromise } from "../lib/use-promise"
-import { useToasts } from "../lib/toast"
+import { useToasts } from "../../lib/toast"
 import { Editor } from '../../prosemirror/Editor'
 import { Loader } from "../components/Loader"
 import { Button } from "../components/Button"
@@ -89,25 +89,26 @@ export function EditTranslation({ name, locale: initialLocale, rich, multiline, 
         .map(draft => draft.t)
     )
     for (const result of results) {
-      const resultLocale = result.current.locale
-      if (result.type === 'failure') {
-        quickToast('error', `Error: Unable to save ${result.failed.locale.toUpperCase()}.`, { timed: false, key: `${resultLocale}_failure` })
+      const { current } = result.data
+      const resultLocale = current.locale
+      if (result.type === 'error') {
+        quickToast('error', `Error: Unable to save ${result.data.failed.locale.toUpperCase()}.`, { timed: false, key: `${resultLocale}_failure` })
         continue
       }
 
       setDraft(resultLocale, {
-        t: result.current,
-        originalValue: result.current.value,
+        t: current,
+        originalValue: current.value,
       })
 
       if (resultLocale === locale) {
-        req.update({ t: result.current })
+        req.update({ t: current })
       }
 
       quickToast('success', `Saved ${resultLocale.toUpperCase()} successfully.`)
       const elem = document.querySelector(`[data-t-name="${name}"][data-t-locale="${resultLocale}"]`)
       if (elem) {
-        elem.innerHTML = result.current.value
+        elem.innerHTML = current.value
       }
       if (locale === initialLocale && results.every(r => r.type === 'success')) {
         onClose()
@@ -119,7 +120,7 @@ export function EditTranslation({ name, locale: initialLocale, rich, multiline, 
   }
 
 
-  const wrapLoader = (content: (data: ProcTypes['getLocales']) => React.ReactNode) => (
+  const wrapLoader = (content: (data: ProcResults['getLocales']) => React.ReactNode) => (
     <div className="p-6 sm:p-10 sm:m-8 rounded-sm bg-gray-100 dark:bg-blue-900 text-blue-800 shadow-xl w-full max-w-4xl">
       <h2 className="font-header text-xl sm:text-2xl dark:text-blue-200">
         Edit Translation

@@ -26,6 +26,7 @@ type State =
 export function EnterExit(props: Props) {
   const { show } = props
   const [state, setState] = useState<State>('hidden')
+  const [childrenCache, setChildrenCache] = useState(props.children)
   const shouldRender = state !== 'hidden'
 
   useEffect(() => {
@@ -42,6 +43,12 @@ export function EnterExit(props: Props) {
       })
     }
   }, [state, show])
+
+  useEffect(() => {
+    if (show) {
+      setChildrenCache(props.children)
+    }
+  })
 
   const onAnimationEnd = useCallback(function onAnimationEnd() {
     if (state === 'enter-go') {
@@ -72,7 +79,10 @@ export function EnterExit(props: Props) {
         className={className}
         onTransitionEnd={onAnimationEnd}
       >
-        {props.children}
+        {!show
+          ? childrenCache
+          : props.children
+        }
       </div>
     ) : null
   )

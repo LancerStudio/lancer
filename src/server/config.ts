@@ -1,20 +1,35 @@
 import path from 'path'
 import { existsSync, mkdirSync } from 'fs'
 
-import { read, Env } from '../lib/config'
+import { read, Env } from './lib/config'
 import { requireLatest } from './lib/fs'
 
 export const env = Env(['test', 'development', 'production'])
 
+export const sessionSecret = env.branch(() => 'TEMP KEY', {
+  production: () => read('SESSION_SECRET')
+})
+
+
 export const sourceDir = env.branch(() => read('LANCER_SOURCE_DIR', process.cwd()), {
   test: path.join(__dirname, '../test-app')
 })
-
 if (!existsSync(sourceDir)) {
   throw new Error(`Source directory does not exist: '${sourceDir}'`)
 }
 
-export const dataDir = read('LANCER_DATA_DIR', joinp(sourceDir, '/data'))
+
+export const dataDir = read('LANCER_DATA_DIR', path.join(sourceDir, '/data'))
+if (!existsSync(dataDir)) {
+  if (process.env.LANCER_INIT_DATA_DIR) {
+    mkdirSync(dataDir, { recursive: true })
+  }
+  else {
+    throw new Error(`Data directory does not exist: '${dataDir}'\n  Run \`lancer init data\` to create.`)
+  }
+}
+
+
 export const cacheDir = read('LANCER_CACHE_DIR', joinp(dataDir, '/cache'))
 export const filesDir = joinp(dataDir, '/files')
 export const clientDir = joinp(sourceDir, '/client')

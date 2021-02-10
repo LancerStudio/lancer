@@ -7,7 +7,7 @@ Lancer is a radically simple tool for building content-focused websites. It help
 - No-hassle on-the-fly image resizing
 - End up with an extremely low-touch, maintainable codebase.
 
-Lancer DOES NOT cater to fully-JS-rendered apps. If you're building a full-fledged web app, consider Ruby on Rails or Next.js.
+Lancer DOES NOT cater to fully-JS-rendered apps. If you're building a full-fledged web app, only use Lancer for your landing and marketing pages. For your heavy application code, we recommend something like Ruby on Rails or Next.js.
 
 ## Getting Started
 
@@ -17,7 +17,7 @@ To start a project from scratch:
 $ mkdir my-proj && cd my-proj
 $ npm init -y
 $ npm install freelance
-$ mkdir client
+$ lancer init
 $ echo 'It works!' > client/index.html
 $ lance dev
 ```
@@ -25,6 +25,14 @@ $ lance dev
 Now visit [http://localhost:8080](http://localhost:8080).
 
 If `lance dev` didn't work, you need to add `./node_modules/.bin` to the beginning of your path.
+
+## Workflow Overview
+
+- Create your project: `lancer create my-project`
+- Write html/css/js; specify and populate data; drag files & images into `data/files`
+- Push code to a host like DigitalOcean
+- Push data and files to production: `lance push https://example.com`
+- All done!
 
 ## Basics
 

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState } from 'react'
-import { Notification, Props as NotificationProps } from '../notification'
+import { Notification, Props as NotificationProps } from '../dev/notification'
 
 type ToastProps = {
   id: number

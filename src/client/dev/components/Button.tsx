@@ -3,13 +3,15 @@ type Props = {
   title: string
 
   size?: 'xs' | 'sm' | 'md' | 'lg' | null
+  block?: boolean
   color?: 'primary' | 'secondary'
-  onClick: () => void
+  onClick?: () => void
   loading?: boolean
   disabled?: boolean
   className?: string
+  formSubmit?: boolean
 }
-export function Button({ loading=false, disabled=false, size='md', color, title, onClick, className }: Props) {
+export function Button({ loading=false, disabled=false, size='md', color, title, onClick, formSubmit, block=true, className='' }: Props) {
   const dims =
     // size === 'lg' ? 'py-2 px-4 text-sm font-medium' :
     size === 'md' ? 'py-2 px-4 text-sm font-medium' :
@@ -21,25 +23,28 @@ export function Button({ loading=false, disabled=false, size='md', color, title,
   if (color === 'primary') {
     textColor = 'text-white'
     btnColor = disabled
-      ? 'bg-gray-300 cursor-not-allowed'
-      : 'bg-primary-600 hover:bg-primary-700 dark:hover:bg-primary-500'
+      ? 'bg-gray-400 cursor-not-allowed'
+      : 'text-gray-100 bg-gray-800 hover:bg-gray-900'
   }
   else if (color === 'secondary') {
-    textColor = 'text-blue-100 dark:text-blue-200'
+    textColor = 'text-blue-100 '
     btnColor = disabled
-      ? 'bg-gray-300 cursor-not-allowed'
-      : 'bg-blue-400 dark:bg-blue-700 hover:bg-blue-500 dark:hover:bg-blue-600'
+      ? 'bg-gray-400 cursor-not-allowed'
+      : 'bg-blue-400'
   }
   else {
     textColor = 'text-gray-900'
     btnColor = disabled
-      ? 'bg-gray-300 cursor-not-allowed'
-      : 'bg-gray-300'
+      ? 'bg-gray-400 cursor-not-allowed'
+      : 'bg-gray-400'
   }
 
   return (
     <button
-      className={`${className} ${textColor} ${btnColor} ${dims} ${loading ? 'Loading' : ''} relative inline-flex items-center border border-transparent rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500`}
+      type={formSubmit ? 'submit' : 'button'}
+      className={`${className} ${textColor} ${btnColor} ${dims} ${loading ? 'Loading' : ''} ${
+        block ? 'block' : 'inline-flex items-center'
+      } relative border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500`}
       onClick={onClick}
     >
       {title}

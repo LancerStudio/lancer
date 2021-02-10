@@ -4,12 +4,12 @@ import { useEffect, useState } from 'react'
 import { Notification } from './notification'
 import { useNavigation } from './lib/navigation'
 import { EditFile } from './screens/EditFile'
-import { ProcTypes, Rpc } from './lib/rpc-client'
+import { ProcResults, Rpc } from './lib/rpc-client'
 import { Lancer } from './global'
 import { EnterExit } from './components/EnterExit'
-import { ToastContainer, ToastProvider, useToasts } from './lib/toast'
+import { ToastContainer, ToastProvider, useToasts } from '../lib/toast'
 
-type DevStatus = ProcTypes['getDevStatus']
+type DevStatus = ProcResults['getDevStatus']
 
 function DevApp() {
   const [status, setStatus] = useState<DevStatus>({
@@ -50,11 +50,11 @@ function DevApp() {
             />
           )
         }
-      }    
+      }
       setStatus(update)
     })
   }, [setStatus])
-  
+
 
   return <div className="Lancer">
     <ToastProvider>
@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   link.type = 'text/css'
   link.rel = 'stylesheet'
-  link.href = '/lancer/dev.css'
+  link.href = '/lancer.css'
 
   document.head.appendChild(link)
 }, false)
