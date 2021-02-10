@@ -20,9 +20,7 @@ router.use( express.static(staticDir) )
 mountSession(router)
 router.use( require('body-parser').json() )
 
-if (env.development) {
-  Dev.mount(router)
-}
+Dev.mount(router)
 
 router.get('/*', ensureLocale(), checkTempPassword(), async (req, res) => {
   const path = req.locale ? req.path.replace(`/${req.locale}`, '') : req.path
