@@ -7,7 +7,7 @@ import * as Bundle from '../bundle'
 import { env, filesDir } from '../config'
 import { missingFiles } from './state'
 import routes from '../../shared/routes'
-import { requireUser, checkTempPass } from '../lib/session'
+import { requireUser, checkTempPassword } from '../lib/session'
 import { last } from '../../client/dev/lib/util'
 import { ProcAuthError } from './errors'
 
@@ -68,7 +68,7 @@ export function mount(router: Router) {
     }
   })
 
-  router.get('/lancer/:page', requireUser({ redirectIfNot: true }), checkTempPass(), (req, res, next) => {
+  router.get('/lancer/:page', requireUser({ redirectIfNot: true }), checkTempPassword(), (req, res, next) => {
     const route = routes.pages.children.find(r => r.match(req.path))
     if (!route) {
       return next()

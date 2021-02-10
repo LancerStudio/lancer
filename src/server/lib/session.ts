@@ -61,7 +61,7 @@ export function requireUser(opts: { redirectIfNot?: boolean } = {}): RequestHand
   }
 }
 
-export function checkTempPass(): RequestHandler {
+export function checkTempPassword(): RequestHandler {
   return (req, res, next) => {
     if (req.user?.password_temporary && !routes.pages.setPassword.match(req.path)) {
       req.session.returnTo = req.path

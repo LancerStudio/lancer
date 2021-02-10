@@ -6,7 +6,7 @@ import * as Bundle from './bundle'
 import { staticDir, siteConfig, env, filesDir, sourceDir } from './config'
 import { resolveFile } from './files'
 import { render, resolveAsset, validScriptBundles, validStyleBundles } from './render'
-import { checkTempPass, mountSession } from './lib/session'
+import { checkTempPassword, mountSession } from './lib/session'
 
 require('express-async-errors')
 
@@ -23,7 +23,7 @@ if (env.development) {
   Dev.mount(router)
 }
 
-router.get('/*', checkTempPass(), async (req, res) => {
+router.get('/*', checkTempPassword(), async (req, res) => {
   const path = req.path
 
   try {
