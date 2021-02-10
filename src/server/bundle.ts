@@ -53,12 +53,8 @@ export function bundleScript(file: string) {
 const styleCache: Record<string, { mtimeMs: number, css: string }> = {}
 const styleDepRecord: Record<string, { file: string, mtimeMs: number }[]> = {}
 
-var postcss = (rootFile: string, twConfig: any) => require('postcss')([
+var postcss = (rootFile: string, twConfig: object) => require('postcss')([
   require("postcss-import")({
-    path: [
-      // Add this lib's node_modules so it can find tailwind
-      path.join(__dirname, '../../node_modules')
-    ],
     load(filename: string) {
       if (filename.startsWith(sourceDir) && existsSync(filename)) {
         styleDepRecord[rootFile]!.push({
@@ -69,12 +65,7 @@ var postcss = (rootFile: string, twConfig: any) => require('postcss')([
       return require('postcss-import/lib/load-content')(filename)
     }
   }),
-  require('tailwindcss')(
-    // Build in some plugins
-    set(cloneDeep(twConfig), 'plugins', (twConfig.plugins || []).concat([
-      require('@tailwindcss/typography')
-    ]))
-  ),
+  require('tailwindcss')(twConfig),
   require('autoprefixer'),
 ])
 
