@@ -103,8 +103,7 @@ const SETUP = `
 
   INSERT OR IGNORE INTO lancer_kvs (name, value)
     VALUES
-      ('migration', '0.0.0'),
-      ('site_version', '1.0.0')
+      ('migration', '0.0.0')
 `
 
 const MIGRATIONS = {
@@ -115,11 +114,12 @@ const MIGRATIONS = {
         value TEXT NOT NULL,
         locale TEXT NOT NULL,
         version INTEGER NOT NULL,
+        site_version INTEGER NOT NULL DEFAULT 1,
         meta TEXT NOT NULL DEFAULT '{}',
         created_at INTEGER NOT NULL
       );;
 
-      CREATE UNIQUE INDEX lancer_translations_name ON lancer_translations (locale, name, version);;
+      CREATE UNIQUE INDEX lancer_translations_name ON lancer_translations (locale, name, site_version, version);;
 
       CREATE TABLE lancer_sessions (
         sid PRIMARY KEY,
@@ -134,6 +134,7 @@ const MIGRATIONS = {
         password_hash TEXT,
         password_temporary INTEGER DEFAULT 0,
         type TEXT NOT NULL,
+        meta TEXT NOT NULL DEFAULT '{}',
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL
       );;
@@ -143,6 +144,7 @@ const MIGRATIONS = {
         user_id INTEGER NOT NULL,
         type TEXT NOT NULL,
         value TEXT NOT NULL,
+        meta TEXT NOT NULL DEFAULT '{}',
         created_at INTEGER NOT NULL
       );;
 
