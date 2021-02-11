@@ -112,15 +112,18 @@ export function EditTranslation({ name, locale: initialLocale, link, rich, multi
       }
 
       quickToast('success', `Saved ${resultLocale.toUpperCase()} successfully.`)
-      const elem = document.querySelector(`[data-t-name="${name}"][data-t-locale="${resultLocale}"]`)
-      if (elem && link) {
-        const parts = current.value.split(LINK_DELIMINATOR)
-        elem.setAttribute('href', shouldPrefixMailto(parts[0]!) ? `mailto:${parts[0]}` : parts[0]!)
-        elem.innerHTML = parts[1]!
-      }
-      else if (elem) {
-        elem.innerHTML = current.value
-      }
+      const elems = [...document.querySelectorAll(`[data-t-name="${name}"][data-t-locale="${resultLocale}"]`)]
+
+      elems.forEach(elem => {
+        if (link) {
+          const parts = current.value.split(LINK_DELIMINATOR)
+          elem.setAttribute('href', shouldPrefixMailto(parts[0]!) ? `mailto:${parts[0]}` : parts[0]!)
+          elem.innerHTML = parts[1]!
+        }
+        else {
+          elem.innerHTML = current.value
+        }
+      })
       if (locale === initialLocale && results.every(r => r.type === 'success')) {
         onClose()
       }
