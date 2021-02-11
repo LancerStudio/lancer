@@ -93,19 +93,28 @@ const alpha = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ123456789'
 const capitalize = (s) => s[0].toUpperCase() + s.slice(1)
 
 //
+// Utility
+//
+program
+  .command('secret')
+  .action(() => {
+    console.log(require('crypto').randomBytes(64).toString('hex'))
+  })
+
+//
 // Catch-all (invalid arguments)
 //
 program
   .command('*')
   .action(function(){
-    exec('lance --help')
+    exec('lancer --help')
   })
 
 //
 // No arguments
 //
 if(process.argv.length === 2) {
-  exec('lance --help')
+  exec('lancer --help')
 }
 
 //
