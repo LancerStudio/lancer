@@ -68,6 +68,12 @@ export function mount(router: Router) {
     }
   })
 
+  router.post('/lancer/sign-out', (req, res) => {
+    req.session.destroy(() => {
+      res.redirect('/')
+    })
+  })
+
   router.get('/lancer/:page', requireUser({ redirectIfNot: true }), checkTempPassword(), (req, res, next) => {
     const route = routes.pages.children.find(r => r.match(req.path))
     if (!route) {
