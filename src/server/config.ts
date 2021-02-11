@@ -22,7 +22,7 @@ if (!existsSync(sourceDir)) {
 
 export const dataDir = read('LANCER_DATA_DIR', path.join(sourceDir, '/data'))
 if (!existsSync(dataDir)) {
-  if (process.env.LANCER_INIT_DATA_DIR) {
+  if (process.env.LANCER_INIT_DATA_DIR || env.production) {
     mkdirSync(dataDir, { recursive: true })
   }
   else {
