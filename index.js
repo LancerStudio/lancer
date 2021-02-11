@@ -102,22 +102,6 @@ program
   })
 
 //
-// Catch-all (invalid arguments)
-//
-program
-  .command('*')
-  .action(function(){
-    exec('lancer --help')
-  })
-
-//
-// No arguments
-//
-if(process.argv.length === 2) {
-  exec('lancer --help')
-}
-
-//
 // Begin the process
 //
 async function go() {
