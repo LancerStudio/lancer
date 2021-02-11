@@ -94,7 +94,7 @@ const exportedColors = [
 
 module.exports = {
   purge: [
-    './src/client/dev/**/*',
+    './src/client/**/*',
   ],
   // darkMode: 'media', // or 'media' or 'class'
   theme: {
