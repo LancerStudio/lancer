@@ -1,4 +1,6 @@
 import { RequestHandler } from "express"
+import { LINK_DELIMINATOR } from "../shared/constants"
+import { shouldPrefixMailto } from "../shared/logic"
 import { env, PostHtmlCtx, siteConfig } from "./config"
 import { memoizeUnary } from "./lib/util"
 import { TranslationModel } from "./models/translation"
@@ -45,6 +47,44 @@ export function posthtmlPlugin({ Translation, ctx: { site, reqPath, locale } }: 
         node.attrs['data-t-multiline'] = multiline
         node.attrs['data-t-rich'] = rich
       }
+      return node
+    })
+
+    tree.match(matchHelper('a[t]'), function(node: any) {
+      const name = node.attrs.t.trim()
+
+      const rich = node.attrs.rich == null ? false : true
+      delete node.attrs.rich
+
+      const t = Translation.get(name, locale, { fallback: site.locales[0] })
+      if (t && t.meta.link) {
+        const parts = t.value.split(LINK_DELIMINATOR)
+        const href = parts[0] || '#'
+        const text = parts[1] || name
+
+        node.content = t.meta.rich ? tree.parser(text) : text
+
+        // Auto-detect email
+        node.attrs.href = shouldPrefixMailto(href) ? `mailto:${href}` : href
+      }
+      else if (t) {
+        node.attrs.href = '#'
+        node.content = t.meta.rich ? tree.parser(t.value) : t.value
+      }
+      else {
+        node.content = name
+      }
+
+      delete node.attrs.t
+
+      if (env.development) {
+        node.attrs.onclick = `Lancer.onTranslationClick(event)`
+        node.attrs['data-t-name'] = name
+        node.attrs['data-t-locale'] = locale
+        node.attrs['data-t-rich'] = rich
+        node.attrs['data-t-link'] = true
+      }
+
       return node
     })
 

@@ -79,6 +79,7 @@ export const updateTranslations = rpc(
       value: z.string(),
       version: z.number().optional(),
       meta: z.object({
+        link: z.boolean().optional(),
         rich: z.boolean().optional(),
         multiline: z.boolean().optional(),
       }).optional(),

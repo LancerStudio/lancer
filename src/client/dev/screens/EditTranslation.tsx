@@ -1,6 +1,7 @@
 import { useState } from "react"
 import TextareaAutosize from 'react-autosize-textarea'
 
+import LinkSm from "../../lib/icons/LinkSm"
 import { ProcParams, ProcResults, Rpc } from "../lib/rpc-client"
 import { usePromise } from "../lib/use-promise"
 import { useToasts } from "../../lib/toast"
@@ -9,6 +10,8 @@ import { Loader } from "../components/Loader"
 import { Button } from "../components/Button"
 import { useKeyValueState } from "../lib/hooks"
 import { textInputClass } from "../../lib/ui"
+import { LINK_DELIMINATOR } from "../../../shared/constants"
+import { shouldPrefixMailto } from "../../../shared/logic"
 
 type Draft = {
   t: ItemType<ProcParams['updateTranslations']>
@@ -24,11 +27,13 @@ type Props = {
   name: string
   locale: string
   onClose: () => void
+  link?: boolean
   rich?: boolean
   multiline: boolean
 }
-export function EditTranslation({ name, locale: initialLocale, rich, multiline, onClose }: Props) {
+export function EditTranslation({ name, locale: initialLocale, link, rich, multiline, onClose }: Props) {
   const meta = {
+    link,
     rich,
     multiline,
   }
@@ -108,7 +113,12 @@ export function EditTranslation({ name, locale: initialLocale, rich, multiline, 
 
       quickToast('success', `Saved ${resultLocale.toUpperCase()} successfully.`)
       const elem = document.querySelector(`[data-t-name="${name}"][data-t-locale="${resultLocale}"]`)
-      if (elem) {
+      if (elem && link) {
+        const parts = current.value.split(LINK_DELIMINATOR)
+        elem.setAttribute('href', shouldPrefixMailto(parts[0]!) ? `mailto:${parts[0]}` : parts[0]!)
+        elem.innerHTML = parts[1]!
+      }
+      else if (elem) {
         elem.innerHTML = current.value
       }
       if (locale === initialLocale && results.every(r => r.type === 'success')) {
@@ -139,88 +149,122 @@ export function EditTranslation({ name, locale: initialLocale, rich, multiline, 
     </div>
   )
 
-  // We can be confident this is set since wrapLoader() ensures the initial request is complete
-  const current = drafts[locale]!
-  const dirty = Object.values(drafts).some(draft => draft.t.value !== draft.originalValue)
+  return wrapLoader(locales => {
+    // We can be confident this is set since wrapLoader() ensures the initial request is complete
+    const current = drafts[locale]!
+    const dirty = Object.values(drafts).some(draft => draft.t.value !== draft.originalValue)
 
+    const [href, content] = (() => {
+      if (link) {
+        const parts = current.t.value.split(LINK_DELIMINATOR)
+        if (parts.length === 1) return ['', parts[0]!] as const
+        return parts as [string, string]
+      }
+      else {
+        return ['', current.t.value] as const
+      }
+    })()
 
-  return wrapLoader(locales => (
-    <div className="mt-3 sm:mt-4">
-      <div className="flex flex-wrap space-x-1">
-        {Object.entries(locales).map(([loc, isSet]) =>
-          <div
-            key={loc}
-            className={`${
-              loc === locale ? 'bg-gray-800 text-white' :
-              !isSet ? 'cursor-pointer text-red-700' :
-              'cursor-pointer text-gray-700'
-            } uppercase flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium`}
-            onClick={() => {
-              if (locale !== loc) {
-                loadLocale(loc)
+    return (
+      <div className="mt-3 sm:mt-4">
+        <div className="flex flex-wrap space-x-1">
+          {Object.entries(locales).map(([loc, isSet]) =>
+            <div
+              key={loc}
+              className={`${
+                loc === locale ? 'bg-gray-800 text-white' :
+                !isSet ? 'cursor-pointer text-red-700' :
+                'cursor-pointer text-gray-700'
+              } uppercase flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium`}
+              onClick={() => {
+                if (locale !== loc) {
+                  loadLocale(loc)
+                }
+              }}
+            >
+              {loc}
+            </div>
+          )}
+        </div>
+
+        {rich ? <>
+          <Editor
+            content={content}
+            onChange={value => {
+              value = link ? `${href}${LINK_DELIMINATOR}${value}` : value
+              updateDraft(locale, { t: { ...current.t, value } })
+            }}
+            className="mt-4"
+            multiline={!!multiline}
+          />
+        </> : <>
+          <TextareaAutosize
+            autoFocus
+            value={content}
+            onChange={({ currentTarget: { value } }) => {
+              value = link ? `${href}${LINK_DELIMINATOR}${value}` : value
+              updateDraft(locale, {
+                t: { ...current.t, value: multiline ? value : value.replace(NL, '') }
+              })
+            }}
+            onKeyPress={e => {
+              if (e.key === 'Enter' && (e.altKey)) {
+                save()
+              }
+              if (e.key === 'Enter' && !multiline) {
+                e.preventDefault()
               }
             }}
-          >
-            {loc}
+            className={`mt-3 block w-full text-sm sm:text-base ${textInputClass()}`}
+            style={{ maxHeight: '50vh' }}
+          />
+        </>}
+
+        {link &&
+          <div className="mt-2 flex rounded-md shadow-sm">
+            <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-400 bg-gray-100 text-gray-500 sm:text-sm">
+              <LinkSm className="w-4 h-4" />
+            </span>
+            <input
+              type="text"
+              placeholder="https://www.example.com or alice@example.com"
+              className={`flex-1 rounded-none rounded-r-md text-sm sm:text-base ${textInputClass({ noRounded: true })}`}
+              value={href}
+              onChange={({ currentTarget: { value } }) => {
+                value = `${value}${LINK_DELIMINATOR}${content}`
+                updateDraft(locale, { t: { ...current.t, value } })
+              }}
+            />
           </div>
-        )}
-      </div>
+        }
 
-      {rich ? <>
-        <Editor
-          content={current.t.value}
-          onChange={value => updateDraft(locale, { t: { ...current.t, value } })}
-          className="mt-4"
-          multiline={!!multiline}
-        />
-      </> : <>
-        <TextareaAutosize
-          autoFocus
-          value={current.t.value}
-          onChange={({ currentTarget: { value } }) => {
-            updateDraft(locale, {
-              t: { ...current.t, value: multiline ? value : value.replace(NL, '') }
-            })
-          }}
-          onKeyPress={e => {
-            if (e.key === 'Enter' && (e.altKey)) {
-              save()
+        <div className="mt-3 flex justify-end">
+          <Button
+            title={
+              dirty ? "Discard" :
+              update.data ? "Done" :
+              "Close"
             }
-            if (e.key === 'Enter' && !multiline) {
-              e.preventDefault()
-            }
-          }}
-          className={`mt-3 block w-full text-sm sm:text-base ${textInputClass()}`}
-          style={{ maxHeight: '50vh' }}
-        />
-      </>}
-
-      <div className="mt-3 flex justify-end">
-        <Button
-          title={
-            dirty ? "Discard" :
-            update.data ? "Done" :
-            "Close"
-          }
-          color="secondary"
-          onClick={() => {
-            if (dirty && !confirm(`Are you sure? You have unsaved changes.`)) {
-              return
-            }
-            onClose()
-          }}
-          disabled={update.isLoading}
-        />
-        <Button
-          title="Save"
-          color="primary"
-          className="ml-3"
-          onClick={save}
-          disabled={!dirty}
-        />
+            color="secondary"
+            onClick={() => {
+              if (dirty && !confirm(`Are you sure? You have unsaved changes.`)) {
+                return
+              }
+              onClose()
+            }}
+            disabled={update.isLoading}
+          />
+          <Button
+            title="Save"
+            color="primary"
+            className="ml-3"
+            onClick={save}
+            disabled={!dirty}
+          />
+        </div>
       </div>
-    </div>
-  ))
+    )
+  })
 }
 
 const NL = /[\n\r]/g

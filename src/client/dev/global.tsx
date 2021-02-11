@@ -10,10 +10,10 @@ export const Lancer = {
     if (e.altKey){
       e.preventDefault()
       const d = (e.currentTarget as any).dataset
-      Lancer.editTranslation(d.tName, d.tLocale, { multiline: 'tMultiline' in d, rich: 'tRich' in d })
+      Lancer.editTranslation(d.tName, d.tLocale, { link: 'tLink' in d, multiline: 'tMultiline' in d, rich: 'tRich' in d })
     }
   },
-  editTranslation(name: string, locale: string, opts: { multiline: boolean, rich: boolean }) {
+  editTranslation(name: string, locale: string, opts: { link: boolean, multiline: boolean, rich: boolean }) {
     emitter.emit('navigate', (nav: AnimatedNav) =>
       <EditTranslation name={name} locale={locale} onClose={() => nav.close()} {...opts} />
     )

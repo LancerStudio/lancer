@@ -17,6 +17,8 @@ type TranslationObj = _<Assign<TranslationRow, {
 type TranslationMeta = {
   rich?: boolean
   multiline?: boolean
+  /** If true, value is stored as HREF + LINK_DELIMINATOR + TEXT */
+  link?: boolean
 }
 
 export class TranslationModel {
