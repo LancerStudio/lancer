@@ -14,6 +14,8 @@ export const validScriptBundles: Record<string, boolean> = {}
 
 export function render(ctx: PostHtmlCtx) {
   const locals = {
+    currentUser: ctx.user,
+
     site: ctx.site,
 
     page: {

@@ -6,13 +6,14 @@ import { db, User } from '../models'
 import { DB } from './db'
 import { env, sessionSecret } from '../config'
 import routes from '../../shared/routes'
+import { UserRow } from '../models/user'
 
 type Session = Record<string, any>
 
 declare global {
   namespace Express {
     interface Request {
-      user: ReturnType<typeof User.get>
+      user: UserRow | null
     }
   }
 }

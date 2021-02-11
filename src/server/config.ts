@@ -3,6 +3,7 @@ import { existsSync, mkdirSync } from 'fs'
 
 import { read, Env } from './lib/config'
 import { requireLatest } from './lib/fs'
+import { UserRow } from './models/user'
 
 export const env = Env(['test', 'development', 'production'])
 
@@ -37,7 +38,10 @@ export const staticDir = read('LANCER_STATIC_DIR', joinp(clientDir, '/public'))
 export const previewsDir = joinp(cacheDir, '/previews')
 
 export type PostHtmlCtx = {
+  /** Config from the site's site.config.js file */
   site: SiteConfig
+  /** The signed in user */
+  user: UserRow | null
   /** Simple object for caching within the request. */
   cache: Record<string, any>
   /** The locale calculated from the request */

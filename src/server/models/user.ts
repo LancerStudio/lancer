@@ -4,7 +4,7 @@ import argon2 from 'argon2'
 const table = 'lancer_users'
 const auth_table = 'lancer_auth_connection'
 
-type UserRow = {
+export type UserRow = {
   id: number
   name: string
   password_temporary: 0 | 1

@@ -68,6 +68,7 @@ router.get('/*', ensureLocale(), checkTempPassword(), async (req, res) => {
     const site = siteConfig()
     const result = await render({
       site,
+      user: req.user,
       cache: {},
       locale: req.locale!,
       reqPath: path,
