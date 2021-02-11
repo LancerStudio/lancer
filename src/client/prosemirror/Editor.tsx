@@ -47,6 +47,8 @@ export function Editor(options: Options) {
     const content = doc.toJSON()
     const temp = document.createElement('div')
     let contentNode = Node.fromJSON(schemaLongform, content)
+    // Types don't seem to be correct
+    // @ts-ignore
     DOMSerializer.fromSchema(schemaLongform).serializeFragment(contentNode.content, {}, temp)
     setLastContent(temp.innerHTML)
     options.onChange(temp.innerHTML)

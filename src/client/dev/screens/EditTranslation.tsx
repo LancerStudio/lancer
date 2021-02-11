@@ -40,6 +40,9 @@ export function EditTranslation({ name, locale: initialLocale, link, rich, multi
   const [locale, setLocale] = useState(initialLocale)
   const [loadingLocale, loadLocale] = useState(initialLocale)
   const [drafts, setDraft, updateDraft] = useKeyValueState<Draft>()
+
+  // TODO
+  // @ts-ignore
   const [conflicts, setConflict] = useKeyValueState<Conflict>()
 
   const { quickToast } = useToasts()
@@ -201,6 +204,8 @@ export function EditTranslation({ name, locale: initialLocale, link, rich, multi
             multiline={!!multiline}
           />
         </> : <>
+          {/* Not sure why react's types are wrong */}
+          {/* @ts-ignore */}
           <TextareaAutosize
             autoFocus
             value={content}

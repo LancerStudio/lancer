@@ -62,6 +62,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     },
   }
 
+  // Not sure why react's types are wrong
+  // @ts-ignore
   return <ToastContext.Provider value={context}>
     {children}
   </ToastContext.Provider>
