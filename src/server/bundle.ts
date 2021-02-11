@@ -1,6 +1,4 @@
 import path from 'path'
-import cloneDeep from 'lodash/cloneDeep'
-import set from 'lodash/set'
 import { existsSync, promises as fs, statSync } from 'fs'
 
 import { sourceDir } from './config'
