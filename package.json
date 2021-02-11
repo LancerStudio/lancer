@@ -1,6 +1,6 @@
 {
   "name": "freelance",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A radically simple framework for building client websites.",
   "main": "index.js",
   "repository": {
@@ -8,9 +8,9 @@
     "url": "https://github.com/gilbert/freelance"
   },
   "scripts": {
-    "build": "tsc && npm build-styles",
+    "build": "tsc && npm run build-styles",
     "build-styles": "node dist/client/build.js",
-    "prepublishOnly": "npm build",
+    "prepublishOnly": "npm run build",
     "test": "ospec",
     "test-watch": "nodemon -w dist/server -w tests --exec ospec"
   },
