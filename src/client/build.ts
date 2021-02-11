@@ -19,6 +19,7 @@ const pluginsScoped = plugins.concat([
 
 
 async function build() {
+  console.log(`Building Lancer CSS (${process.env.NODE_ENV || 'development'})`)
   const file = path.join(srcDir, 'client/dev/styles/index.css')
   const css = await fs.readFile(file, 'utf8')
   const result = await postcss(plugins).process(css, {

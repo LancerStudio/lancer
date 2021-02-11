@@ -10,7 +10,7 @@
   "scripts": {
     "build": "tsc && npm run build-styles",
     "build-styles": "node dist/client/build.js",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "NODE_ENV=production npm run build",
     "test": "ospec",
     "test-watch": "nodemon -w dist/server -w tests --exec ospec"
   },
@@ -28,8 +28,6 @@
   "dependencies": {
     "@tailwindcss/forms": "^0.2.1",
     "@tailwindcss/typography": "^0.4.0",
-    "@types/react": "^17.0.0",
-    "@types/react-dom": "^17.0.0",
     "argon2": "^0.27.1",
     "autoprefixer": "^10.2.3",
     "axios": "^0.21.1",
@@ -90,6 +88,8 @@
     "@types/prosemirror-menu": "^1.0.3",
     "@types/prosemirror-schema-list": "^1.0.2",
     "@types/prosemirror-state": "^1.2.6",
+    "@types/react": "^17.0.0",
+    "@types/react-dom": "^17.0.0",
     "@types/sharp": "^0.27.1",
     "nodemon": "^2.0.7",
     "ospec": "^4.1.1",
