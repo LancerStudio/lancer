@@ -1,7 +1,7 @@
 import { RequestHandler } from "express"
 import { LINK_DELIMINATOR } from "../shared/constants"
 import { shouldPrefixMailto } from "../shared/logic"
-import { env, PostHtmlCtx, siteConfig } from "./config"
+import { PostHtmlCtx, siteConfig } from "./config"
 import { memoizeUnary } from "./lib/util"
 import { TranslationModel } from "./models/translation"
 
@@ -22,7 +22,7 @@ type PostHtmlOptions = {
   ctx: PostHtmlCtx
   Translation: TranslationModel
 }
-export function posthtmlPlugin({ Translation, ctx: { site, reqPath, locale } }: PostHtmlOptions) {
+export function posthtmlPlugin({ Translation, ctx: { user, site, reqPath, locale } }: PostHtmlOptions) {
   return function interpolateI18n(tree: any) {
     if (!locale) throw new Error('i18n_no_locale_set')
 
@@ -40,7 +40,7 @@ export function posthtmlPlugin({ Translation, ctx: { site, reqPath, locale } }: 
       const t = Translation.get(name, locale, { fallback: site.locales[0] })
 
       node.content = tree.parser(t?.value || `<u style="cursor: pointer">${name}</u>`)
-      if (env.development) {
+      if (user) {
         node.attrs.onclick = `Lancer.onTranslationClick(event)`
         node.attrs['data-t-name'] = name
         node.attrs['data-t-locale'] = locale
@@ -77,7 +77,7 @@ export function posthtmlPlugin({ Translation, ctx: { site, reqPath, locale } }: 
 
       delete node.attrs.t
 
-      if (env.development) {
+      if (user) {
         node.attrs.onclick = `Lancer.onTranslationClick(event)`
         node.attrs['data-t-name'] = name
         node.attrs['data-t-locale'] = locale
