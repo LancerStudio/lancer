@@ -1,4 +1,4 @@
-import { Router, RequestHandler } from 'express'
+import { Router, RequestHandler, Request, Response } from 'express'
 import expressSession, { Store } from 'express-session'
 import events, { EventEmitter } from 'events'
 
@@ -62,16 +62,22 @@ export function requireUser(opts: { redirectIfNot?: boolean } = {}): RequestHand
   }
 }
 
-export function checkTempPassword(): RequestHandler {
+export function checkTempPasswordMiddleware(): RequestHandler {
   return (req, res, next) => {
-    if (req.user?.password_temporary && !routes.pages.setPassword.match(req.path)) {
-      req.session.returnTo = req.path
-      res.redirect(routes.pages.setPassword.link())
+    if (guardTempPassword(req, res)) {
+      return
     }
-    else {
-      next()
-    }
+    next()
   }
+}
+
+export function guardTempPassword(req: Request, res: Response) {
+  if (req.user?.password_temporary && !routes.pages.setPassword.match(req.path)) {
+    req.session.returnTo = req.path
+    res.redirect(routes.pages.setPassword.link())
+    return true
+  }
+  return false
 }
 
 const ONE_DAY = 86400000

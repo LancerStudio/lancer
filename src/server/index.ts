@@ -6,7 +6,7 @@ import * as Bundle from './bundle'
 import { staticDir, siteConfig, env, filesDir, sourceDir } from './config'
 import { resolveFile } from './files'
 import { render, resolveAsset, validScriptBundles, validStyleBundles } from './render'
-import { checkTempPassword, mountSession } from './lib/session'
+import { guardTempPassword, mountSession } from './lib/session'
 import { ensureLocale } from './i18n'
 
 require('express-async-errors')
@@ -22,7 +22,8 @@ router.use( require('body-parser').json() )
 
 Dev.mount(router)
 
-router.get('/*', ensureLocale(), checkTempPassword(), async (req, res) => {
+
+router.get('/*', ensureLocale(), async (req, res) => {
   const path = req.locale ? req.path.replace(`/${req.locale}`, '') : req.path
 
   try {
@@ -61,6 +62,13 @@ router.get('/*', ensureLocale(), checkTempPassword(), async (req, res) => {
     }
   }
   else if ( filename.match(/\.html$/) && existsSync(filename) ) {
+    //
+    // Only check temp passwords here
+    // to avoid catching requests like favicon.io
+    //
+    if (guardTempPassword(req, res)) {
+      return
+    }
     console.log('         -->', filename.replace(sourceDir+'/', ''))
     const html = await fs.readFile(filename, 'utf8')
     // const frontMatter = fm(html)
