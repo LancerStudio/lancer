@@ -1,4 +1,3 @@
-// import glob from 'glob'
 import path from 'path'
 import startCase from 'lodash/startCase'
 import express, { Router } from "express"
@@ -10,11 +9,14 @@ import routes from '../../shared/routes'
 import { requireUser, checkTempPasswordMiddleware } from '../lib/session'
 import { last } from '../../client/dev/lib/util'
 import { ProcAuthError } from './errors'
+import { mountDevFiles } from './files'
 
 
 export function mount(router: Router) {
 
   router.use('/lancer', express.static(path.join(__dirname, '../../../public')) )
+
+  mountDevFiles(router, filesDir)
 
   router.get('/lancer.js', async (req, res) => {
     if (!req.user) {

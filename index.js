@@ -3,7 +3,7 @@ const fs = require('fs')
 const path = require('path')
 const program = require('commander')
 const port = process.env.PORT || 8080
-const { question } = require('readline')
+const { pushFiles } = require('./dist/cli/files')
 
 program
   .version(require('./package.json').version)
@@ -64,6 +64,15 @@ program
   })
 
 //
+// Build (for production)
+//
+program
+  .command('build')
+  .action(function () {
+    console.log("TODO")
+  })
+
+//
 // User Management
 //
 program
@@ -91,6 +100,18 @@ program
 
 const alpha = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ123456789'
 const capitalize = (s) => s[0].toUpperCase() + s.slice(1)
+
+//
+// Data management
+//
+program
+  .command('files:push <host>')
+  .option('-d <dir>', 'The files directory to upload')
+  .action(async (host, options) => {
+    console.log("Pushing data/files to", host, '...')
+    await pushFiles(host, { inputDir: options.d })
+    console.log('Done.')
+  })
 
 //
 // Utility
