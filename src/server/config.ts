@@ -32,7 +32,7 @@ if (!existsSync(dataDir)) {
 
 
 export const cacheDir = read('LANCER_CACHE_DIR', joinp(dataDir, '/cache'))
-export const buildDir = joinp(cacheDir, '/build')
+export const buildDir = read('LANCER_BUILD_DIR', joinp(cacheDir, '/build'))
 export const filesDir = joinp(dataDir, '/files')
 export const clientDir = joinp(sourceDir, '/client')
 export const staticDir = read('LANCER_STATIC_DIR', joinp(clientDir, '/public'))
