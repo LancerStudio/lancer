@@ -31,11 +31,11 @@ if (!existsSync(dataDir)) {
 }
 
 
-export const cacheDir = read('LANCER_CACHE_DIR', joinp(dataDir, '/cache'))
-export const buildDir = read('LANCER_BUILD_DIR', joinp(cacheDir, '/build'))
+export const cacheDir = handleRelative( read('LANCER_CACHE_DIR', joinp(dataDir, '/cache')) )
+export const buildDir = handleRelative( read('LANCER_BUILD_DIR', joinp(cacheDir, '/build')) )
 export const filesDir = joinp(dataDir, '/files')
 export const clientDir = joinp(sourceDir, '/client')
-export const staticDir = read('LANCER_STATIC_DIR', joinp(clientDir, '/public'))
+export const staticDir = handleRelative( read('LANCER_STATIC_DIR', joinp(clientDir, '/public')) )
 export const previewsDir = joinp(cacheDir, '/previews')
 
 export type PostHtmlCtx = {
@@ -80,4 +80,8 @@ function joinp(dir1: string, dir2: string) {
     mkdirSync(dir)
   }
   return dir
+}
+
+function handleRelative(path: string) {
+  return path[0] !== '/' ? joinp(sourceDir, path) : path
 }
