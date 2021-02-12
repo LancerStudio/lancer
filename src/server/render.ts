@@ -94,6 +94,8 @@ export function renderPostHtmlPlugins(ctx: PostHtmlCtx, opts: {
       scopeTags: ['context'],
       locals,
     }),
+
+    ...(opts.postfix || []),
   ]
 }
 
