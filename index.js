@@ -68,7 +68,9 @@ program
 program
   .command('build')
   .action(function () {
+    process.env.NODE_ENV = 'production'
     console.log("Building assets for production...")
+
     const { buildForProduction } = require('./dist/server/build')
     buildForProduction().then(
       () => {
