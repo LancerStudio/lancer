@@ -45,7 +45,7 @@ router.get('/*', ensureLocale(), async (req, res) => {
   }
   else if ( validStyleBundles[filename] ) {
     console.log('         -->', filename.replace(sourceDir+'/', ''), '(bundle)')
-    const result = await Bundle.bundleStyle(filename)
+    const result = await Bundle.bundleStyle(sourceDir, filename)
     res.set({ 'Content-Type': 'text/css' })
     res.send(result === null ? '!error' : result)
   }

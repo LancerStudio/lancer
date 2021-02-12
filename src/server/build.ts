@@ -3,7 +3,7 @@ import glob from 'glob'
 import path from 'path'
 
 import { bundleScript, bundleStyle, posthtmlPlugin } from './bundle'
-import { clientDir, siteConfig, buildDir } from './config'
+import { clientDir, siteConfig, buildDir, sourceDir } from './config'
 import { renderPostHtmlPlugins, resolveAsset } from './render'
 
 
@@ -59,7 +59,7 @@ export async function buildForProduction() {
 
     await Promise.all([
       Promise.all(styles.map(async publicPath => {
-        const css = await bundleStyle(path.join(clientDir, publicPath))
+        const css = await bundleStyle(sourceDir, path.join(clientDir, publicPath))
         if (!css) {
           throw new Error(`Failed to compile ${publicPath}`)
         }

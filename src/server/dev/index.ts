@@ -15,34 +15,13 @@ import { mountDevFiles } from './files'
 export function mount(router: Router) {
 
   router.use('/lancer', express.static(path.join(__dirname, '../../../public')) )
+  router.use(express.static(path.join(__dirname, '../../../dist/build')) )
+
+  if (!env.production) {
+    mountLocalDevRoutes(router)
+  }
 
   mountDevFiles(router, filesDir)
-
-  router.get('/lancer.js', async (req, res) => {
-    if (!req.user) {
-      res.send('//'); return
-    }
-    const result = await Bundle.bundleScript(path.join(__dirname, '../../client/dev'))
-    res.set({ 'Content-Type': 'application/javascript' })
-    res.send(result)
-  })
-
-  router.get('/lancer/:page.js', async (req, res) => {
-    const route = routes.pages.children.find(r => r.match(req.path.replace(/.js$/, '')))
-    if (!route || !req.user && route !== routes.pages.signIn) {
-      res.sendStatus(404); return
-    }
-
-    const pageName = last(route.link().split('/'))!
-
-    const result = await Bundle.bundleScript(path.join(__dirname, `../../client/pages/${pageName}/index`))
-    res.set({ 'Content-Type': 'application/javascript' })
-    res.send(result)
-  })
-
-  router.get('/lancer.css', async (req, res) => {
-    res.sendFile( path.join(__dirname, `../../client/dev/${ req.query.unscoped ? 'style' : 'style-scoped' }.css`) )
-  })
 
   router.post('/lancer/rpc/:method', async (req, res) => {
     const procs: any = await import('./procs')
@@ -91,7 +70,7 @@ export function mount(router: Router) {
     res.set({ 'Content-Type': 'text/html' })
     res.send(`<!DOCTYPE html>
       <title>${startCase(pageName)} | Lancer | ${site.name}</title>
-      <link rel="stylesheet" href="/lancer.css?unscoped=1">
+      <link rel="stylesheet" href="/lancer.css">
       <div class="bg-gray-200" id="app"></div>
       <script src="/lancer/${pageName}.js"></script>
     `)
@@ -104,4 +83,25 @@ export function handle404(path: string) {
     missingFiles[p] = missingFiles[p] || 0
     missingFiles[p] += 1
   }
+}
+
+function mountLocalDevRoutes(router: Router) {
+  router.get('/lancer.js', async (_req, res) => {
+    const result = await Bundle.bundleScript(path.join(__dirname, '../../client/dev'))
+    res.set({ 'Content-Type': 'application/javascript' })
+    res.send(result)
+  })
+
+  router.get('/lancer/:page.js', async (req, res) => {
+    const route = routes.pages.children.find(r => r.match(req.path.replace(/.js$/, '')))
+    if (!route || !req.user && route !== routes.pages.signIn) {
+      res.sendStatus(404); return
+    }
+
+    const pageName = last(route.link().split('/'))!
+
+    const result = await Bundle.bundleScript(path.join(__dirname, `../../client/pages/${pageName}/index`))
+    res.set({ 'Content-Type': 'application/javascript' })
+    res.send(result)
+  })
 }

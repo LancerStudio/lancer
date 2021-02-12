@@ -98,15 +98,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.body.appendChild(mountPoint)
   render(<DevApp />, mountPoint)
   checkDevStatus()
-
-  // Inject our css file into the page
-  const link = document.createElement("link")
-
-  link.type = 'text/css'
-  link.rel = 'stylesheet'
-  link.href = '/lancer.css'
-
-  document.head.appendChild(link)
 }, false)
 
 let delay = 1000

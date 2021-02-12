@@ -88,18 +88,32 @@ export function posthtmlPlugin({ Translation, ctx: { user, site, reqPath, locale
       return node
     })
 
+    let lancerHead = user ? [
+      //
+      // Defer loading lancer css
+      // https://web.dev/defer-non-critical-css/
+      //
+      `<link rel="preload" href="/lancer-scoped.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+      <noscript><link rel="stylesheet" href="/lancer-scoped.css"></noscript>`,
+
+      //
+      // Defer loading lancer js
+      //
+      `<script defer src="/lancer.js"></script>`,
+    ] : []
+
     if (site.locales.length >= 2) {
-      tree.match(matchHelper('meta[lancer]'), function() {
-        return {
-          tag: false,
-          content: tree.parser(
-            site.locales.filter(loc => loc !== locale).map(loc =>
-              `<link rel="alternate" hreflang="${loc}" href="/${loc}${reqPath}" />`
-            )
-          )
-        }
-      })
+      lancerHead = site.locales.filter(loc => loc !== locale).map(loc =>
+        `<link rel="alternate" hreflang="${loc}" href="/${loc}${reqPath}" />`
+      ).concat(lancerHead)
     }
+
+    tree.match(matchHelper('meta[lancer]'), function() {
+      return {
+        tag: false,
+        content: tree.parser(lancerHead.join('\n'))
+      }
+    })
   }
 }
 
