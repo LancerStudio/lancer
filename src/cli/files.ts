@@ -14,7 +14,6 @@ export async function pushFiles(host: string, opts: { inputDir?: string }) {
     throw new Error(`No such files directory: ${inputDir}`)
   }
   const zipFile = path.join(os.tmpdir(), `lancer-files-${Date.now()}.zip`)
-  console.log("ZIP", zipFile)
   await createArchive(opts.inputDir || filesDir, zipFile)
   await uploadFiles(zipFile, host)
 }
