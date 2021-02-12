@@ -107,7 +107,10 @@ export function posthtmlPlugin({ Translation, ctx: { user, site, reqPath, locale
 export function ensureLocale(): RequestHandler {
   return (req, res, next) => {
     const site = siteConfig()
-    if (site.locales.length === 1) {
+    if (
+      site.locales.length === 1 ||
+      req.path.startsWith('/files/')
+    ) {
       return next()
     }
     const locale = req.path.split('/')[1]
