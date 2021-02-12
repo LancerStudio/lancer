@@ -13,6 +13,28 @@ export const validScriptBundles: Record<string, boolean> = {}
 
 
 export function render(ctx: PostHtmlCtx) {
+  const plugins = renderPostHtmlPlugins(ctx, {
+    prefix: [
+      Bundle.posthtmlPlugin({
+        resolveScript: function (scriptPath: string) {
+          var resolved = resolveAsset(scriptPath)
+          validScriptBundles[resolved] = true
+          return resolved.replace(clientDir, '')
+        },
+        resolveStyle: function (stylePath: string) {
+          var resolved = resolveAsset(stylePath)
+          validStyleBundles[resolved] = true
+          return resolved.replace(clientDir, '')
+        },
+      }),
+    ]
+  })
+  return require('posthtml')(plugins)
+}
+
+export function renderPostHtmlPlugins(ctx: PostHtmlCtx, opts: {
+  prefix: ((tree: any) => void)[]
+}) {
   const locals = {
     currentUser: ctx.user,
 
@@ -21,7 +43,7 @@ export function render(ctx: PostHtmlCtx) {
     page: {
       path: ctx.reqPath,
       locale: ctx.locale,
-      fullPath: `/${ctx.locale}${ctx.reqPath}`,
+      fullPath: path.join('/', ctx.locale, ctx.reqPath),
     },
 
     pathFor(locale: string, path?: string) {
@@ -59,20 +81,9 @@ export function render(ctx: PostHtmlCtx) {
       }
     },
   }
-  return require('posthtml')([
-    Bundle.posthtmlPlugin({
-      resolveScript: function (scriptPath: string) {
-        var resolved = resolveAsset(scriptPath)
-        validScriptBundles[resolved] = true
-        return resolved.replace(clientDir, '')
-      },
-      resolveStyle: function (stylePath: string) {
-        var resolved = resolveAsset(stylePath)
-        validStyleBundles[resolved] = true
-        return resolved.replace(clientDir, '')
-      },
-    }),
 
+  return [
+    ...opts.prefix,
     IncludePlugin({ root: clientDir, encoding: 'utf8' }),
 
     require('posthtml-expressions')({
@@ -81,7 +92,7 @@ export function render(ctx: PostHtmlCtx) {
     }),
 
     i18n.posthtmlPlugin({ Translation, ctx }),
-  ])
+  ]
 }
 
 export function resolveAsset (assetPath: string) {

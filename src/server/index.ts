@@ -3,7 +3,7 @@ import express from 'express'
 
 import * as Dev from './dev'
 import * as Bundle from './bundle'
-import { staticDir, siteConfig, env, filesDir, sourceDir } from './config'
+import { staticDir, siteConfig, env, filesDir, sourceDir, buildDir } from './config'
 import { resolveFile } from './files'
 import { render, resolveAsset, validScriptBundles, validStyleBundles } from './render'
 import { guardTempPassword, mountSession } from './lib/session'
@@ -17,6 +17,7 @@ export default router
 
 
 router.use( express.static(staticDir) )
+router.use( express.static(buildDir) )
 mountSession(router)
 router.use( require('body-parser').json() )
 

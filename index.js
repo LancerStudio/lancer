@@ -3,7 +3,6 @@ const fs = require('fs')
 const path = require('path')
 const program = require('commander')
 const port = process.env.PORT || 8080
-const { pushFiles } = require('./dist/cli/files')
 
 program
   .version(require('./package.json').version)
@@ -69,7 +68,17 @@ program
 program
   .command('build')
   .action(function () {
-    console.log("TODO")
+    console.log("Building assets for production...")
+    const { buildForProduction } = require('./dist/server/build')
+    buildForProduction().then(
+      () => {
+        console.log("Done.")
+      },
+      err => {
+        console.error(err)
+        process.exit(1)
+      }
+    )
   })
 
 //
@@ -109,6 +118,7 @@ program
   .option('-d <dir>', 'The files directory to upload')
   .action(async (host, options) => {
     console.log("Pushing data/files to", host, '...')
+    const { pushFiles } = require('./dist/cli/files')
     await pushFiles(host, { inputDir: options.d })
     console.log('Done.')
   })

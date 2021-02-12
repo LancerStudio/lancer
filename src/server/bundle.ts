@@ -35,7 +35,7 @@ export function posthtmlPlugin(options: PostHtmlOptions) {
 //
 var browserify = require('browserify')
 
-export function bundleScript(file: string) {
+export function bundleScript(file: string): Promise<string> {
   return new Promise(function (resolve, reject) {
     browserify(file).bundle(function (err: any, src: any) {
       if (err) return reject(err)
