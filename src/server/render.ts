@@ -6,13 +6,13 @@ import * as Bundle from './bundle'
 import * as i18n from './i18n'
 import IncludePlugin from './posthtml-plugins/include'
 import { clientDir, filesDir, PostHtmlCtx } from "./config"
-import { Translation } from './models'
 
 export const validStyleBundles: Record<string, boolean> = {}
 export const validScriptBundles: Record<string, boolean> = {}
 
 
 export function render(ctx: PostHtmlCtx) {
+  const { Translation } = require('./models')
   const plugins = renderPostHtmlPlugins(ctx, {
     prefix: [
       Bundle.posthtmlPlugin({
@@ -27,13 +27,17 @@ export function render(ctx: PostHtmlCtx) {
           return resolved.replace(clientDir, '')
         },
       }),
+    ],
+    postfix: [
+      i18n.posthtmlPlugin({ Translation, ctx }),
     ]
   })
   return require('posthtml')(plugins)
 }
 
 export function renderPostHtmlPlugins(ctx: PostHtmlCtx, opts: {
-  prefix: ((tree: any) => void)[]
+  prefix: ((tree: any) => void)[],
+  postfix?: ((tree: any) => void)[],
 }) {
   const locals = {
     currentUser: ctx.user,
@@ -90,8 +94,6 @@ export function renderPostHtmlPlugins(ctx: PostHtmlCtx, opts: {
       scopeTags: ['context'],
       locals,
     }),
-
-    i18n.posthtmlPlugin({ Translation, ctx }),
   ]
 }
 

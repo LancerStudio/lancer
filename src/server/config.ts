@@ -7,7 +7,9 @@ import { UserRow } from './models/user'
 
 export const env = Env(['test', 'development', 'production'])
 
-export const sessionSecret = env.branch(() => 'TEMP KEY', {
+const building = !!process.env.LANCER_BUILD
+
+export const sessionSecret = building ? '' : env.branch(() => 'TEMP KEY', {
   production: () => read('SESSION_SECRET')
 })
 
@@ -22,14 +24,16 @@ if (!existsSync(sourceDir)) {
 
 export const dataDir = read('LANCER_DATA_DIR', path.join(sourceDir, '/data'))
 if (!existsSync(dataDir)) {
-  if (process.env.LANCER_INIT_DATA_DIR || env.production) {
+  if (building) {
+    // Nothing to do. During `lancer build` we assume we only have access to the build folder.
+  }
+  else if (process.env.LANCER_INIT_DATA_DIR || env.production) {
     mkdirSync(dataDir, { recursive: true })
   }
   else {
     throw new Error(`Data directory does not exist: '${dataDir}'\n  Run \`lancer init data\` to create.`)
   }
 }
-
 
 export const cacheDir = handleRelative( read('LANCER_CACHE_DIR', joinp(dataDir, '/cache')) )
 export const buildDir = handleRelative( read('LANCER_BUILD_DIR', joinp(cacheDir, '/build')) )
@@ -76,7 +80,7 @@ export const siteConfig: () => SiteConfig = () => {
 
 function joinp(dir1: string, dir2: string) {
   const dir = path.join(dir1, dir2)
-  if (!existsSync(dir)) {
+  if (!existsSync(dir) && !building) {
     mkdirSync(dir)
   }
   return dir

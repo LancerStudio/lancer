@@ -8,6 +8,8 @@ import { renderPostHtmlPlugins, resolveAsset } from './render'
 
 
 export async function buildForProduction() {
+  console.log("Build dir:", buildDir)
+
   const site = siteConfig()
   const styles = [] as string[]
   const scripts = [] as string[]
