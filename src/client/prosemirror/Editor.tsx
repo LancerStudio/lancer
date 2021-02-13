@@ -13,21 +13,23 @@ type Options = {
   multiline: boolean
   submitButton?: boolean
 }
-export function Editor(options: Options) {
+export function Editor(props: Options) {
   const viewRef = useRef<EditorView<any>>(null)
   const editorRef = useRef<HTMLDivElement>(null)
-  const [lastContent, setLastContent] = useState(options.content)
+  const onChangeRef = useRef(props.onChange)
+  const [lastContent, setLastContent] = useState(props.content)
 
   useEffect(() => {
-    if (options.content !== lastContent) {
-      viewRef.current?.updateState(createState(options.content))
-      setLastContent(options.content)
+    if (props.content !== lastContent) {
+      console.log("UPDATE FROM OUTSIDE", props.content)
+      viewRef.current?.updateState(createState(props.content))
+      setLastContent(props.content)
     }
-  }, [options.content])
+  }, [props.content])
 
-  // window.e = editorElem
-  // const inputElem = editorElem.previousElementSibling
-
+  useEffect(() => {
+    onChangeRef.current = props.onChange
+  }, [props.onChange])
 
 
   function createState(content: string) {
@@ -37,8 +39,8 @@ export function Editor(options: Options) {
       doc: DOMParser.fromSchema(schemaLongform).parse(temp),
       plugins: setup({
         schema: schemaLongform,
-        multiline: options.multiline,
-        submitButton: !!options.submitButton,
+        multiline: props.multiline,
+        submitButton: !!props.submitButton,
       })
     })
   }
@@ -51,7 +53,7 @@ export function Editor(options: Options) {
     // @ts-ignore
     DOMSerializer.fromSchema(schemaLongform).serializeFragment(contentNode.content, {}, temp)
     setLastContent(temp.innerHTML)
-    options.onChange(temp.innerHTML)
+    onChangeRef.current(temp.innerHTML)
   }, 230)
 
   useEffect(() => {
@@ -63,7 +65,7 @@ export function Editor(options: Options) {
           // TODO: For some reason you can still delete one character when disabled
           return editorElem.dataset.disabled !== 'true'
         },
-        state: createState(options.content),
+        state: createState(props.content),
         dispatchTransaction(tx) {
           if (!viewRef.current) return
           const { state } = viewRef.current.state.applyTransaction(tx)
@@ -83,5 +85,5 @@ export function Editor(options: Options) {
     }
   }, [])
 
-  return <div ref={editorRef} className={options.className}></div>
+  return <div ref={editorRef} className={props.className}></div>
 }
