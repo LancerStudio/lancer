@@ -70,6 +70,7 @@ export function mount(router: Router) {
     res.set({ 'Content-Type': 'text/html' })
     res.send(`<!DOCTYPE html>
       <title>${startCase(pageName)} | Lancer | ${site.name}</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
       <link rel="stylesheet" href="/lancer.css">
       <div class="bg-gray-200" id="app"></div>
       <script src="/lancer/${pageName}.js"></script>
