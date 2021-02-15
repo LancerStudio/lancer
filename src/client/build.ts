@@ -8,17 +8,24 @@ const srcDir = path.join(__dirname, '../../src')
 const distDir = path.join(__dirname, '../../dist')
 const buildDir = path.join(distDir, 'build')
 
-const plugins = [
+const common = [
   require("postcss-import")(),
   require('tailwindcss')( path.join(srcDir, 'client/tailwind.config.js') ),
 ]
 
-const pluginsScoped = plugins.concat([
+const plugins = [
+  ...common,
+  require('autoprefixer')(),
+]
+
+const pluginsScoped = [
+  ...common,
   require('postcss-prefix-selector')({
     prefix: '.Lancer',
     exclude: [/data-t-/]
-  })
-])
+  }),
+  require('autoprefixer')(),
+]
 
 
 async function build() {
@@ -33,6 +40,7 @@ async function build() {
   console.log(`Building Lancer ${scope} (${process.env.NODE_ENV || 'development'})`)
 
   if (scope === 'css' || scope === 'assets') {
+    console.log('  > lancer.css ...')
     const file = path.join(srcDir, 'client/dev/styles/index.css')
     const css = await fs.readFile(file, 'utf8')
     const result = await postcss(plugins).process(css, {
@@ -42,6 +50,7 @@ async function build() {
     })
     await fs.writeFile(path.join(buildDir, 'lancer.css'), result.css)
 
+    console.log('  > lancer-scoped.css ...')
     const scoped = await postcss(pluginsScoped).process(css, {
       from: file,
       to: file,

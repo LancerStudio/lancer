@@ -9,7 +9,8 @@
   },
   "scripts": {
     "build": "tsc && npm run build-assets",
-    "build-styles": "node dist/client/build.js styles",
+    "build-js": "node dist/client/build.js js",
+    "build-css": "node dist/client/build.js css",
     "build-assets": "node dist/client/build.js assets",
     "prepublishOnly": "NODE_ENV=production npm run build",
     "test": "ospec",
