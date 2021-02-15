@@ -52,6 +52,7 @@ export function SignIn() {
                 <input
                   id="email"
                   name="email"
+                  type="email"
                   autoComplete="email"
                   required
                   className={`rounded-none rounded-t-md ${textInputClass({ noRounded: true, noBorder: true })}`}
