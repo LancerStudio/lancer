@@ -97,7 +97,7 @@ export class SQLiteStore extends Store {
     this.client = new events.EventEmitter()
 
     this.client.emit('connect')
-    setInterval(this._dbCleanup, ONE_DAY, this).unref()
+    setInterval(() => this._dbCleanup, ONE_DAY, this).unref()
   }
 
   get = wrapForNode((sid: string) => {
