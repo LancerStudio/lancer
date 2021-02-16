@@ -223,7 +223,7 @@ export function EditTranslation({ name, locale: initialLocale, link, rich, multi
                 e.preventDefault()
               }
             }}
-            className={`mt-3 block w-full text-sm sm:text-base ${textInputClass()}`}
+            className={`mt-3 block w-full ${textInputClass()}`}
             style={{ maxHeight: '50vh' }}
           />
         </>}

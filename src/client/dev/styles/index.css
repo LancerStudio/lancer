@@ -12,6 +12,10 @@
   cursor: pointer;
 }
 
+.Lancer__select-none {
+  @apply select-none;
+}
+
 .Spinner {
   width: 40px;
   height: 40px;

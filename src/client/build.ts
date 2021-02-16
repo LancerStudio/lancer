@@ -22,7 +22,7 @@ const pluginsScoped = [
   ...common,
   require('postcss-prefix-selector')({
     prefix: '.Lancer',
-    exclude: [/data-t-/]
+    exclude: [/data-t-/, /^.Lancer/]
   }),
   require('autoprefixer')(),
 ]
