@@ -1,18 +1,11 @@
 import { existsSync, statSync } from "fs"
-import { Request } from 'express'
 
-import {z, rpc} from './rpc'
-import { filesDir, siteConfig } from "../config"
-import { missingFiles } from "./state"
-import { Translation, User } from "../models"
-import { ProcAuthError } from "./errors"
+import {z, rpc, bad, ok, allowAnonymous, RpcContext} from '../rpc'
+import { filesDir, siteConfig } from "../../config"
+import { missingFiles } from "../state"
+import { Translation, User } from "../../models"
 
-const ok = <T>(data: T) => ({ type: 'success', data } as const)
-const bad = <C extends string, D>(code: C, data: D) => ({ type: 'error', code, data } as const)
-
-type RpcContext = {
-  req: Request
-}
+export * from './onboarding'
 
 export const getDevStatus = rpc(
   z.object({}),
@@ -113,14 +106,14 @@ export const signIn = rpc(
     return ok(null)
   }
 )
+allowAnonymous(signIn)
 
 export const updatePassword = rpc(
   z.object({
     currentPassword: z.string().optional(),
     newPassword: z.string(),
   }),
-  async function ({ newPassword }, { req }: RpcContext) {
-    const user = requireUser(req)
+  async function ({ newPassword }, { req, user }: RpcContext) {
     if (!user.password_temporary) {
       // TODO: Check if currentPassword is correct
     }
@@ -128,14 +121,3 @@ export const updatePassword = rpc(
     return ok({ returnTo: req.session.returnTo || '/' })
   }
 )
-
-
-//
-// Helpers
-//
-function requireUser(req: RpcContext['req']) {
-  if (!req.user) {
-    throw new ProcAuthError()
-  }
-  return req.user
-}

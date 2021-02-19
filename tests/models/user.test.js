@@ -1,3 +1,4 @@
+const { SqliteError } = require('better-sqlite3')
 const o = require('ospec')
 const db = require('../../dist/server/lib/db').connect(':memory:')
 const { UserModel } = require('../../dist/server/models/user')
@@ -25,6 +26,29 @@ o.spec('UserModel', () => {
     o( typeof user.updated_at ).equals('number')
 
     o( User.findByEmail('alice@example.com') ).deepEquals(user)
+
+    o( User.allWithPrimaryEmail()[0].email ).equals('alice@example.com')
+    o( User.getWithPrimaryEmail(id).email ).equals('alice@example.com')
+  })
+
+  o('email uniqueness', async () => {
+    const email = 'unique@example.com'
+    await User.create(email, 'abc123', {
+      name: 'Unique',
+      type: 'client',
+    })
+    try {
+      await User.create(email, 'abc123', {
+        name: 'Unique',
+        type: 'client',
+      })
+    }
+    catch(err) {
+      o(err instanceof SqliteError).equals(true)
+      o(err.code).equals('SQLITE_CONSTRAINT_UNIQUE')
+      const rows = db.query(`SELECT name FROM lancer_users WHERE name = ?`, 'Unique')
+      o(rows.length).equals(1)
+    }
   })
 
   o('password', async () => {

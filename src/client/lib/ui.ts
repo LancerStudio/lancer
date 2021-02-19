@@ -15,3 +15,10 @@ export const textInputClass = ({ noBorder, hasError, noRounded }: TextInputProps
     ${noRounded ? '' : 'rounded-md'}
   `
 }
+
+type SelectProps = {
+  noBorder?: boolean
+}
+export const selectClass = ({ noBorder }: SelectProps = {}) => {
+  return `block pl-3 pr-10 py-2 text-base bg-gray-50 ${noBorder ? 'border-transparent' : 'border-gray-300'} focus:outline-none focus:ring-gray-600 focus:border-gray-600 rounded-md`
+}

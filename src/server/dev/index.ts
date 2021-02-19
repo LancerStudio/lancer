@@ -10,12 +10,14 @@ import { requireUser, checkTempPasswordMiddleware } from '../lib/session'
 import { last } from '../../client/dev/lib/util'
 import { ProcAuthError } from './errors'
 import { mountDevFiles } from './files'
-
+import { checkForInitialSetupState, requireSetup } from './setup'
 
 export function mount(router: Router) {
 
   router.use('/lancer', express.static(path.join(__dirname, '../../../public')) )
   router.use(express.static(path.join(__dirname, '../../../dist/build')) )
+
+  router.use(checkForInitialSetupState())
 
   if (!env.production) {
     mountLocalDevRoutes(router)
@@ -26,9 +28,11 @@ export function mount(router: Router) {
   router.post('/lancer/rpc/:method', async (req, res) => {
     const procs: any = await import('./procs')
     const method = procs[req.params.method!]
-    if (!method) {
-      res.status(404).send({})
-      return
+    if (method && !req.user && !method.allowAnonymous && env.development) {
+      res.status(401).send({}); return
+    }
+    if (!method || !req.user && !method.allowAnonymous) {
+      res.status(404).send({}); return
     }
     try {
       const result = await method(req.body, { req })
@@ -55,27 +59,34 @@ export function mount(router: Router) {
     })
   })
 
-  router.get('/lancer/:page', requireUser({ redirectIfNot: true }), checkTempPasswordMiddleware(), (req, res, next) => {
-    const route = routes.pages.children.find(r => r.match(req.path))
-    if (!route) {
-      return next()
-    }
-    else if (route === routes.pages.signIn && req.user) {
-      return res.redirect('/')
-    }
+  router.get('/lancer/:page',
 
-    const site = siteConfig()
-    const pageName = last(route.link().split('/'))!
+    requireSetup(),
+    requireUser({ redirectIfNot: true }),
+    checkTempPasswordMiddleware(),
 
-    res.set({ 'Content-Type': 'text/html' })
-    res.send(`<!DOCTYPE html>
-      <title>${startCase(pageName)} | Lancer | ${site.name}</title>
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <link rel="stylesheet" href="/lancer.css">
-      <div class="bg-gray-200" id="app"></div>
-      <script src="/lancer/${pageName}.js"></script>
-    `)
-  })
+    (req, res, next) => {
+      const route = routes.pages.children.find(r => r.match(req.path))
+      if (!route) {
+        return next()
+      }
+      else if (route === routes.pages.signIn && req.user) {
+        return res.redirect('/')
+      }
+
+      const site = siteConfig()
+      const pageName = last(route.link().split('/'))!
+
+      res.set({ 'Content-Type': 'text/html' })
+      res.send(`<!DOCTYPE html>
+        <title>${startCase(pageName)} | Lancer | ${site.name}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="/lancer.css">
+        <div class="bg-gray-200" id="app"></div>
+        <script src="/lancer/${pageName}.js"></script>
+      `)
+    }
+  )
 }
 
 export function handle404(path: string) {
@@ -95,7 +106,7 @@ function mountLocalDevRoutes(router: Router) {
 
   router.get('/lancer/:page.js', async (req, res) => {
     const route = routes.pages.children.find(r => r.match(req.path.replace(/.js$/, '')))
-    if (!route || !req.user && route !== routes.pages.signIn) {
+    if (!route) {
       res.sendStatus(404); return
     }
 

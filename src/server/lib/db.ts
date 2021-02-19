@@ -150,4 +150,12 @@ const MIGRATIONS = {
 
       CREATE UNIQUE INDEX lancer_auth_values ON lancer_auth_connection (type, value)
     `,
+
+    '1.1.1': `
+      ALTER TABLE lancer_auth_connection RENAME TO lancer_auth_connections;;
+      ALTER TABLE lancer_auth_connections ADD COLUMN is_primary INTEGER NOT NULL DEFAULT 0;;
+
+      -- ATOW users can only have one email address
+      UPDATE lancer_auth_connections SET is_primary = 1
+    `,
 }

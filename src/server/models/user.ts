@@ -1,8 +1,9 @@
-import { DB } from "../lib/db";
 import argon2 from 'argon2'
+import { DB } from "../lib/db";
+import { makeGravatarUrl } from '../lib/util';
 
 const table = 'lancer_users'
-const auth_table = 'lancer_auth_connection'
+const auth_table = 'lancer_auth_connections'
 
 export type UserRow = {
   id: number
@@ -11,13 +12,40 @@ export type UserRow = {
   type: 'client' | 'dev'
 }
 
+export type UserWithPrimaryEmail = UserRow & {
+  email: string
+  gravatar_url: string
+}
+
 export class UserModel {
   constructor(private db: DB) {}
+
+  any() {
+    return !!this.db.get(`SELECT id FROM ${table} LIMIT 1`)
+  }
+
+  allWithPrimaryEmail() {
+    return this.db.query<UserWithPrimaryEmail>(`
+      SELECT ${table}.id, name, value AS email, ${table}.type, password_temporary, ${table}.created_at, ${table}.updated_at
+      FROM ${table}
+      JOIN ${auth_table} ON user_id = ${table}.id
+      WHERE is_primary = 1
+    `).map(attachGravatar)
+  }
 
   get(id: number) {
     return this.db.get<UserRow>(`
       SELECT id, name, type, password_temporary, created_at, updated_at FROM ${table} WHERE id = ?
     `, id)
+  }
+
+  getWithPrimaryEmail(id: number) {
+    const user = this.db.get<UserWithPrimaryEmail>(`
+      SELECT ${table}.id, name, value AS email, ${table}.type, password_temporary, ${table}.created_at, ${table}.updated_at
+      FROM ${table}, ${auth_table}
+      WHERE ${table}.id = ? AND is_primary = 1
+    `, id)
+    return user && attachGravatar(user)
   }
 
   findByEmail(email: string) {
@@ -35,25 +63,30 @@ export class UserModel {
   }) {
     const password_hash = await argon2.hash(password)
     const now = this.db.now()
-    const result = this.db.run(`
-      INSERT INTO ${table} (name, type, password_hash, password_temporary, created_at, updated_at)
-      VALUES (:name, :type, :password_hash, :password_temporary, :created_at, :updated_at)
-    `, {
-      password_temporary: 0,
-      ...attrs,
-      password_hash,
-      created_at: now,
-      updated_at: now,
-    })
-    const user_id = +result.lastInsertRowid
 
-    this.db.run(`
-      INSERT INTO ${auth_table} (user_id, type, value, created_at)
-      VALUES (:user_id, 'email', :email, :created_at)
-    `, {
-      user_id,
-      email,
-      created_at: now,
+    let user_id: number = 0
+
+    this.db.runTransaction(() => {
+      const result = this.db.run(`
+        INSERT INTO ${table} (name, type, password_hash, password_temporary, created_at, updated_at)
+        VALUES (:name, :type, :password_hash, :password_temporary, :created_at, :updated_at)
+      `, {
+        password_temporary: 0,
+        ...attrs,
+        password_hash,
+        created_at: now,
+        updated_at: now,
+      })
+      user_id = +result.lastInsertRowid
+
+      this.db.run(`
+        INSERT INTO ${auth_table} (user_id, type, value, created_at, is_primary)
+        VALUES (:user_id, 'email', :email, :created_at, 1)
+      `, {
+        user_id,
+        email,
+        created_at: now,
+      })
     })
 
     return user_id
@@ -75,4 +108,9 @@ export class UserModel {
       WHERE id = :id
     `, { password_hash, id, updated_at, password_temporary: options.isTemp ? 1 : 0 })
   }
+}
+
+function attachGravatar(user: UserWithPrimaryEmail) {
+  user.gravatar_url = makeGravatarUrl(user.email, { type: 'identicon' })
+  return user
 }

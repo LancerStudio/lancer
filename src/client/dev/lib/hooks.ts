@@ -6,13 +6,13 @@ export function useKeyValueState<Value>(initialState: Record<string, Value> = {}
 
   return [
     state,
-    (key: string, value: Value) => {
+    (key: string | number, value: Value) => {
       setState(state => ({
         ...state,
         [key]: value
       }))
     },
-    (key: string, values: Partial<Value>) => {
+    (key: string | number, values: Partial<Value>) => {
       setState(state => ({
         ...state,
         [key]: {

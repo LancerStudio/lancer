@@ -12,7 +12,7 @@
     "build-js": "node dist/client/build.js js",
     "build-css": "node dist/client/build.js css",
     "build-assets": "node dist/client/build.js assets",
-    "prepublishOnly": "NODE_ENV=production npm run build",
+    "prepublishOnly": "npm test && NODE_ENV=production npm run build",
     "test": "ospec",
     "test-watch": "nodemon -w dist/server -w tests --exec ospec"
   },

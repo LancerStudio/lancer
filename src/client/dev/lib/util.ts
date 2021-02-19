@@ -18,3 +18,21 @@ export function debounce<F extends (...args: any[]) => any>(func: F, wait: numbe
 export function last<T>(array: T[]) {
 	return array[array.length-1]
 }
+
+export function capitalize(str: string) {
+	return str[0]!.toUpperCase() + str.slice(1)
+}
+
+export function firstWord(str: string) {
+	return str.split(' ')[0]
+}
+
+export function copyToClipboard(text: string) {
+	var input = document.createElement('input')
+	input.setAttribute('value', text)
+	document.body.appendChild(input)
+	input.select()
+	var result = document.execCommand('copy')
+	document.body.removeChild(input)
+	return result
+}

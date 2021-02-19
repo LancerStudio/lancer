@@ -48,6 +48,9 @@ export function requireUser(opts: { redirectIfNot?: boolean } = {}): RequestHand
     if (req.user) {
       next()
     }
+    else if (req.initialSetup === 'on-page' && routes.pages.setup.match(req.path)) {
+      next()
+    }
     else if (opts.redirectIfNot && !isSignInPage) {
       req.session.returnTo = req.path
       res.redirect(routes.pages.signIn.link())

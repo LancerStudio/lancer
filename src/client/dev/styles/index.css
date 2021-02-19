@@ -94,3 +94,18 @@ button.Loading {
     transform: rotate(360deg);
   }
 }
+
+.FadeIn {
+  animation: fadein 0.6s;
+}
+.FadeInLong {
+  animation: fadein 1s;
+}
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

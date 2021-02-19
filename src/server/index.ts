@@ -8,6 +8,7 @@ import { resolveFile } from './files'
 import { render, resolveAsset, validScriptBundles, validStyleBundles } from './render'
 import { guardTempPassword, mountSession } from './lib/session'
 import { ensureLocale } from './i18n'
+import { requireSetup } from './dev/setup'
 
 require('express-async-errors')
 
@@ -24,7 +25,7 @@ router.use( require('body-parser').json() )
 Dev.mount(router)
 
 
-router.get('/*', ensureLocale(), async (req, res) => {
+router.get('/*', requireSetup(), ensureLocale(), async (req, res) => {
   const path = req.locale ? req.path.replace(`/${req.locale}`, '') : req.path
 
   try {
