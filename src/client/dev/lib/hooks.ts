@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { debounce } from "./util";
 
 
 export function useKeyValueState<Value>(initialState: Record<string, Value> = {}) {
@@ -22,4 +23,19 @@ export function useKeyValueState<Value>(initialState: Record<string, Value> = {}
       }))
     }
   ] as const
+}
+
+export function useWindowWidth() {
+  const [width, setWidth] = useState(window.innerWidth)
+
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth)
+    const debouncedHandleResize = debounce(handleResize, 300)
+    window.addEventListener('resize', debouncedHandleResize)
+    return () => {
+      window.removeEventListener('resize', debouncedHandleResize)
+    }
+  }, [])
+
+  return width
 }

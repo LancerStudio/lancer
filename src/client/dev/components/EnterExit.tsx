@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect, useCallback } from 'react'
+import { ReactNode, useState, useEffect, useCallback, useLayoutEffect } from 'react'
 
 type Props = {
   show: boolean
@@ -29,7 +29,7 @@ export function EnterExit(props: Props) {
   const [childrenCache, setChildrenCache] = useState(props.children)
   const shouldRender = state !== 'hidden'
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (show && state === 'hidden') {
       setState('enter-before')
       requestAnimationFrame(() => {

@@ -14,11 +14,11 @@ export function CreateFirstUser({ name, email, next }: Props) {
 
   return (
     <div className="px-6 max-w-xs mx-auto w-full FadeInLong">
-      <h3 className="pt-1 text-3xl font-header text-gray-800 text-center">
+      <h3 className="sm:pt-1 text-3xl font-header text-gray-900 text-center">
         Account Setup
       </h3>
 
-      <div className="mt-4 max-w-xs">
+      <div className="mt-4 sm:mt-6 max-w-xs">
         <p className="text-center">Nice to meet you, {name.split(' ')[0]}. Please enter a password for your account.</p>
 
         <div className="mt-8 text-lg w-full">

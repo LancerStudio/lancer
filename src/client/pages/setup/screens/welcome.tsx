@@ -18,11 +18,11 @@ export function Welcome({ next }: Props) {
 
   return (
     <div className="flex flex-col items-center">
-      <h3 className="pt-1 text-3xl font-header text-gray-800">
-        Welcome.
+      <h3 className="text-3xl sm:text-4xl font-header text-gray-900">
+        Welcome
       </h3>
 
-      <div className="mt-4 px-6 max-w-xs w-full">
+      <div className="mt-4 sm:mt-6 px-6 max-w-xs w-full">
 
         {hasClient === null && <>
 

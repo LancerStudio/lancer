@@ -19,11 +19,11 @@ export function CreateOtherUsers({ status, reloadStatus, next }: Props) {
   console.log('passes', tempPasswords)
   return (
     <div className="FadeInLong">
-      <h3 className="mt-1 text-3xl font-header text-gray-800 text-center">
+      <h3 className="text-3xl font-header text-gray-900 text-center">
         Additional Users
       </h3>
 
-      <div className="mt-4 px-6 max-w-xs mx-auto">
+      <div className="mt-4 sm:mt-6 px-6 max-w-xs mx-auto">
         {status.use_case === 'client' && <>
           <p className="text-center">Here you can create additional accounts for your client(s) and other developers.</p>
         </>}
@@ -176,7 +176,7 @@ function NewUserForm({ onCreate, useCase, className }: {
   const { quickToast } = useToasts()
   const create = usePromise(Rpc.createUser)
 
-  const [open, setOpen] = useState(useCase === 'client')
+  const [open, setOpen] = useState(false)
   const [type, setType] = useState<UserType>(useCase === 'client' ? 'client' : 'dev')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')

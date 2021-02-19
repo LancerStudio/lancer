@@ -2,13 +2,14 @@ import { render } from 'react-dom'
 import { ToastContainer, ToastProvider } from '../../lib/toast'
 import { Welcome } from './screens/welcome'
 import { CreateFirstUser } from './screens/create-first-user'
-import { useState } from 'react'
+import {  useLayoutEffect, useState } from 'react'
 import CheckCircleSm from '../../lib/icons/CheckCircleSm'
 import { usePromise } from '../../dev/lib/use-promise'
 import { ProcResults, Rpc } from '../../dev/lib/rpc-client'
 import { Loader } from '../../dev/components/Loader'
 import { CreateOtherUsers } from './screens/create-other-users'
 import { Complete } from './screens/complete'
+import { useWindowWidth } from '../../dev/lib/hooks'
 
 type Status = ProcResults['getOnboardingStatus']
 
@@ -17,7 +18,7 @@ function App() {
   return (
     <ToastProvider>
       <ToastContainer />
-      <div className="min-h-screen flex flex-col justify-center py-10 sm:px-6 lg:px-8 md:pb-16">
+      <div className="min-h-screen">
         {status.isLoading && !status.data
           ? <Loader />
           : <LoadedApp status={status.data!} reloadStatus={async () => { await status.call({}) }} />
@@ -52,40 +53,88 @@ function LoadedApp({ status, reloadStatus }: { status: Status, reloadStatus: () 
   })
   const step = steps.find(s => s.name === stepName) || null
 
-  return (
-    <div className="FadeInLong">
-      <div className="flex flex-col items-center">
-        <div className="mt-4">
-          <h2 className="flex items-center font-header-alt font-bold text-4xl text-gray-900 text-center">
-            <img src="/lancer/logo-icon.svg" className="h-7" />
-            <span className="ml-1 relative" style={{ left: '0.4rem' }}>Lancer</span>
-          </h2>
-          <Steps current={step} className="mt-6" />
-        </div>
-      </div>
+  const width = useWindowWidth()
+  const [sideTop, setSideTop] = useState(0)
+  const [mainTopTall, setMainTopTall] = useState(0)
+  const [mode, setMode] = useState<'short' | 'tall' | null>(null)
 
-      <div className="mt-10">
-        {
-          step === null ?
-            <Complete /> :
-          step.name === 'Welcome' ?
-            <Welcome
-              next={(n, e) => { setName(n); setEmail(e); setStepName('CreateFirstUser') }}
-            /> :
-          step.name === 'CreateFirstUser' ?
-            <CreateFirstUser
-              name={name}
-              email={email}
-              next={async () => { await reloadStatus(); setStepName('CreateOtherUsers') }}
-            /> :
-          step.name === 'CreateOtherUsers' ?
-            <CreateOtherUsers
-              next={async () => { setStepName('complete') }}
-              status={status}
-              reloadStatus={reloadStatus}
-            /> :
-          `No such screen: ${stepName}`
-        }
+  const sm = width >= 640
+  const isTallerStep = step?.index === 2
+  const isTransitioning = mode === null || mode === 'short' && isTallerStep || mode === 'tall' && !isTallerStep
+  const mainTop = mode === 'tall' ? mainTopTall : sideTop
+
+  useLayoutEffect(() => {
+    if (!sm) return
+    const side = document.querySelector('.SetupSidebar')?.getBoundingClientRect().top
+    const main = document.querySelector('.SetupMain')?.getBoundingClientRect().top
+
+    // Sidebar should be stable after page load; only set it once
+    if (side && !sideTop) {
+      setSideTop(side)
+    }
+    // Tall steps should be set every time they occur.
+    if (main && isTallerStep) {
+      setMainTopTall(main)
+    }
+    else if (!isTallerStep) {
+      setMainTopTall(0)
+    }
+
+    setMode(isTallerStep ? 'tall' : 'short')
+  }, [sm, isTallerStep])
+
+  return (
+    <div className={`SetupContainer py-12 sm:py-0 sm:flex min-h-screen justify-center FadeInLong ${sm && isTransitioning ? 'items-center' : ''}`}>
+      <div className={`sm:flex ${sm && mode === null ? 'h-screen items-center' : ''}`}>
+        <div
+          className={`SetupSidebar flex justify-center`}
+          style={{ paddingTop: sm && sideTop ? `${sideTop}px` : undefined }}
+        >
+          <div className="sm:pb-24">
+            <div className="flex justify-center relative">
+              <img src="/lancer/logo-icon.svg" className="h-24 relative" style={{ left: '-0.2rem' }} />
+            </div>
+            <h2 className="mt-3 pb-0.5 flex items-center font-header-alt font-bold text-4xl text-gray-900 text-center">
+              <span className="">Lancer</span>
+            </h2>
+            <Steps current={step} className="mt-6 pl-0.5" />
+          </div>
+        </div>
+
+        <div
+          className={`SetupMain mt-10 sm:mt-0 sm:ml-16 pb-8`}
+          style={{ paddingTop: sm && mainTop && !isTransitioning ? `${mainTop}px` : undefined }}
+        >
+          <div className={`${step === null && !sm ? 'flex' : 'hidden h-24'} sm:flex mb-3 items-end justify-center`}>
+            {
+              step === null
+                ? <CheckCircleSm className="mb-2 h-16 w-16 text-green-500" />
+                : <div className="-mb-1 text-white"></div>
+            }
+          </div>
+
+          {
+            step === null ?
+              <Complete /> :
+            step.name === 'Welcome' ?
+              <Welcome
+                next={(n, e) => { setName(n); setEmail(e); setStepName('CreateFirstUser') }}
+              /> :
+            step.name === 'CreateFirstUser' ?
+              <CreateFirstUser
+                name={name}
+                email={email}
+                next={async () => { await reloadStatus(); setStepName('CreateOtherUsers') }}
+              /> :
+            step.name === 'CreateOtherUsers' ?
+              <CreateOtherUsers
+                next={async () => { setStepName('complete') }}
+                status={status}
+                reloadStatus={reloadStatus}
+              /> :
+            `No such screen: ${stepName}`
+          }
+        </div>
       </div>
     </div>
   )

@@ -102,10 +102,7 @@ button.Loading {
   animation: fadein 1s;
 }
 @keyframes fadein {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  0% { opacity: 0; }
+  1% { opacity: 0; }
+  100% { opacity: 1; }
 }
