@@ -51,8 +51,8 @@ export function requireUser(opts: { redirectIfNot?: boolean } = {}): RequestHand
     else if (req.initialSetup === 'on-page' && routes.pages.setup.match(req.path)) {
       next()
     }
-    else if (opts.redirectIfNot && !isSignInPage) {
-      req.session.returnTo = req.path
+    else if ((req.initialSetup === 'needs-auth' || opts.redirectIfNot) && !isSignInPage) {
+      req.session.returnTo = req.path || '/'
       res.redirect(routes.pages.signIn.link())
     }
     else if (!isSignInPage) {

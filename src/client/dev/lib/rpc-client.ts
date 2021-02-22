@@ -4,6 +4,7 @@ type Procs = typeof import('../../../server/dev/procs')
 export const Rpc = makeRpcClient<Procs>('/lancer/rpc')
 export type ProcParams = ParamsTypeObject<Procs>
 export type ProcResults = UnPromisifiedObject<ReturnTypeObject<Procs>>
+export type ProcSuccess<T> = T extends { type: 'success', data: infer U } ? U : never
 
 type NoContextWithUnexpected<F> =
   F extends (params: infer T, ctx?: any) => infer U
@@ -27,6 +28,7 @@ async function rpc(endpoint: string, proc: string, arg: any) {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       'Cache-Control': 'no-cache',
+      'X-Rpc-From': window.location.href,
     },
     body: JSON.stringify(arg)
   })
@@ -34,6 +36,9 @@ async function rpc(endpoint: string, proc: string, arg: any) {
       const data = await res.json()
       if (res.status === 200) {
         return data
+      }
+      else if (res.status === 401) {
+        window.location.href = data.signInUrl
       }
       else {
         console.error(`[rpc][${proc}]`, data)

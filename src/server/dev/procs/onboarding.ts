@@ -6,14 +6,19 @@ import { allowAnonymous, bad, ok, rpc, RpcContext, z } from "../rpc"
 export const getOnboardingStatus = rpc(
   z.object({}),
   async function (_, { req }: RpcContext) {
-    if (User.any() && !req.user) {
+    if (Kv.get(knownKeys.onboarded)) {
       throw new ProcAuthError()
     }
-    return {
+    const status = {
       self: req.user,
       users: User.allWithPrimaryEmail(),
       use_case: Kv.get(knownKeys.use_case) as 'client' | 'personal' | null,
     }
+
+    if (status.users.length && !req.user) {
+      throw new ProcAuthError()
+    }
+    return status
   }
 )
 allowAnonymous(getOnboardingStatus)

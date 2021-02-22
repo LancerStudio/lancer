@@ -24,6 +24,7 @@ export const getSiteInfo = rpc(
     }
   }
 )
+allowAnonymous(getSiteInfo)
 
 export const getFileInfo = rpc(
   z.object({

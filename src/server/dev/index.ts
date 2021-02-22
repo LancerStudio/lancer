@@ -27,9 +27,16 @@ export function mount(router: Router) {
 
   router.post('/lancer/rpc/:method', async (req, res) => {
     const procs: any = await import('./procs')
-    const method = procs[req.params.method!]
+    const methodName = req.params.method!
+    const method = procs[methodName]
+
+    const goToSignIn = () => {
+      req.session.returnTo = req.get('X-Rpc-From') || '/'
+      res.status(401).send({ signInUrl: '/lancer/sign-in' })
+    }
+
     if (method && !req.user && !method.allowAnonymous && env.development) {
-      res.status(401).send({}); return
+      goToSignIn(); return
     }
     if (!method || !req.user && !method.allowAnonymous) {
       res.status(404).send({}); return
@@ -42,10 +49,10 @@ export function mount(router: Router) {
     }
     catch (err) {
       if (env.development) {
-        console.log(`[rpc][${method}]`, err)
+        console.log(`[rpc][${methodName}]`, err)
       }
       if (err instanceof ProcAuthError) {
-        res.sendStatus(401)
+        goToSignIn()
       }
       else {
         res.status(500).send(err)

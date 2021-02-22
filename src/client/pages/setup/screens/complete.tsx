@@ -12,7 +12,7 @@ export function Complete() {
       </h3>
 
       <div className="mt-4 sm:mt-6 px-6 max-w-xs mx-auto text-center">
-        <p>You're all set up. May your journey be filled with success.</p>
+        <p>You're all set up. May your work be filled with success.</p>
       </div>
 
       <div className="mt-4 px-6 max-w-xs mx-auto w-full">
