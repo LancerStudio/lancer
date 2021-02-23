@@ -1,4 +1,5 @@
 import path from 'path'
+import { build } from 'esbuild'
 import { existsSync, promises as fs, statSync } from 'fs'
 
 import { requireLatest } from './lib/fs'
@@ -32,15 +33,19 @@ export function posthtmlPlugin(options: PostHtmlOptions) {
 //
 // Script bundling
 //
-var browserify = require('browserify')
-
-export function bundleScript(file: string): Promise<string> {
-  return new Promise(function (resolve, reject) {
-    browserify(file).bundle(function (err: any, src: any) {
-      if (err) return reject(err)
-      resolve(src)
-    })
+export async function bundleScript(file: string) {
+  const isProd = process.env.NODE_ENV === 'production'
+  const result = await build({
+    entryPoints: [file],
+    bundle: true,
+    write: false,
+    minify: isProd,
+    outdir: 'out',
+    define: {
+      'process.env.NODE_ENV': `"${isProd ? 'production' : 'development'}"`
+    }
   })
+  return result.outputFiles[0]!.contents
 }
 
 

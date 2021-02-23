@@ -73,8 +73,9 @@ export function Env<E extends string, Envs extends E[]>(validEnvs: Envs) {
   type ConfigVal<T> = T | ((env: Env) => T)
   const env = validEnvs.find(env => env === read('NODE_ENV', 'development'))
   if (!env) {
-    throw new Error('blah')
+    throw new Error(`[Lancer] Unrecognized environment: '${env}'`)
   }
+  process.env.NODE_ENV = env
 
   function branch<T>(defaultValue: ConfigVal<T>, choices: Partial<Record<Env, ConfigVal<T>>>): T;
   function branch<T>(choices: Record<Env, ConfigVal<T>>): T;

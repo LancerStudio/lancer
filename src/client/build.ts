@@ -38,6 +38,7 @@ async function build() {
   }
 
   console.log(`Building Lancer ${scope} (${process.env.NODE_ENV || 'development'})`)
+  console.log(' ', buildDir.replace(process.cwd()+'/', ''))
 
   if (scope === 'css' || scope === 'assets') {
     console.log('  > lancer.css ...')
@@ -60,17 +61,20 @@ async function build() {
   }
 
   if (scope === 'js' || scope === 'assets') {
-    const lancerJs = await bundleScript(path.join(distDir, 'client/dev'))
+    console.log('  > lancer.js ...')
+    const lancerJs = await bundleScript(path.join(srcDir, 'client/dev/index.tsx'))
     await fs.writeFile(path.join(buildDir, 'lancer.js'), lancerJs)
 
     await Promise.all(
       routes.pages.children.map(async route => {
         const page = route.link().replace('/lancer/', '')
-        const file = path.join(distDir, 'client/pages', page, 'index.js')
+        const file = path.join(srcDir, 'client/pages', page, 'index.tsx')
         if (!existsSync(file)) return
 
         // Match dest to /lancer/:page.js route
         const dest = path.join(buildDir, 'lancer', `${page}.js`)
+
+        console.log(`  > ${dest.replace(buildDir+'/', '')} ...`)
 
         const js = await bundleScript(file)
         await fs.mkdir(path.dirname(dest), { recursive: true })
