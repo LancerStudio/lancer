@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react'
+import React, { createContext, useContext, useState } from 'react'
 import { Notification, Props as NotificationProps } from '../dev/notification'
 
 type ToastProps = {

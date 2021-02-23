@@ -1,4 +1,4 @@
-import { useState } from "react"
+import React, { useState } from "react"
 import TextareaAutosize from 'react-autosize-textarea'
 
 import LinkSm from "../../lib/icons/LinkSm"

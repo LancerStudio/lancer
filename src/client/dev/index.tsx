@@ -1,5 +1,5 @@
+import React, { useEffect, useState } from 'react'
 import { render } from 'react-dom'
-import { useEffect, useState } from 'react'
 
 import { Notification } from './notification'
 import { useNavigation } from './lib/navigation'

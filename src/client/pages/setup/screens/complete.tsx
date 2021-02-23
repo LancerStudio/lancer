@@ -1,3 +1,4 @@
+import React from 'react'
 import { Button } from '../../../dev/components/Button'
 import { Rpc } from '../../../dev/lib/rpc-client'
 import { usePromise } from '../../../dev/lib/use-promise'

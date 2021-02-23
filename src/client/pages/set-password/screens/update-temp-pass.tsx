@@ -1,7 +1,8 @@
-import { Rpc } from "../../../dev/lib/rpc-client";
-import { usePromise } from "../../../dev/lib/use-promise";
-import { SetPasswordForm } from "../../../lib/components/SetPasswordForm";
-import { useToasts } from "../../../lib/toast";
+import React from 'react'
+import { Rpc } from "../../../dev/lib/rpc-client"
+import { usePromise } from "../../../dev/lib/use-promise"
+import { SetPasswordForm } from "../../../lib/components/SetPasswordForm"
+import { useToasts } from "../../../lib/toast"
 
 export function UpdateTempPass() {
   const { quickToast } = useToasts()

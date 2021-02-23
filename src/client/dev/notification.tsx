@@ -1,4 +1,4 @@
-import { useState, ReactChild, useEffect } from 'react'
+import React, { useState, ReactChild, useEffect } from 'react'
 import { EnterExit } from './components/EnterExit'
 
 export type Props = {

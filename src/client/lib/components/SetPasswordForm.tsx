@@ -1,5 +1,5 @@
 import owasp from 'owasp-password-strength-test'
-import { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { Button } from '../../dev/components/Button'
 import { EnterExit } from '../../dev/components/EnterExit'
 import CheckCircleSm from '../icons/CheckCircleSm'

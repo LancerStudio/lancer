@@ -1,3 +1,4 @@
+import React from 'react'
 import './lib/long-press'
 import { createNanoEvents } from "nanoevents";
 import { EditTranslation } from "./screens/EditTranslation";

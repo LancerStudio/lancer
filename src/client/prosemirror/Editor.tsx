@@ -1,10 +1,10 @@
+import React, { useEffect, useRef, useState } from "react"
 import {EditorState} from "prosemirror-state"
 import {EditorView} from "prosemirror-view"
 import {DOMParser, DOMSerializer, Node} from "prosemirror-model"
 import {setup} from "./index"
 import {schemaLongform} from "./schema"
 import { debounce } from "../dev/lib/util"
-import { useEffect, useRef, useState } from "react"
 
 type Options = {
   content: string

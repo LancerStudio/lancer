@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect, useCallback, useLayoutEffect } from 'react'
+import React, { ReactNode, useState, useEffect, useCallback, useLayoutEffect } from 'react'
 
 type Props = {
   show: boolean
