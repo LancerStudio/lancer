@@ -1,3 +1,7 @@
+<p align="center">
+  <img width="256" height="256" src="public/logo-sq.png">
+</p>
+
 # Lancer
 
 Lancer is a radically simple tool for building content-focused websites. It helps you:
