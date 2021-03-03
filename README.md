@@ -9,6 +9,10 @@ Lancer is a radically simple tool for building content-focused websites. It help
 
 Lancer DOES NOT cater to fully-JS-rendered apps. If you're building a full-fledged web app, only use Lancer for your landing and marketing pages. For your heavy application code, we recommend something like Ruby on Rails or Next.js.
 
+## WARNING
+
+Lancer is in ALPHA. It works for what it does, but many useful features are still missing.
+
 ## Getting Started
 
 To start a project from scratch:
@@ -19,25 +23,24 @@ $ npm init -y
 $ npm install freelance
 $ lancer init
 $ echo 'It works!' > client/index.html
-$ lance dev
+$ lancer dev
 ```
 
 Now visit [http://localhost:8080](http://localhost:8080).
 
-If `lance dev` didn't work, you need to add `./node_modules/.bin` to the beginning of your path.
+If `lancer dev` didn't work, you need to add `./node_modules/.bin` to the beginning of your `PATH`.
 
 ## Workflow Overview
 
 - Create your project: `lancer create my-project`
 - Write html/css/js; specify and populate data; drag files & images into `data/files`
 - Push code to a host like DigitalOcean
-- Push data and files to production: `lance push https://example.com`
+- Push data and files to production: `lancer push https://example.com`
 - All done!
 
 ## Basics
 
-Lance requires your content to be in a `client/` folder. Take the following example:
-
+Lancer requires your content to be in a `client/` folder. Take the following example:
 
 ```txt
 client/
@@ -68,7 +71,7 @@ Applying this to the example:
 
 ### Bundling JS & CSS
 
-JavaScript and CSS files in `client/` are not immediately accessible. However, you can put them on a page using the special attribute `bundle` on script tags and link tags:
+JavaScript and CSS files in `client/` are not immediately accessible for security. However, you can put them on a page using the special attribute `bundle` on script tags and link tags:
 
 ```html
 <script bundle="/js/family-pic.js"></script>
@@ -81,7 +84,9 @@ JavaScript is bundled using Browserify, and CSS is bundled using PostCSS.
 
 ### Static Content
 
-Simply create a `client/public/` folder in your project. Any file in that folder will be publically accessible by the browser. This is good for small images, pdfs, etc.
+Simply create a `client/public/` folder in your project. Any file in that folder will be publically accessible by the browser. This is good for small files like favicons.
+
+HOWEVER, you will want to put the majority of your files in the `data/files/` directory. This directory IS NOT committed to git, to your benefit. You can use this to develop locally and push it to your server.
 
 ## HTML
 
@@ -93,79 +98,41 @@ If you need to update content dynamically, you should probably use JavaScript to
 
 See docs for [posthtml-expressions](https://github.com/posthtml/posthtml-expressions).
 
-### Layouts
-
-Take the following `client/_layout.html` file:
-
-```html
-<html>
-<head>
-  <block name='title'>
-    <title>Default Title</title>
-  </block>
-</head>
-
-<body>
-  <div class="content">
-    <block name="content"></block>
-  </div>
-  <footer>
-    <block name="footer">footer content</block>
-  </footer>
-</body>
-</html>
-```
-
-Notice how there are three `<block>` tags in that file. The one with `name="content"` is required in a layout, whereas the other two are optional.
-
-To use a layout, reference it at the top of your file. Take the following `client/index.html` as an example:
-
-```html
-<!--
-layout: _layout.html
--->
-<content-for name="title">
-  <title>Home | The Website</title>
-</content-for>
-
-<h1>Welcome to my Client's Website!</h1>
-
-<p>Lorem ipsum blah so dah</p>
-
-<content-for name="footer">
-  Footer stuff
-</content-for>
-```
-
-Although there are only two `<content-for>` tags, all three `<block>` tags from the layout get filled. This is because any content NOT in a `<content-for>` tag gets inserted into the `name="content"` block automatically.
-
-Tips:
-
-- `<content-for>` tags only work at the top-level of the file.
-- Layout file names are required to start with an underscore.
-- `<block>` tags do not work within the following tags: `title`, `style`, `script`, `iframe`, `xmp`, `noscript`, `noframes`, `noembed`.
-
 ### Resizing Images
 
-TODO
+For any image file in your `data/files` directory, you can request a resized version of that image quite easily. Great for image galleries or responsive image definitions.
 
-https://sharp.pixelplumbing.com/api-resize#resize
+For example, to create a gallery preview image definition, you can put this in your `site.config.js`:
+
+```js
+module.exports = {
+  name: 'My App',
+  // ...
+
+  //
+  // See resize options here: https://sharp.pixelplumbing.com/api-resize#resize
+  //
+  imagePreviews: sharp => ({
+    myGalleryDef: {
+      width: 360,
+      height: 240,
+      fit: sharp.fit.outside,
+    },
+  })
+}
+```
+
+Now, assuming you have an image file in `data/files/my-page/my-image.jpg`, you can request a smaller size like so:
+
+```html
+<img src="/files/my-page/my-image.jpg?preview=myGalleryDef" />
+```
+
+And that's it! Lancer will generate and cache the image for you in `data/cache`.
 
 ## CSS
 
-Lancer uses [CSS Next](http://cssnext.io/), a tool for converting future standards into cross-browser CSS. The keyword is **standards**. Unlike SASS or LESS, the features CSS Next makes available to you will eventually be built into all browsers.
-
-If you haven't already, you should take a quick look at the [features page](http://cssnext.io/features/), which will show you the syntax for said features. For example, nesting selectors [by the spec](http://tabatkins.github.io/specs/css-nesting/) looks a bit different coming from LESS or SASS:
-
-```css
-.my-thing {
-  color: black;
-  /* WRONG */
-  .hidden { visibility: none; }
-  /* RIGHT */
-  & .hidden { visibility: none; }
-}
-```
+Lancer uses [PostCSS](https://postcss.org) and recommends using Tailwind CSS with it.
 
 ### Importing Files
 
@@ -178,24 +145,21 @@ If you haven't already, you should take a quick look at the [features page](http
 
 ## Internationalization (i18n)
 
-TODO
+Not only does Lancer support i18n out of the box, it also gives you and your client a super-easy way to edit translations (after you sign in).
+
+To start, just use the `<t>` tag in your html. For example:
 
 ```
-<t>my.key_name</t>
+<t>home.header.title</t>
 ```
+
+The server will render this on the page, and make it editable if you're signed in. Simply **alt-click** the text and a textarea will appear on the screen.
 
 `hreflang` attributes are added according to [Google's recommendations](https://developers.google.com/search/docs/advanced/crawling/localized-versions)
 
-## Publishing to Production
+## Deploying to Production
 
-After you've committed your project to git:
-
-```bash
-$ heroku apps:create my-project
-$ git push heroku master
-$ heroku open
-```
-
+See [Deploying to Production](./deploying-to-production.md)
 
 ## Developing
 
@@ -206,7 +170,15 @@ $ npm link  # for running locally in your own project
 $ npm build
 ```
 
-### Internal Notes
+## Roadmap
+
+- Layouts
+- Dynamic urls
+- Structured content (lists, etc.)
+- Database import/export UI
+- Password manager
+
+## Internal Notes
 
 - [Scaling sqlite3 to 4m queries per second on a single server](https://blog.expensify.com/2018/01/08/scaling-sqlite-to-4m-qps-on-a-single-server/)
 - [How Browser Language Redirect Affects Google Indexing](https://wpml.org/documentation/getting-started-guide/language-setup/automatic-redirect-based-on-browser-language/how-browser-language-redirect-affects-google-indexing/)
