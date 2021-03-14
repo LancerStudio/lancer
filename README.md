@@ -30,7 +30,7 @@ $ echo 'It works!' > client/index.html
 $ lancer dev
 ```
 
-Now visit [http://localhost:8080](http://localhost:8080).
+Now visit [http://localhost:7272](http://localhost:7272).
 
 If `lancer dev` didn't work, you need to add `./node_modules/.bin` to the beginning of your `PATH`.
 

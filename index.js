@@ -2,7 +2,7 @@
 const fs = require('fs')
 const path = require('path')
 const program = require('commander')
-const port = process.env.PORT || 8080
+const port = process.env.PORT || 7272
 
 program
   .version(require('./package.json').version)
