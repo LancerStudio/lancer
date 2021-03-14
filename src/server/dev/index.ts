@@ -6,7 +6,7 @@ import * as Bundle from '../bundle'
 import { env, filesDir, siteConfig } from '../config'
 import { missingFiles } from './state'
 import routes from '../../shared/routes'
-import { requireUser, checkTempPasswordMiddleware } from '../lib/session'
+import { checkTempPasswordMiddleware } from './setup'
 import { last } from '../../client/dev/lib/util'
 import { ProcAuthError } from './errors'
 import { mountDevFiles } from './files'
@@ -39,10 +39,10 @@ export function mount(router: Router) {
       goToSignIn(); return
     }
     if (!method || !req.user && !method.allowAnonymous) {
-      res.status(404).send({}); return
+      res.status(401).send({}); return
     }
     try {
-      const result = await method(req.body, { req })
+      const result = await method(req.body, { req, user: req.user })
       // console.log(`[rpc][${req.params.method}]`, result)
       res.set({ 'Content-Type': 'application/json' })
       res.status(200).send(JSON.stringify(result))
@@ -69,7 +69,6 @@ export function mount(router: Router) {
   router.get('/lancer/:page',
 
     requireSetup(),
-    requireUser({ redirectIfNot: true }),
     checkTempPasswordMiddleware(),
 
     (req, res, next) => {

@@ -1,11 +1,10 @@
-import { Router, RequestHandler, Request, Response } from 'express'
+import { Router } from 'express'
 import expressSession, { Store } from 'express-session'
 import events, { EventEmitter } from 'events'
 
 import { db, User } from '../models'
 import { DB } from './db'
 import { env, sessionSecret } from '../config'
-import routes from '../../shared/routes'
 import { UserRow } from '../models/user'
 
 type Session = Record<string, any>
@@ -40,47 +39,6 @@ export function mountSession(router: Router) {
     req.user = req.session.user_id ? User.get(req.session.user_id) : null
     next()
   })
-}
-
-export function requireUser(opts: { redirectIfNot?: boolean } = {}): RequestHandler {
-  return (req, res, next) => {
-    const isSignInPage = !!routes.pages.signIn.match(req.path)
-    if (req.user) {
-      next()
-    }
-    else if (req.initialSetup === 'on-page' && routes.pages.setup.match(req.path)) {
-      next()
-    }
-    else if ((req.initialSetup === 'needs-auth' || opts.redirectIfNot) && !isSignInPage) {
-      req.session.returnTo = req.path || '/'
-      res.redirect(routes.pages.signIn.link())
-    }
-    else if (!isSignInPage) {
-      // TODO: Show nice 404 page
-      res.status(404).send('Not found.')
-    }
-    else {
-      next()
-    }
-  }
-}
-
-export function checkTempPasswordMiddleware(): RequestHandler {
-  return (req, res, next) => {
-    if (guardTempPassword(req, res)) {
-      return
-    }
-    next()
-  }
-}
-
-export function guardTempPassword(req: Request, res: Response) {
-  if (req.user?.password_temporary && !routes.pages.setPassword.match(req.path)) {
-    req.session.returnTo = req.path
-    res.redirect(routes.pages.setPassword.link())
-    return true
-  }
-  return false
 }
 
 const ONE_DAY = 86400000

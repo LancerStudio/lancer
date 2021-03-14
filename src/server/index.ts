@@ -6,9 +6,9 @@ import * as Bundle from './bundle'
 import { staticDir, siteConfig, env, filesDir, sourceDir, buildDir } from './config'
 import { resolveFile } from './files'
 import { render, resolveAsset, validScriptBundles, validStyleBundles } from './render'
-import { guardTempPassword, mountSession } from './lib/session'
+import { mountSession } from './lib/session'
 import { ensureLocale } from './i18n'
-import { requireSetup } from './dev/setup'
+import { guardTempPassword, requireSetup } from './dev/setup'
 
 require('express-async-errors')
 
