@@ -11,6 +11,7 @@ declare global {
 }
 
 const setupPage = routes.pages.setup
+const signinPage = routes.pages.signIn
 
 export function checkForInitialSetupState(): Handler {
   return (req, _res, next) => {
@@ -28,6 +29,9 @@ export function requireSetup(): Handler {
   return (req, res, next) => {
     if (req.initialSetup === 'needs-redirect') {
       res.redirect(setupPage.link())
+    }
+    else if (req.initialSetup === 'needs-auth' && !signinPage.match(req.path)) {
+      res.redirect(signinPage.link())
     }
     else {
       next()
