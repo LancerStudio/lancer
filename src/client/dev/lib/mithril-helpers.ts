@@ -11,7 +11,7 @@ type ComponentContext<Attrs> = {
   unsub: Remover['unsub']
 }
 
-type ComponentDef<Attrs> = (this: ComponentContext<Attrs>, params: Stream<Attrs>) => ((attrs: Attrs) => Vnode<any,any>)
+type ComponentDef<Attrs> = (this: ComponentContext<Attrs>, params: Stream<Attrs>) => ((attrs: Attrs, vnode: Vnode<Attrs>) => Vnode<any,any>)
 
 export function cc<Attrs>(init: ComponentDef<Attrs>) {
   return function actualComponent(vnode: m.Vnode<Attrs>) {
@@ -39,7 +39,7 @@ export function cc<Attrs>(init: ComponentDef<Attrs>) {
       onremove,
       view(vnode: Vnode<Attrs>) {
         attrs(vnode.attrs)
-        return view(vnode.attrs)
+        return view(vnode.attrs, vnode)
       }
     }
   }
