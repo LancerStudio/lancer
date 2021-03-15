@@ -42,7 +42,7 @@ router.get('/*', requireSetup(), ensureLocale(), async (req, res) => {
     console.log('         -->', filename.replace(sourceDir+'/', ''), '(bundle)')
     const result = await Bundle.bundleScript(filename)
     res.set({ 'Content-Type': 'application/javascript' })
-    res.send(result)
+    res.send(Buffer.from(result).toString('utf8'))
   }
   else if ( validStyleBundles[filename] ) {
     console.log('         -->', filename.replace(sourceDir+'/', ''), '(bundle)')

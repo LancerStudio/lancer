@@ -1,19 +1,19 @@
-import React from 'react'
+import m from 'mithril'
 
-type Props = {
+type Attrs = {
   title: string
 
   href?: string
   size?: 'xs' | 'sm' | 'md' | 'lg' | null
   block?: boolean
   color?: 'primary' | 'secondary'
-  onClick?: () => void
+  onclick?: () => void
   loading?: boolean
   disabled?: boolean
-  className?: string
+  class?: string
   formSubmit?: boolean
 }
-export function Button({ href, loading=false, disabled=false, size='md', color, title, onClick, formSubmit, block=true, className='' }: Props) {
+export function Button({ href, loading=false, disabled=false, size='md', color, title, onclick, formSubmit, block=true, class: className='' }: Attrs) {
   const dims =
     // size === 'lg' ? 'py-2 px-4 text-sm font-medium' :
     size === 'md' ? 'py-2 px-4 text-sm font-medium' :
@@ -38,22 +38,22 @@ export function Button({ href, loading=false, disabled=false, size='md', color, 
       : 'bg-gray-400'
   }
 
-  const Tag = href ? 'a' : 'button'
+  const tag = href ? 'a' : 'button'
 
   return (
-    <Tag
-      href={href}
-      type={
+    m(tag, {
+      href,
+      onclick,
+      type:
         href ? undefined :
         formSubmit ? 'submit' :
         'button'
-      }
-      className={`${className} ${btnColor} ${dims} ${loading ? 'Loading' : ''} ${
-        block ? 'block' : 'inline-flex items-center'
-      } relative border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500`}
-      onClick={onClick}
-    >
-      {title}
-    </Tag>
+      ,
+      class:
+        `${className} ${btnColor} ${dims} ${loading ? 'Loading' : ''} ${
+          block ? 'block' : 'inline-flex items-center'
+        } relative border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500`
+      ,
+    }, title)
   )
 }

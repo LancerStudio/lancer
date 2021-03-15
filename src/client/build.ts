@@ -62,13 +62,13 @@ async function build() {
 
   if (scope === 'js' || scope === 'assets') {
     console.log('  > lancer.js ...')
-    const lancerJs = await bundleScript(path.join(srcDir, 'client/dev/index.tsx'))
+    const lancerJs = await bundleScript(path.join(srcDir, 'client/dev/website-editor.ts'))
     await fs.writeFile(path.join(buildDir, 'lancer.js'), lancerJs)
 
     await Promise.all(
       routes.pages.children.map(async route => {
         const page = route.link().replace('/lancer/', '')
-        const file = path.join(srcDir, 'client/pages', page, 'index.tsx')
+        const file = path.join(srcDir, 'client/pages', page, 'index.ts')
         if (!existsSync(file)) return
 
         // Match dest to /lancer/:page.js route

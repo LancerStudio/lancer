@@ -1,13 +1,9 @@
-import React from 'react'
+import m from 'mithril'
 import './lib/long-press'
-import { createNanoEvents } from "nanoevents";
 import { EditTranslation } from "./screens/EditTranslation";
-import { AnimatedNav } from './lib/navigation'
-
-const emitter = createNanoEvents()
+import { navigation } from './lib/navigation'
 
 export const Lancer = {
-  emitter,
   onTranslationClick(e: MouseEvent) {
     if (e.altKey){
       e.preventDefault()
@@ -25,8 +21,8 @@ export const Lancer = {
     }
   },
   editTranslation(name: string, locale: string, opts: { link: boolean, multiline: boolean, rich: boolean }) {
-    emitter.emit('navigate', (nav: AnimatedNav) =>
-      <EditTranslation name={name} locale={locale} onClose={() => nav.close()} {...opts} />
+    navigation.push(nav =>
+      m(EditTranslation, { name, locale, onClose: () => nav.close(), ...opts })
     )
   },
 }
