@@ -4,7 +4,7 @@ import { capitalize, copyToClipboard, firstWord } from '../../../dev/lib/util'
 import { selectClass, textInputClass } from '../../../lib/ui'
 import { Button } from '../../../dev/components/Button'
 import { dx } from '../../../dev/lib/dx'
-import { cc } from '../../../dev/lib/mithril-helpers'
+import { cc, fixWidth } from '../../../dev/lib/mithril-helpers'
 import { quickToast } from '../../../lib/toast'
 
 type Status = ProcResults['getOnboardingStatus']
@@ -108,6 +108,7 @@ const UserTable = cc<UserTableAttrs>(function() {
                             m('span.font-mono', showPassword[user.id] ? temporaryPasswords[user.id] : '••••••••••'),
 
                             m('button', {
+                              oncreate: fixWidth,
                               onclick() { showPassword[user.id] = !showPassword[user.id] },
                               class: "ml-1 text-sm text-gray-500 underline cursor-pointer",
                             }, showPassword[user.id] ? 'hide' : 'show'),

@@ -72,3 +72,8 @@ export function remover() {
     addEventListener(dom: Element | Window, event: string, handler: (e: any) => void): void
   }
 }
+
+export function fixWidth(vnode: m.VnodeDOM) {
+  const dom = vnode.dom as HTMLElement
+  dom.style.width = `${dom.getBoundingClientRect().width}px`
+}
