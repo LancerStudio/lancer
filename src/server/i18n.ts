@@ -16,7 +16,7 @@ declare global {
 }
 
 
-var matchHelper = require('posthtml-match-helper')
+const matchHelper = require('posthtml-match-helper')
 
 type PostHtmlOptions = {
   ctx: PostHtmlCtx

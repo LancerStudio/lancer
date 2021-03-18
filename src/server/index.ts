@@ -72,19 +72,19 @@ router.get('/*', requireSetup(), ensureLocale(), async (req, res) => {
       return
     }
     console.log('         -->', filename.replace(sourceDir+'/', ''))
-    const html = await fs.readFile(filename, 'utf8')
+    const htmlSrc = await fs.readFile(filename, 'utf8')
     // const frontMatter = fm(html)
     // const result = await reshape.process(html, { frontMatter: frontMatter })
     const site = siteConfig()
-    const result = await render({
+    const html = await render(htmlSrc, {
       site,
       user: req.user,
       cache: {},
       locale: req.locale || site.locales[0]!,
       reqPath: path,
-    }).process(html)
+    })
     res.set({ 'Content-Type': 'text/html' })
-    res.send(result.html)
+    res.send(html)
   }
   else {
     if (existsSync(filename)) {

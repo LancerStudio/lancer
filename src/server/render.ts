@@ -5,13 +5,14 @@ import imageSize from 'image-size'
 import * as Bundle from './bundle'
 import * as i18n from './i18n'
 import IncludePlugin from './posthtml-plugins/include'
+import LayoutPlugin from './posthtml-plugins/layout'
 import { clientDir, filesDir, PostHtmlCtx } from "./config"
 
 export const validStyleBundles: Record<string, boolean> = {}
 export const validScriptBundles: Record<string, boolean> = {}
 
 
-export function render(ctx: PostHtmlCtx) {
+export async function render(html: string, ctx: PostHtmlCtx) {
   const { Translation } = require('./models')
   const plugins = renderPostHtmlPlugins(ctx, {
     prefix: [
@@ -32,7 +33,8 @@ export function render(ctx: PostHtmlCtx) {
       i18n.posthtmlPlugin({ Translation, ctx }),
     ]
   })
-  return require('posthtml')(plugins)
+  const result = await require('posthtml')(plugins).process(html)
+  return result.html as string
 }
 
 export function renderPostHtmlPlugins(ctx: PostHtmlCtx, opts: {
@@ -87,6 +89,11 @@ export function renderPostHtmlPlugins(ctx: PostHtmlCtx, opts: {
   }
 
   return [
+    LayoutPlugin({
+      onPageAttrs(attrs) {
+        locals.page = { ...attrs, ...locals.page }
+      }
+    }),
     ...opts.prefix,
     IncludePlugin({ root: clientDir, encoding: 'utf8' }),
 
