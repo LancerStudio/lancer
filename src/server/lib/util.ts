@@ -21,3 +21,7 @@ export function makeGravatarUrl(email: string, opts: { size?: number, type?: str
   ].filter(x => x).join('&')
   return `https://secure.gravatar.com/avatar/${hash}${qs ? '?'+qs : ''}`
 }
+
+export function notNullish<TValue>(value: TValue | null | undefined): value is TValue {
+  return value !== null && value !== undefined;
+}

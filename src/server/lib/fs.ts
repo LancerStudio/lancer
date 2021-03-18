@@ -16,3 +16,12 @@ export function requireLatest(module: string) {
 		fresh,
 	}
 }
+
+export function requireLatestOptional(module: string) {
+	try {
+		return requireLatest(module)
+	}
+	catch(err) {
+		return null
+	}
+}

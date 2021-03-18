@@ -2,7 +2,8 @@ import path from 'path'
 import { build } from 'esbuild'
 import { existsSync, promises as fs, statSync } from 'fs'
 
-import { requireLatest } from './lib/fs'
+import { requireLatestOptional } from './lib/fs'
+import { notNullish } from './lib/util'
 
 var isProd = process.env.NODE_ENV === 'production'
 var matchHelper = require('posthtml-match-helper')
@@ -55,7 +56,7 @@ export async function bundleScript(file: string) {
 const styleCache: Record<string, { mtimeMs: number, css: string }> = {}
 const styleDepRecord: Record<string, { file: string, mtimeMs: number }[]> = {}
 
-var postcss = (sourceDir: string, rootFile: string, twConfig: object) => require('postcss')([
+var postcss = (sourceDir: string, rootFile: string, twConfig: object | null) => require('postcss')([
   require("postcss-import")({
     load(filename: string) {
       if (filename.startsWith(sourceDir) && existsSync(filename)) {
@@ -67,12 +68,12 @@ var postcss = (sourceDir: string, rootFile: string, twConfig: object) => require
       return require('postcss-import/lib/load-content')(filename)
     }
   }),
-  require('tailwindcss')(twConfig),
+  twConfig && require('tailwindcss')(twConfig),
   require('autoprefixer'),
-])
+].filter(notNullish))
 
 export async function bundleStyle(sourceDir: string, file: string): Promise<string | null> {
-  const twConfig = requireLatest(path.join(sourceDir, 'tailwind.config.js'))
+  const twConfig = requireLatestOptional(path.join(sourceDir, 'tailwind.config.js'))
   const styleStat = await fs.stat(file)
   const prev = styleCache[file]
   const deps = styleDepRecord[file]
@@ -80,7 +81,7 @@ export async function bundleStyle(sourceDir: string, file: string): Promise<stri
   if (
     prev &&
     styleStat.mtimeMs - prev.mtimeMs === 0 &&
-    !twConfig.fresh &&
+    (!twConfig || !twConfig.fresh) &&
     (
       !deps ||
       deps.every(dep => existsSync(dep.file) && statSync(dep.file).mtimeMs === dep.mtimeMs)
@@ -91,7 +92,7 @@ export async function bundleStyle(sourceDir: string, file: string): Promise<stri
   const css = await fs.readFile(file, 'utf8')
   try {
     styleDepRecord[file] = []
-    const result = await postcss(sourceDir, file, twConfig.module).process(css, {
+    const result = await postcss(sourceDir, file, twConfig && twConfig.module).process(css, {
       from: file,
       to: file,
       map: { inline: ! isProd },
