@@ -1,6 +1,6 @@
 {
   "name": "freelance",
-  "version": "0.3.20",
+  "version": "0.4.0",
   "description": "A radically simple framework for building client websites.",
   "main": "index.js",
   "repository": {
