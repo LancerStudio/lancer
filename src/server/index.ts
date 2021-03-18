@@ -80,7 +80,7 @@ router.get('/*', requireSetup(), ensureLocale(), async (req, res) => {
       site,
       user: req.user,
       cache: {},
-      locale: req.locale!,
+      locale: req.locale || site.locales[0]!,
       reqPath: path,
     }).process(html)
     res.set({ 'Content-Type': 'text/html' })
