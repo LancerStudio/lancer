@@ -1,13 +1,15 @@
-import { readFileSync, promises as fs } from 'fs'
+import { readFileSync, promises as fs, mkdirSync, readdirSync, copyFileSync, lstatSync } from 'fs'
 import glob from 'glob'
 import path from 'path'
 
 import { bundleScript, bundleStyle, posthtmlPlugin } from './bundle'
-import { clientDir, siteConfig, buildDir, sourceDir } from './config'
+import { clientDir, siteConfig, buildDir, sourceDir, staticDir, filesDir } from './config'
 import { renderPostHtmlPlugins, resolveAsset } from './render'
 
-
-export async function buildForProduction() {
+type Options = {
+  goStatic?: boolean
+}
+export async function buildForProduction({ goStatic }: Options = {}) {
   console.log("Build dir:", buildDir)
 
   const site = siteConfig()
@@ -57,7 +59,11 @@ export async function buildForProduction() {
       ]
     })
 
-    posthtml(plugins).process(readFileSync(match, 'utf8'), { sync: true })
+    const result = posthtml(plugins).process(readFileSync(match, 'utf8'), { sync: true })
+
+    if (goStatic) {
+      await fs.writeFile(path.join(buildDir, match.replace(clientDir, '')), result.html)
+    }
 
     await Promise.all([
       Promise.all(styles.map(async publicPath => {
@@ -78,5 +84,26 @@ export async function buildForProduction() {
       }))
     ])
   }
+
+  if (goStatic) {
+    console.log("\nCopying client/public folder...")
+    copyFolderSync(staticDir, buildDir)
+
+    console.log("\nCopying data/files folder...")
+    copyFolderSync(filesDir, path.join(buildDir, 'files'))
+  }
 }
 
+function copyFolderSync(from: string, to: string) {
+  mkdirSync(to, { recursive: true })
+  readdirSync(from).forEach(element => {
+    if (lstatSync(path.join(from, element)).isFile()) {
+      const src = path.join(from, element)
+
+      console.log('  -', src.replace(clientDir, 'client'))
+      copyFileSync(src, path.join(to, element))
+    } else {
+      copyFolderSync(path.join(from, element), path.join(to, element))
+    }
+  })
+}

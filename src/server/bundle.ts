@@ -69,7 +69,7 @@ const importPlugin = (sourceDir: string, rootFile: string) =>
       }
       return require('postcss-import/lib/load-content')(filename)
     }
-  }),
+  })
 
 
 const postcss = (sourceDir: string, rootFile: string, twConfig: object | null) => PostCSS([

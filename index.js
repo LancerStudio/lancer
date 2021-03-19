@@ -67,13 +67,16 @@ program
 //
 program
   .command('build')
-  .action(function () {
+  .option('--static', 'Build a static website (experimental)')
+  .action(function (options) {
+    const goStatic = !!options.static
     process.env.NODE_ENV = 'production'
     process.env.LANCER_BUILD = '1'
-    console.log("Building assets for production...")
+
+    console.log(`Building ${goStatic ? 'static html and ' : ''}assets for production...`)
 
     const { buildForProduction } = require('./dist/server/build')
-    buildForProduction().then(
+    buildForProduction({ goStatic }).then(
       () => {
         console.log("Done.")
       },
