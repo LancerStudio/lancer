@@ -7,7 +7,7 @@ import { UserRow } from './models/user'
 
 export const env = Env(['test', 'development', 'production'])
 
-const building = !!process.env.LANCER_BUILD
+const building = !!(process.env.LANCER_BUILD || process.env.LANCER_LIBRARY_BUILD)
 
 export const sessionSecret = building ? '' : env.branch(() => 'TEMP KEY', {
   production: () => read('SESSION_SECRET')
