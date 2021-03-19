@@ -1,4 +1,4 @@
-import { readFileSync, promises as fs, mkdirSync, readdirSync, copyFileSync, lstatSync } from 'fs'
+import { readFileSync, promises as fs, mkdirSync, readdirSync, copyFileSync, lstatSync, existsSync } from 'fs'
 import glob from 'glob'
 import path from 'path'
 
@@ -90,8 +90,10 @@ export async function buildForProduction({ goStatic }: Options = {}) {
     console.log("\nCopying client/public folder...")
     copyFolderSync(staticDir, buildDir)
 
-    console.log("\nCopying data/files folder...")
-    copyFolderSync(filesDir, path.join(buildDir, 'files'))
+    if (existsSync(filesDir)) {
+      console.log("\nCopying data/files folder...")
+      copyFolderSync(filesDir, path.join(buildDir, 'files'))
+    }
   }
 }
 
