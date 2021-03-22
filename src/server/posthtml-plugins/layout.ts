@@ -32,21 +32,42 @@ export default function LayoutPlugin(opts: Options = {}) {
       throw new Error(`Security: Cannot use layout file outside client/ folder: '${layoutName}'`)
     }
 
+    const mainContent = [] as any[]
+    const contentFor = {} as Record<string, any[]>
+
     const layout = parseToPostHtml(fs.readFileSync(layoutFile, 'utf8'))
 
-    Api.match.call(layout, matchHelper('yield'), () => {
-      // TODO: Support <yield name="my-stuff"> and <content-for name="my-stuff">
-      return {
-        tag: false,
-        content: tree.slice(),
-      }
+    Api.match.call(layout, matchHelper('yield'), function(node: any) {
+      const attrs = node.attrs || {}
+      const content = attrs.name
+        ? contentFor[attrs.name] || (contentFor[attrs.name] = [])
+        : mainContent
+
+      return { tag: false, content }
     })
+
+
+    tree.match(matchHelper('content-for'), function(node: any) {
+      const attrs = node.attrs || {}
+      if (!attrs.name) {
+        throw new Error(`<content-for> requires a name="" attribute`)
+      }
+      if (contentFor[attrs.name]) {
+        node.content && contentFor[attrs.name]!.push(...node.content)
+      }
+      else {
+        console.warn(`No <yield> tag found for <content-for name="${attrs.name}">`)
+      }
+      return { tag: false }
+    })
+
 
     //
     // Directly mutate tree to wray content in layout.
     // Since tree is an array extended with extra attributes,
     // we take care not to lose them.
     //
+    mainContent.push(...tree.slice())
     tree.length = 0
     tree.push(...layout)
 
