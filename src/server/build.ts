@@ -39,6 +39,7 @@ export async function buildForProduction({ goStatic }: Options = {}) {
 
   for (const match of glob.sync(path.join(clientDir, '/**/*.html'))) {
     if (path.basename(match)[0] === '_') continue
+    if (match.startsWith(staticDir)) continue
 
     const reqPath = match
       .replace(clientDir, '')
