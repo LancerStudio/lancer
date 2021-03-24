@@ -18,7 +18,11 @@ export default router
 
 
 router.use( express.static(staticDir) )
-router.use( express.static(buildDir) )
+
+if (!env.development) {
+  router.use( express.static(buildDir) )
+}
+
 mountSession(router)
 router.use( require('body-parser').json() )
 
