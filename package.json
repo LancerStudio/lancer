@@ -37,7 +37,7 @@
     "commander": "^7.0.0",
     "configstore": "^5.0.1",
     "emailjs": "^3.4.0",
-    "esbuild": "^0.8.50",
+    "esbuild": "^0.9.6",
     "express": "^4.16.2",
     "express-async-errors": "^3.1.1",
     "express-session": "^1.17.1",

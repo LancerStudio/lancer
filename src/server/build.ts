@@ -1,8 +1,11 @@
-import { readFileSync, promises as fs, mkdirSync, readdirSync, copyFileSync, lstatSync, existsSync } from 'fs'
 import glob from 'glob'
 import path from 'path'
+import crypto from 'crypto'
+import { readFileSync, promises as fs, mkdirSync, readdirSync, copyFileSync, lstatSync, existsSync } from 'fs'
+import { buildSync } from 'esbuild'
 
-import { bundleScript, bundleStyle, posthtmlPlugin } from './bundle'
+
+import { bundleScriptProd, bundleStyle, posthtmlPlugin } from './bundle'
 import { clientDir, siteConfig, buildDir, sourceDir, staticDir, filesDir } from './config'
 import { renderPostHtmlPlugins, resolveAsset } from './render'
 
@@ -14,26 +17,52 @@ export async function buildForProduction({ goStatic }: Options = {}) {
   console.log("Build dir:", buildDir)
 
   const site = siteConfig()
-  const styles = [] as string[]
-  const scripts = [] as string[]
   const posthtml = require('posthtml')
 
   const bundlePlugin = posthtmlPlugin({
-    resolveScript: function (scriptPath: string) {
+    resolveScript: async function (scriptPath: string) {
       const resolved = resolveAsset(scriptPath)
-      const path = resolved.replace(clientDir, '')
-      if (path !== '/lancer.js') {
-        scripts.push(path)
-        console.log('  -', path.replace('/', ''))
-      }
-      return path
+
+      // esbuild code splitting is still experimental, so we're only dealing with one file
+      const result = bundleScriptProd(resolved, buildDir).outputFiles[0]!
+
+      const publicPath = result.path.replace(buildDir, '')
+      console.log(`  - ${resolved.replace(clientDir, '')}\t-> ${publicPath}`)
+
+      const dest = path.join(buildDir, publicPath)
+      await fs.mkdir(path.dirname(dest), { recursive: true })
+      await fs.writeFile(dest, result.contents)
+
+      return publicPath
     },
-    resolveStyle: function (stylePath: string) {
+    resolveStyle: async function (stylePath: string) {
       const resolved = resolveAsset(stylePath)
-      const path = resolved.replace(clientDir, '')
-      styles.push(path)
-      console.log('  -', path.replace('/', ''))
-      return path
+
+      const css = await bundleStyle(sourceDir, resolved)
+      if (!css) {
+        throw new Error(`Failed to compile ${resolved}`)
+      }
+      const minifiedCss = buildSync({
+        stdin: {
+          contents: css,
+          loader: 'css',
+        },
+        write: false,
+        minify: true,
+      }).outputFiles[0]!.contents
+
+      const publicPath = path.join(
+        path.dirname(resolved.replace(clientDir, '')),
+        path.basename(resolved).replace('.css', `-${hash(minifiedCss)}.css`)
+      )
+      console.log(`  - ${resolved.replace(clientDir, '')}\t-> ${publicPath}`)
+
+      const dest = path.join(buildDir, publicPath)
+      await fs.mkdir(path.dirname(dest), { recursive: true })
+
+      await fs.writeFile(dest, minifiedCss)
+
+      return publicPath
     },
   })
 
@@ -47,7 +76,7 @@ export async function buildForProduction({ goStatic }: Options = {}) {
       .replace(/\/index\.html$/, '')
       .replace(/\.html$/, '')
 
-    console.log(match.replace(clientDir, 'client'), '->', reqPath)
+    console.log('\n', match.replace(clientDir, 'client'), '->', reqPath)
 
     const plugins = renderPostHtmlPlugins({
       user: null,
@@ -61,30 +90,11 @@ export async function buildForProduction({ goStatic }: Options = {}) {
       ]
     })
 
-    const result = posthtml(plugins).process(readFileSync(match, 'utf8'), { sync: true })
+    const result = await posthtml(plugins).process(readFileSync(match, 'utf8'))
 
     if (goStatic) {
       await fs.writeFile(path.join(buildDir, match.replace(clientDir, '')), result.html)
     }
-
-    await Promise.all([
-      Promise.all(styles.map(async publicPath => {
-        const css = await bundleStyle(sourceDir, path.join(clientDir, publicPath))
-        if (!css) {
-          throw new Error(`Failed to compile ${publicPath}`)
-        }
-        const dest = path.join(buildDir, publicPath)
-        await fs.mkdir(path.dirname(dest), { recursive: true })
-        await fs.writeFile(dest, css)
-      })),
-
-      Promise.all(scripts.map(async publicPath => {
-        const js = await bundleScript(path.join(clientDir, publicPath))
-        const dest = path.join(buildDir, publicPath)
-        await fs.mkdir(path.dirname(dest), { recursive: true })
-        await fs.writeFile(dest, js)
-      }))
-    ])
   }
 
   if (goStatic) {
@@ -110,4 +120,8 @@ function copyFolderSync(from: string, to: string) {
       copyFolderSync(path.join(from, element), path.join(to, element))
     }
   })
+}
+
+function hash(css: Uint8Array) {
+  return crypto.createHash('md5').update(css).digest('hex').substring(0, 10)
 }

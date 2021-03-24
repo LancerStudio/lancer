@@ -1,5 +1,5 @@
 import path from 'path'
-import { build } from 'esbuild'
+import { build, buildSync } from 'esbuild'
 import { existsSync, promises as fs, statSync } from 'fs'
 
 import { requireLatestOptional } from './lib/fs'
@@ -14,22 +14,30 @@ const PostCSS = require('postcss')
 // <script> and <link> tag rewriting
 //
 type PostHtmlOptions = {
-  resolveScript: (bundlePath: string) => string
-  resolveStyle: (bundlePath: string) => string
+  resolveScript: (bundlePath: string) => Promise<string>
+  resolveStyle: (bundlePath: string) => Promise<string>
 }
 export function posthtmlPlugin(options: PostHtmlOptions) {
-  return function extendAttrs(tree: any) {
+  return async function extendAttrs(tree: any) {
+    const tasks: Promise<any>[] = []
+
     tree.match(matchHelper('script[bundle]'), function(node: any) {
-      node.attrs.src = options.resolveScript(node.attrs.bundle)
-      delete node.attrs.bundle
+      tasks.push(async function() {
+        node.attrs.src = await options.resolveScript(node.attrs.bundle)
+        delete node.attrs.bundle
+      }())
       return node
     })
 
     tree.match(matchHelper('link[bundle]'), function(node: any) {
-      node.attrs.href = options.resolveStyle(node.attrs.bundle)
-      delete node.attrs.bundle
+      tasks.push(async function() {
+        node.attrs.href = await options.resolveStyle(node.attrs.bundle)
+        delete node.attrs.bundle
+      }())
       return node
     })
+
+    await Promise.all(tasks)
   }
 }
 
@@ -49,6 +57,20 @@ export async function bundleScript(file: string) {
     }
   })
   return result.outputFiles[0]!.contents
+}
+
+export function bundleScriptProd(file: string, outdir: string) {
+  return buildSync({
+    entryPoints: [file],
+    entryNames: '[dir]/[name]-[hash]',
+    bundle: true,
+    write: false,
+    minify: true,
+    outdir: outdir,
+    define: {
+      'process.env.NODE_ENV': `"production"`
+    }
+  })
 }
 
 
