@@ -11,22 +11,36 @@ program
 //
 // Init Project
 //
+const validInits = ['data', 'client', 'scripts', 'all']
 program
   .command('init [name]')
   .action(function (name) {
-    if (name && name !== 'data' && name !== 'client') {
+    if (name && !validInits.includes(name)) {
       return console.log("Unknown init name:", name)
     }
     const set = {
-      data: !name || name === 'data',
-      client: !name || name === 'client',
+      all: name === 'all',
+      data: !name || name === 'data' || name === 'all',
+      client: name === 'client' || name === 'all',
+      scripts: name === 'scripts' || name === 'all',
     }
 
     if (set.data) {
       process.env.LANCER_INIT_DATA_DIR = '1'
     }
 
-    const { clientDir, dataDir } = require('./dist/server/config')
+    const { sourceDir, clientDir, dataDir } = require('./dist/server/config')
+
+    if (set.client) {
+      require('./dist/cli/init').initClientDir(clientDir)
+    }
+    if (set.scripts) {
+      require('./dist/cli/init').initScripts(sourceDir)
+    }
+    if (set.all) {
+      require('./dist/cli/init').initConfig(sourceDir)
+    }
+
     if (set.data) {
       console.log("Initialized data directory:", dataDir)
     }

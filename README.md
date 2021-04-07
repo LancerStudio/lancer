@@ -23,10 +23,9 @@ To start a project from scratch:
 
 ```bash
 $ mkdir my-proj && cd my-proj
-$ npm init -y
-$ npm install freelance
-$ lancer init
-$ echo 'It works!' > client/index.html
+$ yarn init -y
+$ yarn add freelance
+$ lancer init all
 $ lancer dev
 ```
 
