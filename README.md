@@ -6,16 +6,16 @@
 
 Lancer is a radically simple tool for building content-focused websites. It helps you:
 
-- Start a **working** new project without zero manual setup
-- Provide your non-techical colleagues an easy-to-use UI for editing content and uploading files
-- No-hassle on-the-fly image resizing
-- End up with an extremely low-touch, maintainable codebase.
+- Start a **working** new project with zero configuration
+- Provide your non-techical clients & colleagues an easy-to-use UI for editing content and uploading files
+- Serve dynamically resized images
+- Produce an extremely low-touch, maintainable codebase.
 
-Lancer DOES NOT cater to fully-JS-rendered apps. If you're building a full-fledged web app, only use Lancer for your landing and marketing pages. For your heavy application code, we recommend something like Ruby on Rails or Next.js.
+Lancer DOES NOT cater to fully-JS-rendered apps. If you're building a full-fledged web app, I suggest using Lancer for your landing, marketing, about, etc. pages, and something like Ruby on Rails or Next.js for your heavy application code on an `app.example.com` subdomain.
 
 ## WARNING
 
-Lancer is in ALPHA. It works for what it does, but many useful features are still missing.
+Lancer is in ALPHA. It works well for what it does, but many useful features are still missing.
 
 ## Getting Started
 
@@ -35,7 +35,7 @@ If `lancer dev` didn't work, you need to add `./node_modules/.bin` to the beginn
 
 ## Workflow Overview
 
-- Create your project: `lancer create my-project`
+- Create your project: (see [Getting Started](#user-content-getting-started))
 - Write html/css/js; specify and populate data; drag files & images into `data/files`
 - Push code to a host like DigitalOcean
 - Push data and files to production: `lancer push https://example.com`
@@ -47,13 +47,12 @@ Lancer requires your content to be in a `client/` folder. Take the following exa
 
 ```txt
 client/
-  js/
-    app.js
   product/
     index.html
     pricing.html
   _layout.html
   index.html
+  index.js
   about-us.html
 ```
 
@@ -64,11 +63,11 @@ Any `.html` file in `client/` is accessible via the root path. For example:
 - Both `/` and `/index.html` in the browser map to `client/index.html`
 - Both `/product` and `/product/index.html` in the browser map to `client/product/index.html`
 
-However, there are protections. Files that start with an underscore cannot be accessed directly by the browser. JavaScript and CSS files cannot be accessed either unless they are specifically bundled by a tag (see next section).
+However, not everything is public. Files that start with an underscore cannot be accessed directly by the browser. JavaScript and CSS files cannot be accessed either unless they are specifically bundled by a tag (see next section).
 
-Applying this to the example:
+Applying this logic to the example:
 
-- `js/app.js` cannot be accessed unless a page has `<script bundle="/js/app.js"></script>`
+- `index.js` cannot be accessed unless a page has `<script bundle="/index.js"></script>`
 - `_layout.html` cannot be accessed because it starts with an underscore.
 
 
@@ -77,13 +76,13 @@ Applying this to the example:
 JavaScript and CSS files in `client/` are not immediately accessible for security. However, you can put them on a page using the special attribute `bundle` on script tags and link tags:
 
 ```html
-<script bundle="/js/family-pic.js"></script>
-<link rel="stylesheet" type="text/css" bundle="/styles/app.css">
+<script bundle="/js/my-file.js"></script>
+<link rel="stylesheet" type="text/css" bundle="/styles/my-file.css">
 ```
 
 Note how the script tag uses `bundle=` instead of `src=`, and the link tag uses `bundle=` instead of `href=`. This is how Lancer detects an asset *bundle* instead of a simple asset *file*.
 
-JavaScript is bundled using Browserify, and CSS is bundled using PostCSS.
+JavaScript is bundled using [esbuild](https://esbuild.github.io), while CSS is bundled using [PostCSS](https://postcss.org).
 
 ### Static Content
 
@@ -101,7 +100,7 @@ If you need to update content dynamically, you should probably use JavaScript to
 
 See docs for [posthtml-expressions](https://github.com/posthtml/posthtml-expressions).
 
-### Resizing Images
+### Dynamic Image Resizing
 
 For any image file in your `data/files` directory, you can request a resized version of that image quite easily. Great for image galleries or responsive image definitions.
 
@@ -175,13 +174,13 @@ $ npm build
 
 ## Roadmap
 
-- Layouts
-- Dynamic urls
+- Dynamic routes
 - Structured content (lists, etc.)
 - Database import/export UI
-- Password manager
+- Secrets manager
 
 ## Internal Notes
 
+- [SQLite is not a toy database](https://antonz.org/sqlite-is-not-a-toy-database/)
 - [Scaling sqlite3 to 4m queries per second on a single server](https://blog.expensify.com/2018/01/08/scaling-sqlite-to-4m-qps-on-a-single-server/)
 - [How Browser Language Redirect Affects Google Indexing](https://wpml.org/documentation/getting-started-guide/language-setup/automatic-redirect-based-on-browser-language/how-browser-language-redirect-affects-google-indexing/)

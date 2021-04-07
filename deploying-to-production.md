@@ -56,33 +56,54 @@ Next, create a user for you and your client:
 
 ### CapRover Setup
 
-If you've already installed CapRover, you can skip to [project setup](#project-setup)
+If you've already installed CapRover, you can skip to [app setup](#app-setup)
 
 - [One-click install CapRover](https://marketplace.digitalocean.com/apps/caprover?action=deploy&refcode=6410aa23d3f3)
   - Don't run the `docker` command (one-click already does this), but do everything else in [CapRover Setup](https://caprover.com/docs/get-started.html#caprover-setup)
-- After setup, visit your CapRover dashboard
-- Navigate to `Apps` in the sidebar
-- Check the `Has Persistent Data` checkbox
-- Create a new app
 
-### App Config Setup
+### App Setup
 
-- Sign into CapRover
-- Navigate to `Apps` in the sidebar and click on your app
-- Navigate to the `App Configs` tab
-- Add some environment variables:
-  - Key `SESSION_SECRET` with a value from running `lancer secret` locally
-  - Key `LANCER_DATA_DIR` with value `/usr/data/lancer`
-- Scroll down to `Persistent Directories`
-- Enter `/usr/data/lancer` for `Path in App` and something like `my-app-lancer-data` for `Label`
+1. Visit your CapRover dashboard
+1. Navigate to `Apps` in the sidebar
+1. Check the `Has Persistent Data` checkbox in the form
+1. Fill out a name for your app
+1. Click `Create New App`
+1. Scroll down and click your new app
+1. Navigate to the `App Configs` tab
+1. Add some environment variables:
+  a. Key `SESSION_SECRET` with a value from running `lancer secret` locally
+  a. Key `LANCER_DATA_DIR` with value `/usr/data/lancer`
+1. Scroll down and click `Add Persistent Directory`
+1. Enter `/usr/data/lancer` for `Path in App` and something like `my-app-lancer-data` for `Label`
+1. Click `Save & Update`
 
-In your local terminal, create a file named `captain-definition` in the root of your project (if you aren't using yarn, replace `yarn` with `npm` and remove `yarn.lock`):
+Next we will set up deployment. In your local terminal, create a file named `captain-definition` at the root directory of your project (if you aren't using yarn, replace `yarn` with `npm` and remove `yarn.lock`):
 
 ```json
 {
  "schemaVersion": 2,
  "dockerfileLines": [
-    "FROM node:14.15.5-alpine",
+    "FROM node:14-buster",
+    "RUN mkdir -p /usr/src/app && mkdir -p /usr/data/lancer",
+    "WORKDIR /usr/src/app",
+    "COPY package.json yarn.lock /usr/src/app/",
+    "RUN yarn && yarn cache clean --force",
+    "COPY . /usr/src/app/",
+    "RUN yarn build",
+    "ENV PORT 80",
+    "EXPOSE 80",
+    "CMD [ \"yarn\", \"start\" ]"
+  ]
+}
+```
+
+<details>
+<summary>Alpine version, may run into dependency problems</summary>
+```json
+{
+ "schemaVersion": 2,
+ "dockerfileLines": [
+    "FROM node:14-alpine",
     "RUN apk update && apk upgrade && apk add --no-cache git",
     "RUN mkdir -p /usr/src/app && mkdir -p /usr/data/lancer",
     "WORKDIR /usr/src/app",
@@ -97,18 +118,53 @@ In your local terminal, create a file named `captain-definition` in the root of 
   ]
 }
 ```
+</details>
 
-Add this new file to git, commit, and then run `caprover deploy`.
+<details>
+<summary>Multistage alpine version, but very slow until caprover supports multistage caching</summary>
+```json
+{
+ "schemaVersion": 2,
+ "dockerfileLines": [
+    "FROM node:14-alpine as builder",
+    "RUN apk add --no-cache git python make g++",
+    "RUN mkdir -p /usr/src/app",
+    "WORKDIR /usr/src/app",
+    "COPY package.json yarn.lock /usr/src/app/",
+    "RUN yarn",
+    "COPY . /usr/src/app/",
+    "ENV NODE_ENV=production",
+    "RUN yarn build",
 
-Go back to your CapRover app dashboard:
+    "FROM node:14-alpine as app",
+    "RUN mkdir -p /usr/app && mkdir -p /usr/data/lancer/cache/build",
+    "WORKDIR /usr/app",
+    "COPY --from=builder /usr/src/app/node_modules /usr/app/node_modules",
+    "COPY --from=builder /usr/src/app/data/cache/build /usr/data/lancer/cache/build",
+    "COPY . /usr/app/",
+    "ENV NODE_ENV=production PORT=80",
+    "EXPOSE 80",
+    "CMD [ \"yarn\", \"start\" ]"
+  ]
+```
+}
+</details>
+
+**Add this new `captain-definiton` file to git**, commit, and then run `caprover deploy`.
+
+Next, go back to your CapRover app dashboard:
+
 - Navigate to the `HTTP Settings` tab
 - It should tell you your app's subdomain. Click it to check if the deploy worked.
 - In the `HTTP Settings` tab, click `Enable HTTPS`
   - This will generate a certificate for you
-  - Once done, check if it worked
+  - Once done, visit the https version and see if it worked
   - If it worked, scroll down and click the `Force HTTPS...` checkbox
+  - Click `Save & Update`
 - Optional: Connect a separate domain to your project in the same `HTTP Settings` tab
 
 Once your site is running, you can push up your local data:
 
 - `lancer files:push example.com`
+
+**Recommended:** Add a `deploy` script to your `package.json` that runs `caprover deploy --default`
