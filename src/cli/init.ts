@@ -12,6 +12,7 @@ export function initScripts(sourceDir: string) {
 
 export function initConfig(sourceDir: string) {
   fs.writeFileSync(path.join(sourceDir, 'site.config.js'), siteConfig)
+  fs.writeFileSync(path.join(sourceDir, '.gitignore'), gitignore)
 }
 
 const siteConfig =
@@ -28,7 +29,6 @@ export function initClientDir(clientDir: string) {
   fs.writeFileSync(path.join(clientDir, 'index.js'), indexJs)
   fs.mkdirSync(path.join(clientDir, 'styles'), { recursive: true })
   fs.writeFileSync(path.join(clientDir, 'styles/global.css'), globalCss)
-  fs.writeFileSync(path.join(clientDir, '.gitignore'), gitignore)
 }
 
 const _layoutHtml =
