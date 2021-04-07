@@ -17,12 +17,12 @@ export async function render(html: string, ctx: PostHtmlCtx) {
   const plugins = renderPostHtmlPlugins(ctx, {
     prefix: [
       Bundle.posthtmlPlugin({
-        resolveScript: function (scriptPath: string) {
+        resolveScript: async function (scriptPath: string) {
           var resolved = resolveAsset(scriptPath)
           validScriptBundles[resolved] = true
           return resolved.replace(clientDir, '')
         },
-        resolveStyle: function (stylePath: string) {
+        resolveStyle: async function (stylePath: string) {
           var resolved = resolveAsset(stylePath)
           validStyleBundles[resolved] = true
           return resolved.replace(clientDir, '')
