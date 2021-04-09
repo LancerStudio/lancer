@@ -56,18 +56,18 @@ const _layoutHtml =
 `<!DOCTYPE html>
 <title>{{ page.title }} | {{ site.name }}</title>
 
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
-<meta lancer />
+<meta lancer>
 
-<link rel="stylesheet" type="text/css" bundle="/styles/global.css" />
+<link rel="stylesheet" type="text/css" bundle="/styles/global.css">
 
-<yield></yield>
+<yield>
 `
 
 const indexHtml =
-`<page layout title="HOME"></page>
+`<page layout title="HOME">
 
 <script bundle="/index.js"></script>
 

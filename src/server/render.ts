@@ -7,6 +7,7 @@ import * as i18n from './i18n'
 import IncludePlugin from './posthtml-plugins/include'
 import LayoutPlugin from './posthtml-plugins/layout'
 import { clientDir, filesDir, PostHtmlCtx } from "./config"
+import { POSTHTML_OPTIONS } from './lib/posthtml'
 
 export const validStyleBundles: Record<string, boolean> = {}
 export const validScriptBundles: Record<string, boolean> = {}
@@ -33,7 +34,7 @@ export async function render(html: string, ctx: PostHtmlCtx) {
       i18n.posthtmlPlugin({ Translation, ctx }),
     ]
   })
-  const result = await require('posthtml')(plugins).process(html)
+  const result = await require('posthtml')(plugins).process(html, POSTHTML_OPTIONS)
   return result.html as string
 }
 

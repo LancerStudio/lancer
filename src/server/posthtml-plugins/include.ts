@@ -1,6 +1,7 @@
-const fs = require('fs')
-const path = require('path')
-const parser = require('posthtml-parser')
+import parser from '@lancer/posthtml-parser'
+import fs from 'fs'
+import path from 'path'
+import { POSTHTML_OPTIONS } from '../lib/posthtml'
 const {match} = require('posthtml/lib/api')
 
 type Options = {
@@ -8,8 +9,8 @@ type Options = {
   encoding?: string
 }
 export default (options: Options = {}) => {
-  options.root = options.root || './'
-  options.encoding = options.encoding || 'utf-8'
+  const root = options.root || './'
+  const encoding = options.encoding || 'utf-8'
 
   return function posthtmlInclude(tree: any) {
     tree.parser = tree.parser || parser
@@ -22,10 +23,12 @@ export default (options: Options = {}) => {
       let source
 
       if (src) {
-        src = path.resolve(options.root, src)
-        source = fs.readFileSync(src, options.encoding)
+        src = path.resolve(root, src)
+        source = fs.readFileSync(src, encoding as BufferEncoding)
 
-        subtree = tree.parser(source)
+        subtree = (tree.parser as typeof parser)(source, {
+          customVoidElements: POSTHTML_OPTIONS.customVoidElements,
+        }) as any
         subtree.match = tree.match
         subtree.parser = tree.parser
         content = source.includes('include') ? posthtmlInclude(subtree) : subtree

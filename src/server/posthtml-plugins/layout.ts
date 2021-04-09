@@ -3,8 +3,9 @@
 //
 import fs from 'fs'
 import path from 'path'
-import parseToPostHtml from 'posthtml-parser'
+import parseToPostHtml from '@lancer/posthtml-parser'
 import { clientDir } from '../config'
+import { POSTHTML_OPTIONS } from '../lib/posthtml'
 
 const Api = require('posthtml/lib/api')
 const matchHelper = require('posthtml-match-helper')
@@ -35,7 +36,9 @@ export default function LayoutPlugin(opts: Options = {}) {
     const mainContent = [] as any[]
     const contentFor = {} as Record<string, any[]>
 
-    const layout = parseToPostHtml(fs.readFileSync(layoutFile, 'utf8'))
+    const layout = parseToPostHtml(fs.readFileSync(layoutFile, 'utf8'), {
+      customVoidElements: POSTHTML_OPTIONS.customVoidElements,
+    })
 
     Api.match.call(layout, matchHelper('yield'), function(node: any) {
       const attrs = node.attrs || {}

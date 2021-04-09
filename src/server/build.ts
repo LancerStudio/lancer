@@ -4,10 +4,10 @@ import crypto from 'crypto'
 import { readFileSync, promises as fs, mkdirSync, readdirSync, copyFileSync, lstatSync, existsSync } from 'fs'
 import { buildSync } from 'esbuild'
 
-
 import { bundleScriptProd, bundleStyle, posthtmlPlugin } from './bundle'
 import { clientDir, siteConfig, buildDir, sourceDir, staticDir, filesDir } from './config'
 import { renderPostHtmlPlugins, resolveAsset } from './render'
+import { POSTHTML_OPTIONS } from './lib/posthtml'
 
 type Options = {
   goStatic?: boolean
@@ -17,7 +17,6 @@ export async function buildForProduction({ goStatic }: Options = {}) {
   console.log("Build dir:", buildDir)
 
   const site = siteConfig()
-  const posthtml = require('posthtml')
 
   const bundlePlugin = posthtmlPlugin({
     resolveScript: async function (scriptPath: string) {
@@ -90,7 +89,7 @@ export async function buildForProduction({ goStatic }: Options = {}) {
       ]
     })
 
-    const result = await posthtml(plugins).process(readFileSync(match, 'utf8'))
+    const result = await require('posthtml')(plugins, POSTHTML_OPTIONS).process(readFileSync(match, 'utf8'))
 
     if (goStatic) {
       await fs.writeFile(path.join(buildDir, match.replace(clientDir, '')), result.html)
