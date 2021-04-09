@@ -1,11 +1,11 @@
 {
-  "name": "freelance",
-  "version": "0.4.10",
-  "description": "A radically simple framework for building client websites.",
+  "name": "@lancer/studio",
+  "version": "0.4.11",
+  "description": "Build client websites with power and simplicity.",
   "main": "index.js",
   "repository": {
     "type": "github",
-    "url": "https://github.com/gilbert/freelance"
+    "url": "https://github.com/LancerStudio/lancer"
   },
   "scripts": {
     "build": "tsc && npm run build-assets",
