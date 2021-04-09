@@ -90,6 +90,7 @@
     "@types/yauzl": "^2.9.1",
     "@types/yazl": "^2.4.2",
     "autosize": "^4.0.2",
+    "kleur": "^4.1.4",
     "mithril": "^2.0.4",
     "mithril-machine-tools": "^1.0.0-rc.11",
     "nodemon": "^2.0.7",

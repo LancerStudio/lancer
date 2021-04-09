@@ -1,5 +1,6 @@
 import * as fs from 'fs'
 import * as path from 'path'
+import { green, yellow, cyan } from 'kleur'
 
 export function initScripts(sourceDir: string) {
   const file = path.join(sourceDir, 'package.json')
@@ -7,12 +8,16 @@ export function initScripts(sourceDir: string) {
   pkg.scripts ||= {}
   pkg.scripts.start = 'lancer production'
   pkg.scripts.build = 'lancer build'
+  pkg.scripts.init = 'lancer init'
+  pkg.scripts.dev = 'lancer dev'
   fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + '\n')
+  console.log(cyan(`[update] package.json`))
 }
 
 export function initConfig(sourceDir: string) {
-  fs.writeFileSync(path.join(sourceDir, 'site.config.js'), siteConfig)
-  fs.writeFileSync(path.join(sourceDir, '.gitignore'), gitignore)
+  write(sourceDir, path.join(sourceDir, 'site.config.js'), siteConfig)
+  write(sourceDir, path.join(sourceDir, '.gitignore'), gitignore)
+  write(sourceDir, path.join(sourceDir, 'README.md'), readme)
 }
 
 const siteConfig =
@@ -23,12 +28,28 @@ module.exports = {
 }
 `
 
-export function initClientDir(clientDir: string) {
-  fs.writeFileSync(path.join(clientDir, '_layout.html'), _layoutHtml)
-  fs.writeFileSync(path.join(clientDir, 'index.html'), indexHtml)
-  fs.writeFileSync(path.join(clientDir, 'index.js'), indexJs)
+const readme =
+`# New Lancer Project
+
+This is a new Lancer project. Read more at [lancer.studio](https://lancer.studio)
+
+## Getting Started
+
+After cloning this project:
+
+\`\`\`bash
+$ npm
+$ npm run init
+$ npm run dev
+\`\`\`
+`
+
+export function initClientDir(sourceDir: string, clientDir: string) {
+  write(sourceDir, path.join(clientDir, '_layout.html'), _layoutHtml)
+  write(sourceDir, path.join(clientDir, 'index.html'), indexHtml)
+  write(sourceDir, path.join(clientDir, 'index.js'), indexJs)
   fs.mkdirSync(path.join(clientDir, 'styles'), { recursive: true })
-  fs.writeFileSync(path.join(clientDir, 'styles/global.css'), globalCss)
+  write(sourceDir, path.join(clientDir, 'styles/global.css'), globalCss)
 }
 
 const _layoutHtml =
@@ -55,7 +76,7 @@ const indexHtml =
 `
 
 const indexJs =
-`console.log("Project init success.")
+`console.log("Success. Find me in client/index.js")
 `
 
 const globalCss =
@@ -68,3 +89,13 @@ const gitignore =
 `node_modules/
 data/
 `
+
+function write(sourceDir: string, file: string, content: string) {
+  if (!fs.existsSync(file)) {
+    console.log(green(`   [new] ${file.replace(sourceDir+'/', '')}`))
+    fs.writeFileSync(file, content)
+  }
+  else {
+    console.log(yellow(`[exists] ${file.replace(sourceDir+'/', '')}`))
+  }
+}

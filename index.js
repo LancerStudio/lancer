@@ -32,13 +32,13 @@ program
     const { sourceDir, clientDir, dataDir } = require('./dist/server/config')
 
     if (set.client) {
-      require('./dist/cli/init').initClientDir(clientDir)
-    }
-    if (set.scripts) {
-      require('./dist/cli/init').initScripts(sourceDir)
+      require('./dist/cli/init').initClientDir(sourceDir, clientDir)
     }
     if (set.all) {
       require('./dist/cli/init').initConfig(sourceDir)
+    }
+    if (set.scripts) {
+      require('./dist/cli/init').initScripts(sourceDir)
     }
 
     if (set.data) {
