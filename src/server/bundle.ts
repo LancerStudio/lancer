@@ -111,7 +111,7 @@ export async function bundleStyle(sourceDir: string, file: string): Promise<stri
     siteConfig().cacheCssInDev !== false &&
     prev &&
     styleStat.mtimeMs - prev.mtimeMs === 0 &&
-    (!twConfig || !twConfig.fresh) &&
+    (!twConfig || twConfig.fresh !== true && twConfig.module.mode !== 'jit') &&
     (!postCssConfig || !postCssConfig.fresh) &&
     (
       !deps ||
