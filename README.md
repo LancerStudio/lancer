@@ -24,7 +24,7 @@ To start a project from scratch:
 ```bash
 $ mkdir my-proj && cd my-proj
 $ npm init -y
-$ npm install freelance
+$ npm install @lancer/studio
 $ npx lancer init all
 $ npm run dev
 ```
