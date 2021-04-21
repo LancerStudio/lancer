@@ -43,6 +43,8 @@ export const staticDir = handleRelative( read('LANCER_STATIC_DIR', joinp(clientD
 export const previewsDir = joinp(cacheDir, '/previews')
 
 export type PostHtmlCtx = {
+  /** Not present when building static */
+  req?: Request,
   /** Config from the site's site.config.js file */
   site: SiteConfig
   /** The signed in user */
@@ -53,6 +55,8 @@ export type PostHtmlCtx = {
   locale: string
   /** The value of the relevant req.path, EXCLUDING locale */
   reqPath: string
+  /** The html file being rendered */
+  filename: string
 }
 
 export type SiteConfig = {

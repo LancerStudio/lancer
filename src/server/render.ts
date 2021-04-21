@@ -8,6 +8,7 @@ import IncludePlugin from './posthtml-plugins/include'
 import LayoutPlugin from './posthtml-plugins/layout'
 import { clientDir, filesDir, PostHtmlCtx } from "./config"
 import { POSTHTML_OPTIONS } from './lib/posthtml'
+import { ssr } from './lib/ssr'
 
 export const validStyleBundles: Record<string, boolean> = {}
 export const validScriptBundles: Record<string, boolean> = {}
@@ -15,7 +16,12 @@ export const validScriptBundles: Record<string, boolean> = {}
 
 export async function render(html: string, ctx: PostHtmlCtx) {
   const { Translation } = require('./models')
-  const plugins = renderPostHtmlPlugins(ctx, {
+
+  const locals = makeLocals(ctx)
+
+  await ssr({ locals, ctx })
+
+  const plugins = renderPostHtmlPlugins(locals, {
     prefix: [
       Bundle.posthtmlPlugin({
         resolveScript: async function (scriptPath: string) {
@@ -38,10 +44,29 @@ export async function render(html: string, ctx: PostHtmlCtx) {
   return result.html as string
 }
 
-export function renderPostHtmlPlugins(ctx: PostHtmlCtx, opts: {
+export function renderPostHtmlPlugins(locals: any, opts: {
   prefix: ((tree: any) => void)[],
   postfix?: ((tree: any) => void)[],
 }) {
+  return [
+    LayoutPlugin({
+      onPageAttrs(attrs) {
+        locals.page = { ...attrs, ...locals.page }
+      }
+    }),
+    ...opts.prefix,
+    IncludePlugin({ root: clientDir, encoding: 'utf8' }),
+
+    require('posthtml-expressions')({
+      scopeTags: ['context'],
+      locals,
+    }),
+
+    ...(opts.postfix || []),
+  ]
+}
+
+export function makeLocals(ctx: PostHtmlCtx) {
   const locals = {
     currentUser: ctx.user,
 
@@ -89,22 +114,7 @@ export function renderPostHtmlPlugins(ctx: PostHtmlCtx, opts: {
     },
   }
 
-  return [
-    LayoutPlugin({
-      onPageAttrs(attrs) {
-        locals.page = { ...attrs, ...locals.page }
-      }
-    }),
-    ...opts.prefix,
-    IncludePlugin({ root: clientDir, encoding: 'utf8' }),
-
-    require('posthtml-expressions')({
-      scopeTags: ['context'],
-      locals,
-    }),
-
-    ...(opts.postfix || []),
-  ]
+  return locals
 }
 
 export function resolveAsset (assetPath: string) {

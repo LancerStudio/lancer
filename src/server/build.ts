@@ -6,8 +6,9 @@ import { buildSync } from 'esbuild'
 
 import { bundleScriptProd, bundleStyle, posthtmlPlugin } from './bundle'
 import { clientDir, siteConfig, buildDir, sourceDir, staticDir, filesDir } from './config'
-import { renderPostHtmlPlugins, resolveAsset } from './render'
+import { makeLocals, renderPostHtmlPlugins, resolveAsset } from './render'
 import { POSTHTML_OPTIONS } from './lib/posthtml'
+import { ssr } from './lib/ssr'
 
 type Options = {
   goStatic?: boolean
@@ -77,17 +78,22 @@ export async function buildForProduction({ goStatic }: Options = {}) {
 
     console.log('\n', match.replace(clientDir, 'client'), '->', reqPath)
 
-    const plugins = renderPostHtmlPlugins({
+    const ctx = {
       user: null,
       cache: {},
       locale: site.locales[0]!,
       site: site,
       reqPath,
-    }, {
+      filename: match,
+    }
+    const locals = makeLocals(ctx)
+    const plugins = renderPostHtmlPlugins(locals, {
       prefix: [
         bundlePlugin
       ]
     })
+
+    await ssr({ locals, ctx })
 
     const result = await require('posthtml')(plugins, POSTHTML_OPTIONS).process(readFileSync(match, 'utf8'))
 

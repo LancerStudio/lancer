@@ -86,6 +86,7 @@ router.get('/*', requireSetup(), ensureLocale(), async (req, res) => {
       cache: {},
       locale: req.locale || site.locales[0]!,
       reqPath: path,
+      filename,
     })
     res.set({ 'Content-Type': 'text/html' })
     res.send(html)
