@@ -1,14 +1,17 @@
 import { existsSync, promises as fs } from 'fs'
+import path from 'path'
 import express from 'express'
 
 import * as Dev from './dev'
 import * as Bundle from './bundle'
-import { staticDir, siteConfig, env, filesDir, sourceDir, buildDir, hydrateDir } from './config'
+import { staticDir, siteConfig, env, filesDir, sourceDir, buildDir, hydrateDir, clientDir } from './config'
 import { resolveFile } from './files'
 import { render, resolveAsset, validScriptBundles, validStyleBundles } from './render'
 import { mountSession } from './lib/session'
 import { ensureLocale } from './i18n'
 import { guardTempPassword, requireSetup } from './dev/setup'
+import { buildSsrFile, ssrBuildFile } from './lib/ssr'
+import { requireLatestOptional } from './lib/fs'
 
 require('express-async-errors')
 
@@ -29,6 +32,29 @@ router.use( require('body-parser').json() )
 
 Dev.mount(router)
 
+router.post('/lrpc', async (req, res) => {
+  const ns = req.body.namespace
+  if (!ns.match(/\.server$/)) return res.sendStatus(404)
+
+  if (env.development) {
+    // Warning: Some logic duplicated from ssr.ts
+    let ssrFile = path.join(clientDir, `${ns}.js`)
+    if (!existsSync(ssrFile)) ssrFile = path.join(clientDir, `${ns}.ts`)
+    if (!existsSync(ssrFile)) {
+      console.error('No such js/ts file:', `client/${ns}`)
+      return res.sendStatus(404)
+    }
+
+    await buildSsrFile(ssrFile)
+  }
+
+  const rpcs = requireLatestOptional(ssrBuildFile(`${ns}.js`))
+  const rpc = rpcs && rpcs.module[req.body.method]
+  if (!rpc) return res.sendStatus(404)
+
+  const result = await rpc(...req.body.args)
+  return res.send(result)
+})
 
 router.get('/*', requireSetup(), ensureLocale(), async (req, res) => {
   const path = req.locale ? req.path.replace(`/${req.locale}`, '') : req.path

@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { cacheDir, clientDir, PostHtmlCtx } from "../config"
-import { build } from 'esbuild'
+import { build, Plugin } from 'esbuild'
 import { requireLatest } from './fs'
 import { cyan, green } from 'kleur'
 
@@ -41,7 +41,7 @@ export async function ssr({ctx, locals}: Inputs) {
 }
 
 export async function buildSsrFile(ssrFile: string) {
-  const outfile = path.join(cacheDir, 'ssr', ssrFile.replace(clientDir, '')).replace(/\.ts$/, '.js')
+  const outfile = ssrBuildFile(ssrFile)
 
   await build({
     entryPoints: [ssrFile],
@@ -67,17 +67,56 @@ export async function buildHydrateScript(ssrFile: string, outfile: string) {
     bundle: true,
     minify: isProd,
     sourcemap: true,
+    plugins: [injectRpcsPlugin],
     define: {
       'process.env.NODE_ENV': `"${isProd ? 'production' : 'development'}"`
     }
   })
 }
 
+export function ssrBuildFile(ssrFile: string) {
+  return path.join(cacheDir, 'ssr', ssrFile.replace(clientDir, '')).replace(/\.ts$/, '.js')
+}
+
 // https://github.com/evanw/esbuild/issues/619#issuecomment-751995294
-const makeAllPackagesExternalPlugin = {
+const makeAllPackagesExternalPlugin: Plugin = {
   name: 'make-all-packages-external',
-  setup(build: any) {
+  setup(build) {
     let filter = /^[^.\/]|^\.[^.\/]|^\.\.[^\/]/ // Must not start with "/" or "./" or "../"
-    build.onResolve({ filter }, (args: any) => ({ path: args.path, external: true }))
+    build.onResolve({ filter }, args => ({ path: args.path, external: true }))
   },
+}
+
+const injectRpcsPlugin: Plugin = {
+  name: 'inject-rpcs',
+  setup(build) {
+    let filter = /\.server\.(js|ts)$/
+    build.onLoad({ filter }, args => ({
+      contents: makeRpcFile(args.path, Object.keys(requireLatest(ssrBuildFile(args.path)).module))
+    }))
+  },
+}
+
+function makeRpcFile(sourcePath: string, methods: string[]) {
+  return (
+`export const namespace = '${sourcePath.replace(clientDir+'/', '').replace(/\.(js|ts)$/, '')}'
+const _rpc = (method) => async (...args) => {
+  const res = await fetch('/lrpc', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ namespace, method, args }),
+  })
+  if (res.status === 204) return
+  else if (res.status === 200) {
+    return res.headers.get('Content-Type').match('application/json') ? res.json() : res.text()
+  }
+  else {
+    const err = new Error(\`[\${namespace}/rpc] Status code \${res.status}\`)
+    err.res = res
+    throw err
+  }
+}
+${methods.filter(m => m !== 'default').map(m => `export const ${m} = _rpc('${m}')`).join('\n')}
+`
+  )
 }
