@@ -1,6 +1,5 @@
 import glob from 'glob'
 import path from 'path'
-import crypto from 'crypto'
 import { readFileSync, promises as fs, mkdirSync, readdirSync, copyFileSync, lstatSync, existsSync } from 'fs'
 import { buildSync } from 'esbuild'
 
@@ -9,6 +8,7 @@ import { clientDir, siteConfig, buildDir, sourceDir, staticDir, filesDir } from 
 import { makeLocals, renderPostHtmlPlugins, resolveAsset } from './render'
 import { POSTHTML_OPTIONS } from './lib/posthtml'
 import { ssr } from './lib/ssr'
+import { hashContent } from './lib/util'
 
 type Options = {
   goStatic?: boolean
@@ -53,7 +53,7 @@ export async function buildForProduction({ goStatic }: Options = {}) {
 
       const publicPath = path.join(
         path.dirname(resolved.replace(clientDir, '')),
-        path.basename(resolved).replace('.css', `-${hash(minifiedCss)}.css`)
+        path.basename(resolved).replace('.css', `-${hashContent(minifiedCss)}.css`)
       )
       console.log(`  - ${resolved.replace(clientDir, '')}\t-> ${publicPath}`)
 
@@ -125,8 +125,4 @@ function copyFolderSync(from: string, to: string) {
       copyFolderSync(path.join(from, element), path.join(to, element))
     }
   })
-}
-
-function hash(css: Uint8Array) {
-  return crypto.createHash('md5').update(css).digest('hex').substring(0, 10)
 }

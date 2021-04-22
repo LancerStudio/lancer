@@ -3,7 +3,7 @@ import express from 'express'
 
 import * as Dev from './dev'
 import * as Bundle from './bundle'
-import { staticDir, siteConfig, env, filesDir, sourceDir, buildDir } from './config'
+import { staticDir, siteConfig, env, filesDir, sourceDir, buildDir, hydrateDir } from './config'
 import { resolveFile } from './files'
 import { render, resolveAsset, validScriptBundles, validStyleBundles } from './render'
 import { mountSession } from './lib/session'
@@ -17,6 +17,7 @@ const router = express.Router()
 export default router
 
 
+router.use( express.static(hydrateDir) )
 router.use( express.static(staticDir) )
 
 if (!env.development) {

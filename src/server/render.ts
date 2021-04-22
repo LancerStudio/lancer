@@ -55,7 +55,7 @@ export function renderPostHtmlPlugins(locals: any, opts: {
       }
     }),
     ...opts.prefix,
-    IncludePlugin({ root: clientDir, encoding: 'utf8' }),
+    IncludePlugin({ locals, root: clientDir, encoding: 'utf8' }),
 
     require('posthtml-expressions')({
       scopeTags: ['context'],

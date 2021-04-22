@@ -40,6 +40,7 @@ export const buildDir = handleRelative( read('LANCER_BUILD_DIR', joinp(cacheDir,
 export const filesDir = joinp(dataDir, '/files')
 export const clientDir = joinp(sourceDir, '/client')
 export const staticDir = handleRelative( read('LANCER_STATIC_DIR', joinp(clientDir, '/public')) )
+export const hydrateDir = handleRelative( read('LANCER_HYDRATE_DIR', joinp(cacheDir, '/hydrate')) )
 export const previewsDir = joinp(cacheDir, '/previews')
 
 export type PostHtmlCtx = {
