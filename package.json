@@ -37,6 +37,7 @@
     "better-sqlite3": "^7.1.2",
     "commander": "^7.0.0",
     "configstore": "^5.0.1",
+    "dotenv": "^8.2.0",
     "emailjs": "^3.4.0",
     "esbuild": "^0.9.6",
     "express": "^4.16.2",
