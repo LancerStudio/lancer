@@ -25,3 +25,7 @@ export function requireLatestOptional(module: string) {
 		return null
 	}
 }
+
+export function requireUserland(sourceDir: string, module: string) {
+	return require(require.resolve(module, { paths: [sourceDir] }))
+}

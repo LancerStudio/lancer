@@ -2,7 +2,7 @@ import path from 'path'
 import { build, buildSync } from 'esbuild'
 import { existsSync, promises as fs, statSync } from 'fs'
 
-import { requireLatestOptional } from './lib/fs'
+import { requireLatestOptional, requireUserland } from './lib/fs'
 import { notNullish } from './lib/util'
 import { siteConfig } from './config'
 
@@ -96,7 +96,7 @@ const importPlugin = (sourceDir: string, rootFile: string) =>
 
 const postcss = (sourceDir: string, rootFile: string, twConfig: object | null) => PostCSS([
   importPlugin(sourceDir, rootFile),
-  twConfig && require('tailwindcss')(twConfig),
+  twConfig && requireUserland(sourceDir, 'tailwindcss')(twConfig),
   require('autoprefixer'),
 ].filter(notNullish))
 

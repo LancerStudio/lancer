@@ -3,7 +3,7 @@ import fs from 'fs'
 import vm from 'vm'
 import path from 'path'
 import { clientDir, hydrateDir, sourceDir } from '../config'
-import { requireLatest } from '../lib/fs'
+import { requireLatest, requireUserland } from '../lib/fs'
 import { POSTHTML_OPTIONS } from '../lib/posthtml'
 import { buildHydrateScript, buildSsrFile } from '../lib/ssr'
 import { checksumFile } from '../lib/util'
@@ -82,8 +82,8 @@ async function wrapMithril(file: string, nodeAttrs: any, locals: object) {
   const outfile = await buildSsrFile(file)
   const component = requireLatest(outfile).module.default
 
-  const m = require(require.resolve('mithril', { paths: [sourceDir] }))
-  const renderMithril = require(require.resolve('mithril-node-render', { paths: [sourceDir] }))
+  const m = requireUserland(sourceDir, 'mithril')
+  const renderMithril = requireUserland(sourceDir, 'mithril-node-render')
 
   const args = vm.runInNewContext(`_$_=${nodeAttrs.args || '{}'}`, locals, { microtaskMode: 'afterEvaluate' })
   delete nodeAttrs.args
