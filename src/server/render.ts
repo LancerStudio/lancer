@@ -132,7 +132,7 @@ export function resolveAsset (assetPath: string) {
   if ( !filename.startsWith(filesDir) && !filename.startsWith(clientDir) ) {
     throw new Error('Access denied')
   }
-  if ( path.basename(filename)[0] === '_' ) {
+  if ( path.basename(filename)[0] === '_' && filename.endsWith('html') ) {
     throw new Error('Access denied (partial)')
   }
   return filename
