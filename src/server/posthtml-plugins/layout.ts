@@ -22,9 +22,9 @@ export default function LayoutPlugin(opts: Options = {}) {
       return { tag: false }
     })
 
-    if (!pageAttrs || !('layout' in pageAttrs)) return
+    if (!pageAttrs || pageAttrs.layout === 'false') return
 
-    const layoutName = pageAttrs.layout === '' ? '_layout.html' : pageAttrs.layout
+    const layoutName = ['', undefined, true].includes(pageAttrs.layout) ? '_layout.html' : pageAttrs.layout
     const layoutFile = path.join(clientDir, layoutName)
     if (!layoutFile || !fs.existsSync(layoutFile)) {
       throw new Error(`No such layout file: '${layoutName}'`)

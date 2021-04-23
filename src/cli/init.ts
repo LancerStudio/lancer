@@ -65,7 +65,7 @@ const _layoutHtml =
 <yield>
 `
 const indexHtml =
-`<page layout title="HOME">
+`<page title="HOME">
 
 <script bundle="/index.js"></script>
 
