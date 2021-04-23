@@ -67,6 +67,8 @@ export function renderPostHtmlPlugins(locals: any, opts: {
 }
 
 export function makeLocals(ctx: PostHtmlCtx) {
+  const globClient = globDir(clientDir, '/')
+
   const locals = {
     currentUser: ctx.user,
 
@@ -84,16 +86,43 @@ export function makeLocals(ctx: PostHtmlCtx) {
 
     getLang: i18n.getLang,
 
-    globFiles(pattern: string) {
-      const files = glob.sync(pattern, {
-        cwd: filesDir
+    globFiles: globDir(filesDir, '/files/'),
+    globClient(pattern: string) {
+      const files = globClient(pattern)
+      //
+      // Read and assign page attributes for html files
+      //
+      const RL = require('n-readlines')
+      return files.map(file => {
+        if (!file.file.endsWith('.html')) return file
+
+        const lines = new RL(file.file)
+        let pageTag = ''
+        let rawLine: Buffer
+        while (rawLine = lines.next()) {
+          const line = rawLine.toString('utf8')
+          if (line.match(/^\w*$/)) continue
+          if (!line.match(/^\w*<page\b/)) break
+
+          pageTag = line
+          while (rawLine = lines.next()) {
+            pageTag += '\n' + rawLine.toString('utf8')
+            if (pageTag.indexOf('>') >= 0) break
+          }
+
+          let pageAttrs: any
+          const parser = new (require("htmlparser2").Parser)({
+            onopentag(name: string, attrs: any) {
+              if (name === 'page') pageAttrs = attrs
+            }
+          })
+          parser.write(pageTag)
+          parser.end()
+
+          return { ...file, attrs: pageAttrs }
+        }
+        return file
       })
-      .map(file => ({
-        src: `/files/${file}`,
-        file: path.join(filesDir, file),
-      }))
-      files.sort((a, b) => a.file.localeCompare(b.file))
-      return files
     },
 
     getDims(imageFile: string) {
@@ -115,6 +144,18 @@ export function makeLocals(ctx: PostHtmlCtx) {
   }
 
   return locals
+}
+
+const globDir = (dir: string, srcPath: string) => (pattern: string) => {
+  const files = glob.sync(pattern, {
+    cwd: dir
+  })
+  .map(file => ({
+    href: `${srcPath}${file}`,
+    file: path.join(dir, file),
+  }))
+  files.sort((a, b) => a.file.localeCompare(b.file))
+  return files
 }
 
 export function resolveAsset (assetPath: string) {
