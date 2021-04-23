@@ -27,7 +27,6 @@ module.exports = {
   locales: ['en'],
 }
 `
-
 const readme =
 `# New Lancer Project
 
@@ -65,7 +64,6 @@ const _layoutHtml =
 
 <yield>
 `
-
 const indexHtml =
 `<page layout title="HOME">
 
@@ -74,20 +72,49 @@ const indexHtml =
 <h1>Home Page</h1>
 <p>Find me in client/index.html</p>
 `
-
 const indexJs =
 `console.log("Success. Find me in client/index.js")
 `
-
 const globalCss =
 `body {
   background: #e9e9e9;
 }
 `
-
 const gitignore =
 `node_modules/
 data/
+`
+
+export function initTailwind(sourceDir: string) {
+  const cssFile = path.join(sourceDir, 'client/styles/global.css')
+  if (fs.existsSync(cssFile)) {
+    const source = fs.readFileSync(cssFile, 'utf8')
+    if (!source.match(`@import "tailwindcss/base"`)) {
+      fs.writeFileSync(cssFile, tailwindImports + '\n' + source)
+      console.log(cyan(`[update] ${cssFile.replace(sourceDir+'/', '')}`))
+    }
+  }
+
+  write(sourceDir, path.join(sourceDir, 'tailwind.config.js'), tailwindConfigJs)
+
+  console.log(cyan('\nInstalling tailwindcss...'))
+  require('child_process').spawnSync(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['install', 'tailwindcss'], { stdio: [0,1,2] })
+}
+
+const tailwindConfigJs =
+`module.exports = {
+  mode: 'jit',
+  purge: [
+    './client/**/*.html',
+    './client/**/*.js',
+    './client/**/*.ts',
+  ],
+}
+`
+const tailwindImports =
+`@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 `
 
 function write(sourceDir: string, file: string, content: string) {

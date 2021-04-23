@@ -11,7 +11,7 @@ program
 //
 // Init Project
 //
-const validInits = ['data', 'client', 'scripts', 'all']
+const validInits = ['data', 'client', 'scripts', 'tailwind', 'all']
 program
   .command('init [name]')
   .action(function (name) {
@@ -23,6 +23,7 @@ program
       data: !name || name === 'data' || name === 'all',
       client: name === 'client' || name === 'all',
       scripts: name === 'scripts' || name === 'all',
+      tailwind: name === 'tailwind',
     }
 
     if (set.data) {
@@ -40,12 +41,12 @@ program
     if (set.scripts) {
       require('./dist/cli/init').initScripts(sourceDir)
     }
+    if (set.tailwind) {
+      require('./dist/cli/init').initTailwind(sourceDir)
+    }
 
     if (set.data) {
       console.log("Initialized data directory:", dataDir)
-    }
-    if (set.client) {
-      console.log("Initialized client directory:", clientDir)
     }
   })
 
