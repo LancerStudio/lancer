@@ -6,15 +6,22 @@ import path from 'path'
 import parseToPostHtml from '@lancer/posthtml-parser'
 import { clientDir } from '../config'
 import { POSTHTML_OPTIONS } from '../lib/posthtml'
+import { interpolate } from '../lib/ssr'
 
 const Api = require('posthtml/lib/api')
 const matchHelper = require('posthtml-match-helper')
 
-type Options = {
-  onPageAttrs?(attrs: Record<string,string>): void
+type NestedLayoutContext = {
+  childPageAttrs: object
+  onPageAttrs: Options['onPageAttrs']
 }
-export default function LayoutPlugin(opts: Options = {}) {
-  return function layoutPlugin(tree: any) {
+
+type Options = {
+  locals: object
+  onPageAttrs(attrs: Record<string,string>): void
+}
+export default function LayoutPlugin({ locals, onPageAttrs }: Options) {
+  return function layoutPlugin(this: undefined | NestedLayoutContext, tree: any) {
     let pageAttrs: any = null
     tree.match(matchHelper('page'), function(node: any) {
       pageAttrs = node.attrs || {}
@@ -23,6 +30,12 @@ export default function LayoutPlugin(opts: Options = {}) {
     })
 
     if (!pageAttrs || pageAttrs.layout === 'false') return
+
+    for (let attr in pageAttrs) {
+      pageAttrs[attr] = interpolate({ ...locals, page: this?.childPageAttrs || {} }, pageAttrs[attr])
+    }
+
+    if (this) pageAttrs = { ...this.childPageAttrs, ...pageAttrs }
 
     const layoutName = ['', undefined, true].includes(pageAttrs.layout) ? '_layout.html' : pageAttrs.layout
     const layoutFile = path.join(clientDir, layoutName)
@@ -64,7 +77,6 @@ export default function LayoutPlugin(opts: Options = {}) {
       return { tag: false }
     })
 
-
     //
     // Directly mutate tree to wray content in layout.
     // Since tree is an array extended with extra attributes,
@@ -74,6 +86,13 @@ export default function LayoutPlugin(opts: Options = {}) {
     tree.length = 0
     tree.push(...layout)
 
-    opts.onPageAttrs?.(pageAttrs)
+    if (layoutName !== '_layout.html') {
+      // This may be a nested layout. Recurse.
+      const {layout, ...childPageAttrs} = pageAttrs
+      layoutPlugin.call({ childPageAttrs, onPageAttrs }, tree)
+    }
+    else {
+      onPageAttrs(pageAttrs)
+    }
   }
 }

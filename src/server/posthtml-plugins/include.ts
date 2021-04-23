@@ -1,11 +1,10 @@
 import parser from '@lancer/posthtml-parser'
 import fs from 'fs'
-import vm from 'vm'
 import path from 'path'
 import { clientDir, hydrateDir, sourceDir } from '../config'
 import { requireLatest, requireUserland } from '../lib/fs'
 import { POSTHTML_OPTIONS } from '../lib/posthtml'
-import { buildHydrateScript, buildSsrFile } from '../lib/ssr'
+import { buildHydrateScript, buildSsrFile, runInContext } from '../lib/ssr'
 import { checksumFile } from '../lib/util'
 const {match} = require('posthtml/lib/api')
 
@@ -85,7 +84,7 @@ async function wrapMithril(file: string, nodeAttrs: any, locals: object) {
   const m = requireUserland(sourceDir, 'mithril')
   const renderMithril = requireUserland(sourceDir, 'mithril-node-render')
 
-  const args = vm.runInNewContext(`_$_=${nodeAttrs.args || '{}'}`, locals, { microtaskMode: 'afterEvaluate' })
+  const args = runInContext(locals, nodeAttrs.args || '{}')
   delete nodeAttrs.args
 
   const html = await renderMithril.sync(m(component, args))

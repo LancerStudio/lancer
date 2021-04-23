@@ -51,6 +51,7 @@ export function renderPostHtmlPlugins(locals: any, opts: {
 }) {
   return [
     LayoutPlugin({
+      locals,
       onPageAttrs(attrs) {
         locals.page = { ...attrs, ...locals.page }
       }
