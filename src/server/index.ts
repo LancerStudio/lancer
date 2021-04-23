@@ -97,6 +97,20 @@ router.get('/*', requireSetup(), ensureLocale(), async (req, res) => {
     }
   }
   else if ( filename.match(/\.html$/) && existsSync(filename) ) {
+    await renderHtml(filename)
+  }
+  else if ( filename.match(/\.html$/) ) {
+    const folderIndex = filename.replace(/\.html$/, '/index.html')
+    if (existsSync(folderIndex)) {
+      await renderHtml(folderIndex)
+    }
+    else notFound()
+  }
+  else {
+    notFound()
+  }
+
+  async function renderHtml(filename: string) {
     //
     // Only check temp passwords here
     // to avoid catching requests like favicon.io
@@ -106,8 +120,6 @@ router.get('/*', requireSetup(), ensureLocale(), async (req, res) => {
     }
     console.log('         -->', filename.replace(sourceDir+'/', ''))
     const htmlSrc = await fs.readFile(filename, 'utf8')
-    // const frontMatter = fm(html)
-    // const result = await reshape.process(html, { frontMatter: frontMatter })
     const site = siteConfig()
     const html = await render(htmlSrc, {
       site,
@@ -120,7 +132,8 @@ router.get('/*', requireSetup(), ensureLocale(), async (req, res) => {
     res.set({ 'Content-Type': 'text/html' })
     res.send(html)
   }
-  else {
+
+  function notFound() {
     if (existsSync(filename)) {
       console.log(' >> Access denied', path)
     }
