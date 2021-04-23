@@ -9,6 +9,7 @@ import LayoutPlugin from './posthtml-plugins/layout'
 import { clientDir, filesDir, PostHtmlCtx } from "./config"
 import { POSTHTML_OPTIONS } from './lib/posthtml'
 import { ssr } from './lib/ssr'
+import TemplatePlugin from './posthtml-plugins/template'
 
 export const validStyleBundles: Record<string, boolean> = {}
 export const validScriptBundles: Record<string, boolean> = {}
@@ -56,6 +57,7 @@ export function renderPostHtmlPlugins(locals: any, opts: {
     }),
     ...opts.prefix,
     IncludePlugin({ locals, root: clientDir, encoding: 'utf8' }),
+    TemplatePlugin(),
 
     require('posthtml-expressions')({
       scopeTags: ['context'],
@@ -111,7 +113,7 @@ export function makeLocals(ctx: PostHtmlCtx) {
           }
 
           let pageAttrs: any
-          const parser = new (require("htmlparser2").Parser)({
+          const parser = new (require("@lancer/htmlparser2").Parser)({
             onopentag(name: string, attrs: any) {
               if (name === 'page') pageAttrs = attrs
             }

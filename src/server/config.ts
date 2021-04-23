@@ -65,6 +65,7 @@ export type SiteConfig = {
   locales: string[]
   cacheCssInDev: boolean
   imagePreviews: Record<string, POJO<any>> | ((sharp: typeof import('sharp')) => Record<string, POJO<any>>)
+  templateTypes: Record<string, (html: string) => string | Promise<string>>
 }
 export const siteConfig: () => SiteConfig = () => {
   const defaults: SiteConfig = {
@@ -72,6 +73,7 @@ export const siteConfig: () => SiteConfig = () => {
     locales: ['en'],
     cacheCssInDev: true,
     imagePreviews: {},
+    templateTypes: {},
   }
   const config = {
     ...defaults,
