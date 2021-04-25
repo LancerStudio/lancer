@@ -10,6 +10,7 @@ import { clientDir, env, filesDir, PostHtmlCtx } from "./config"
 import { POSTHTML_OPTIONS } from './lib/posthtml'
 import { ssr } from './lib/ssr'
 import TemplatePlugin from './posthtml-plugins/template'
+import { addLocale } from './i18n'
 
 export const validStyleBundles: Record<string, boolean> = {}
 export const validScriptBundles: Record<string, boolean> = {}
@@ -78,12 +79,12 @@ export function makeLocals(ctx: PostHtmlCtx) {
     site: ctx.site,
 
     page: {
+      href: addLocale(ctx.reqPath, ctx.locale),
       path: ctx.reqPath,
       locale: ctx.locale,
-      fullPath: path.join('/', ctx.locale, ctx.reqPath),
     },
 
-    pathFor(locale: string, path?: string) {
+    hrefFor(locale: string, path?: string) {
       return `/${locale}${path || ctx.reqPath}`
     },
 
@@ -96,36 +97,42 @@ export function makeLocals(ctx: PostHtmlCtx) {
       // Read and assign page attributes for html files
       //
       const RL = require('n-readlines')
-      return files.map(file => {
-        if (!file.file.endsWith('.html')) return file
+      return files
+        .map(file => ({
+          ...file,
+          href: addLocale(file.path.replace(/\.html$/, ''), ctx.locale),
+          path: file.path.replace(/\.html$/, ''),
+        }))
+        .map(file => {
+          if (!file.file.endsWith('.html')) return file
 
-        const lines = new RL(file.file)
-        let pageTag = ''
-        let rawLine: Buffer
-        while (rawLine = lines.next()) {
-          const line = rawLine.toString('utf8')
-          if (line.match(/^\w*$/)) continue
-          if (!line.match(/^\w*<page\b/)) break
-
-          pageTag = line
+          const lines = new RL(file.file)
+          let pageTag = ''
+          let rawLine: Buffer
           while (rawLine = lines.next()) {
-            pageTag += '\n' + rawLine.toString('utf8')
-            if (pageTag.indexOf('>') >= 0) break
-          }
+            const line = rawLine.toString('utf8')
+            if (line.match(/^\w*$/)) continue
+            if (!line.match(/^\w*<page\b/)) break
 
-          let pageAttrs: any
-          const parser = new (require("@lancer/htmlparser2").Parser)({
-            onopentag(name: string, attrs: any) {
-              if (name === 'page') pageAttrs = attrs
+            pageTag = line
+            while (rawLine = lines.next()) {
+              pageTag += '\n' + rawLine.toString('utf8')
+              if (pageTag.indexOf('>') >= 0) break
             }
-          })
-          parser.write(pageTag)
-          parser.end()
 
-          return { ...file, attrs: pageAttrs }
-        }
-        return file
-      })
+            let pageAttrs: any
+            const parser = new (require("@lancer/htmlparser2").Parser)({
+              onopentag(name: string, attrs: any) {
+                if (name === 'page') pageAttrs = attrs
+              }
+            })
+            parser.write(pageTag)
+            parser.end()
+
+            return { ...file, attrs: pageAttrs }
+          }
+          return file
+        })
     },
 
     getDims(imageFile: string) {
@@ -160,7 +167,7 @@ const globDir = (dir: string, srcPath: string) => (pattern: string) => {
   }
   const files = glob.sync(pattern, opts)
   .map(file => ({
-    href: `${srcPath}${file}`,
+    path: `${srcPath}${file}`,
     file: path.join(dir, file),
   }))
   files.sort((a, b) => a.file.localeCompare(b.file))

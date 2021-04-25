@@ -1,3 +1,4 @@
+import path from 'path'
 import { RequestHandler } from "express"
 import { LINK_DELIMINATOR } from "../shared/constants"
 import { shouldPrefixMailto } from "../shared/logic"
@@ -117,6 +118,11 @@ export function posthtmlPlugin({ Translation, ctx: { user, site, reqPath, locale
   }
 }
 
+
+export function addLocale(urlPath: string, currentLocale: string) {
+  const site = siteConfig()
+  return site.locales.length < 2 ? urlPath : path.join('/', currentLocale, urlPath)
+}
 
 export function ensureLocale(): RequestHandler {
   return (req, res, next) => {
