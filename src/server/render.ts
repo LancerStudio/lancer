@@ -6,7 +6,7 @@ import * as Bundle from './bundle'
 import * as i18n from './i18n'
 import IncludePlugin from './posthtml-plugins/include'
 import LayoutPlugin from './posthtml-plugins/layout'
-import { clientDir, filesDir, PostHtmlCtx } from "./config"
+import { clientDir, env, filesDir, PostHtmlCtx } from "./config"
 import { POSTHTML_OPTIONS } from './lib/posthtml'
 import { ssr } from './lib/ssr'
 import TemplatePlugin from './posthtml-plugins/template'
@@ -150,9 +150,15 @@ export function makeLocals(ctx: PostHtmlCtx) {
 }
 
 const globDir = (dir: string, srcPath: string) => (pattern: string) => {
-  const files = glob.sync(pattern, {
-    cwd: dir
-  })
+  const opts: glob.IOptions = {
+    cwd: dir,
+  }
+  if (env.development) {
+    // Cache per request instead of per server lifetime
+    opts.cache = {}
+    opts.statCache = {}
+  }
+  const files = glob.sync(pattern, opts)
   .map(file => ({
     href: `${srcPath}${file}`,
     file: path.join(dir, file),
