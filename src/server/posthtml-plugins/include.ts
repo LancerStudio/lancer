@@ -71,7 +71,7 @@ export default (options: Options = {}) => {
       return newNode
     })
 
-    await Promise.all(tasks)
+    await Promise.allSettled(tasks)
 
     return tree
   }

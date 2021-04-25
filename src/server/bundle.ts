@@ -21,23 +21,21 @@ export function posthtmlPlugin(options: PostHtmlOptions) {
   return async function extendAttrs(tree: any) {
     const tasks: Promise<any>[] = []
 
-    tree.match(matchHelper('script[bundle]'), function(node: any) {
+    tree.match(matchHelper('script[src]'), function(node: any) {
       tasks.push(async function() {
-        node.attrs.src = await options.resolveScript(node.attrs.bundle)
-        delete node.attrs.bundle
+        node.attrs.src = await options.resolveScript(node.attrs.src)
       }())
       return node
     })
 
-    tree.match(matchHelper('link[bundle]'), function(node: any) {
+    tree.match(matchHelper('link[href]'), function(node: any) {
       tasks.push(async function() {
-        node.attrs.href = await options.resolveStyle(node.attrs.bundle)
-        delete node.attrs.bundle
+        node.attrs.href = await options.resolveStyle(node.attrs.href)
       }())
       return node
     })
 
-    await Promise.all(tasks)
+    await Promise.allSettled(tasks)
   }
 }
 

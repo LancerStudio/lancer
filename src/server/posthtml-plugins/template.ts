@@ -37,7 +37,7 @@ export default function TemplatePlugin () {
       return newNode
     })
 
-    await Promise.all(tasks)
+    await Promise.allSettled(tasks)
 
     return tree
   }
