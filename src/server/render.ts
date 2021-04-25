@@ -151,6 +151,8 @@ export function makeLocals(ctx: PostHtmlCtx) {
         asString: `${w}x${h}`
       }
     },
+
+    ...ctx.site.locals,
   }
 
   return locals
