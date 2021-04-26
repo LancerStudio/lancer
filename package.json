@@ -107,7 +107,7 @@
     "prosemirror-menu": "^1.1.4",
     "prosemirror-schema-list": "^1.1.4",
     "prosemirror-state": "^1.3.4",
-    "tailwindcss": "^2.0.2",
+    "tailwindcss": "^2.1.2",
     "typescript": "^4.1.3"
   }
 }
