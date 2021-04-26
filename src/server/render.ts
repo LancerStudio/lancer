@@ -6,7 +6,7 @@ import * as Bundle from './bundle'
 import * as i18n from './i18n'
 import IncludePlugin from './posthtml-plugins/include'
 import LayoutPlugin from './posthtml-plugins/layout'
-import { clientDir, env, filesDir, PostHtmlCtx } from "./config"
+import { clientDir, env, filesDir, PostHtmlCtx, staticDir } from "./config"
 import { POSTHTML_OPTIONS } from './lib/posthtml'
 import { ssr } from './lib/ssr'
 import TemplatePlugin from './posthtml-plugins/template'
@@ -74,11 +74,15 @@ export function makeLocals(ctx: PostHtmlCtx) {
   const globClient = globDir(clientDir, '/')
 
   const locals = {
-    currentUser: ctx.user,
+    filesDir,
+    clientDir,
+    publicDir: staticDir,
 
     site: ctx.site,
+    currentUser: ctx.user,
 
     page: {
+      file: ctx.filename,
       href: addLocale(ctx.reqPath, ctx.locale),
       path: ctx.reqPath,
       locale: ctx.locale,
