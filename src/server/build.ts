@@ -96,7 +96,7 @@ export async function buildForProduction({ goStatic }: Options = {}) {
 
     await ssr({ locals, ctx })
 
-    const result = await require('posthtml')(plugins, POSTHTML_OPTIONS).process(readFileSync(match, 'utf8'))
+    const result = await require('posthtml')(plugins).process(readFileSync(match, 'utf8'), POSTHTML_OPTIONS)
 
     if (goStatic) {
       const dest = path.join(buildDir, match.replace(clientDir, ''))
