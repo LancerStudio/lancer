@@ -14,8 +14,9 @@ type Options = {
   goStatic?: boolean
 }
 export async function buildForProduction({ goStatic }: Options = {}) {
-  mkdirSync(buildDir, { recursive: true })
   console.log("Build dir:", buildDir)
+  await fs.rmdir(buildDir, { recursive: true })
+  mkdirSync(buildDir, { recursive: true })
 
   const site = siteConfig()
 
