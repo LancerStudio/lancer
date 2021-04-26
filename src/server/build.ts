@@ -98,7 +98,9 @@ export async function buildForProduction({ goStatic }: Options = {}) {
     const result = await require('posthtml')(plugins, POSTHTML_OPTIONS).process(readFileSync(match, 'utf8'))
 
     if (goStatic) {
-      await fs.writeFile(path.join(buildDir, match.replace(clientDir, '')), result.html)
+      const dest = path.join(buildDir, match.replace(clientDir, ''))
+      await fs.mkdir(path.dirname(dest), { recursive: true })
+      await fs.writeFile(dest, result.html)
     }
   }
 
