@@ -18,52 +18,60 @@ export async function buildForProduction({ goStatic }: Options = {}) {
   await fs.rmdir(buildDir, { recursive: true })
   mkdirSync(buildDir, { recursive: true })
 
+  const buildCache = {} as Record<string,Promise<string>>
+
   const site = siteConfig()
 
   const bundlePlugin = posthtmlPlugin({
-    resolveScript: async function (scriptPath: string) {
+    resolveScript: function (scriptPath: string) {
       const resolved = resolveAsset(scriptPath)
+      if (buildCache[resolved]) return buildCache[resolved]!
 
-      // esbuild code splitting is still experimental, so we're only dealing with one file
-      const result = bundleScriptProd(resolved, buildDir).outputFiles[0]!
+      return buildCache[resolved] = async function() {
+        // esbuild code splitting is still experimental, so we're only dealing with one file
+        const result = bundleScriptProd(resolved, buildDir).outputFiles[0]!
 
-      const publicPath = result.path.replace(buildDir, '')
-      console.log(`  - ${resolved.replace(clientDir, '')}\t-> ${publicPath}`)
+        const publicPath = result.path.replace(buildDir, '')
+        console.log(`  - ${resolved.replace(clientDir, '')}\t-> ${publicPath}`)
 
-      const dest = path.join(buildDir, publicPath)
-      await fs.mkdir(path.dirname(dest), { recursive: true })
-      await fs.writeFile(dest, result.contents)
+        const dest = path.join(buildDir, publicPath)
+        await fs.mkdir(path.dirname(dest), { recursive: true })
+        await fs.writeFile(dest, result.contents)
 
-      return publicPath
+        return publicPath
+      }()
     },
-    resolveStyle: async function (stylePath: string) {
+    resolveStyle: function (stylePath: string) {
       const resolved = resolveAsset(stylePath)
+      if (buildCache[resolved]) return buildCache[resolved]!
 
-      const css = await bundleStyle(sourceDir, resolved)
-      if (!css) {
-        throw new Error(`Failed to compile ${resolved}`)
-      }
-      const minifiedCss = buildSync({
-        stdin: {
-          contents: css,
-          loader: 'css',
-        },
-        write: false,
-        minify: true,
-      }).outputFiles[0]!.contents
+      return buildCache[resolved] = async function () {
+        const css = await bundleStyle(sourceDir, resolved)
+        if (!css) {
+          throw new Error(`Failed to compile ${resolved}`)
+        }
+        const minifiedCss = buildSync({
+          stdin: {
+            contents: css,
+            loader: 'css',
+          },
+          write: false,
+          minify: true,
+        }).outputFiles[0]!.contents
 
-      const publicPath = path.join(
-        path.dirname(resolved.replace(clientDir, '')),
-        path.basename(resolved).replace('.css', `-${hashContent(minifiedCss)}.css`)
-      )
-      console.log(`  - ${resolved.replace(clientDir, '')}\t-> ${publicPath}`)
+        const publicPath = path.join(
+          path.dirname(resolved.replace(clientDir, '')),
+          path.basename(resolved).replace('.css', `-${hashContent(minifiedCss)}.css`)
+        )
+        console.log(`  - ${resolved.replace(clientDir, '')}\t-> ${publicPath}`)
 
-      const dest = path.join(buildDir, publicPath)
-      await fs.mkdir(path.dirname(dest), { recursive: true })
+        const dest = path.join(buildDir, publicPath)
+        await fs.mkdir(path.dirname(dest), { recursive: true })
 
-      await fs.writeFile(dest, minifiedCss)
+        await fs.writeFile(dest, minifiedCss)
 
-      return publicPath
+        return publicPath
+      }()
     },
   })
 
