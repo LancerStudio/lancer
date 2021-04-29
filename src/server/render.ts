@@ -11,6 +11,7 @@ import { POSTHTML_OPTIONS } from './lib/posthtml'
 import { ssr } from './lib/ssr'
 import TemplatePlugin from './posthtml-plugins/template'
 import { addLocale } from './i18n'
+import { InterpolatePlugin } from './posthtml-plugins/interpolate'
 
 export const validStyleBundles: Record<string, boolean> = {}
 export const validScriptBundles: Record<string, boolean> = {}
@@ -59,12 +60,9 @@ export function renderPostHtmlPlugins(locals: any, opts: {
     }),
     ...opts.prefix,
     IncludePlugin({ locals, root: clientDir, encoding: 'utf8' }),
-    TemplatePlugin(),
+    TemplatePlugin({ locals }),
 
-    require('posthtml-expressions')({
-      scopeTags: ['context'],
-      locals,
-    }),
+    InterpolatePlugin({ locals }),
 
     ...(opts.postfix || []),
   ]
@@ -125,7 +123,7 @@ export function makeLocals(ctx: PostHtmlCtx) {
             }
 
             let pageAttrs: any
-            const parser = new (require("@lancer/htmlparser2").Parser)({
+            const parser = new (require("@lancer/ihtml-parser").Parser)({
               onopentag(name: string, attrs: any) {
                 if (name === 'page') pageAttrs = attrs
               }
