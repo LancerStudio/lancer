@@ -29,3 +29,11 @@ export function requireLatestOptional(module: string) {
 export function requireUserland(sourceDir: string, module: string) {
 	return require(require.resolve(module, { paths: [sourceDir] }))
 }
+
+export function isExternal(src: string) {
+  return /^.+:\/\//.test(src)
+}
+
+export function isRelative(src: string) {
+	return !isExternal(src) && !src.startsWith('/')
+}

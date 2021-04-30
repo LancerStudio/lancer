@@ -9,6 +9,7 @@ import { makeLocals, renderPostHtmlPlugins, resolveAsset } from './render'
 import { POSTHTML_OPTIONS } from './lib/posthtml'
 import { ssr } from './lib/ssr'
 import { hashContent } from './lib/util'
+import { isRelative } from './lib/fs'
 
 type Options = {
   goStatic?: boolean
@@ -22,9 +23,11 @@ export async function buildForProduction({ goStatic }: Options = {}) {
 
   const site = siteConfig()
 
+  let filename: string
+
   const bundlePlugin = posthtmlPlugin({
     resolveScript: function (scriptPath: string) {
-      const resolved = resolveAsset(scriptPath)
+      const resolved = resolveAsset(scriptPath, filename)
       if (buildCache[resolved]) return buildCache[resolved]!
 
       return buildCache[resolved] = async function() {
@@ -38,11 +41,11 @@ export async function buildForProduction({ goStatic }: Options = {}) {
         await fs.mkdir(path.dirname(dest), { recursive: true })
         await fs.writeFile(dest, result.contents)
 
-        return publicPath
+        return isRelative(scriptPath) ? path.join(path.dirname(scriptPath), path.basename(publicPath)) : publicPath
       }()
     },
     resolveStyle: function (stylePath: string) {
-      const resolved = resolveAsset(stylePath)
+      const resolved = resolveAsset(stylePath, filename)
       if (buildCache[resolved]) return buildCache[resolved]!
 
       return buildCache[resolved] = async function () {
@@ -70,22 +73,22 @@ export async function buildForProduction({ goStatic }: Options = {}) {
 
         await fs.writeFile(dest, minifiedCss)
 
-        return publicPath
+        return isRelative(stylePath) ? path.join(path.dirname(stylePath), path.basename(publicPath)) : publicPath
       }()
     },
   })
 
-  for (const match of glob.sync(path.join(clientDir, '/**/*.html'))) {
-    if (path.basename(match)[0] === '_') continue
-    if (match.startsWith(staticDir)) continue
+  for (filename of glob.sync(path.join(clientDir, '/**/*.html'))) {
+    if (path.basename(filename)[0] === '_') continue
+    if (filename.startsWith(staticDir)) continue
 
-    const reqPath = match
+    const reqPath = filename
       .replace(clientDir, '')
       .replace('/index.html', '/')
       .replace(/\/index\.html$/, '')
       .replace(/\.html$/, '')
 
-    console.log('\n', match.replace(clientDir, 'client'), '->', reqPath)
+    console.log('\n', filename.replace(clientDir, 'client'), '->', reqPath)
 
     const ctx = {
       user: null,
@@ -93,7 +96,7 @@ export async function buildForProduction({ goStatic }: Options = {}) {
       locale: site.locales[0]!,
       site: site,
       reqPath,
-      filename: match,
+      filename: filename,
     }
     const locals = makeLocals(ctx)
     const plugins = renderPostHtmlPlugins(locals, {
@@ -104,10 +107,10 @@ export async function buildForProduction({ goStatic }: Options = {}) {
 
     await ssr({ locals, ctx })
 
-    const result = await require('posthtml')(plugins).process(readFileSync(match, 'utf8'), POSTHTML_OPTIONS)
+    const result = await require('posthtml')(plugins).process(readFileSync(filename, 'utf8'), POSTHTML_OPTIONS)
 
     if (goStatic) {
-      const dest = path.join(buildDir, match.replace(clientDir, ''))
+      const dest = path.join(buildDir, filename.replace(clientDir, ''))
       await fs.mkdir(path.dirname(dest), { recursive: true })
       await fs.writeFile(dest, result.html)
     }

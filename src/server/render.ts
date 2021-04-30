@@ -11,6 +11,7 @@ import { POSTHTML_OPTIONS } from './lib/posthtml'
 import { ssr } from './lib/ssr'
 import TemplatePlugin from './posthtml-plugins/template'
 import { addLocale } from './i18n'
+import { isRelative } from './lib/fs'
 
 export const validStyleBundles: Record<string, boolean> = {}
 export const validScriptBundles: Record<string, boolean> = {}
@@ -27,12 +28,12 @@ export async function render(html: string, ctx: PostHtmlCtx) {
     prefix: [
       Bundle.posthtmlPlugin({
         resolveScript: async function (scriptPath: string) {
-          var resolved = resolveAsset(scriptPath)
+          var resolved = resolveAsset(scriptPath, ctx.filename)
           validScriptBundles[resolved] = true
           return resolved.replace(clientDir, '')
         },
         resolveStyle: async function (stylePath: string) {
-          var resolved = resolveAsset(stylePath)
+          var resolved = resolveAsset(stylePath, ctx.filename)
           validStyleBundles[resolved] = true
           return resolved.replace(clientDir, '')
         },
@@ -180,8 +181,15 @@ const globDir = (dir: string, srcPath: string) => (pattern: string) => {
   return files
 }
 
-export function resolveAsset (assetPath: string) {
-  var filename = assetPath.startsWith('/files/')
+export function resolveAsset (assetPath: string, fromFile?: string) {
+  if (fromFile && isRelative(assetPath)){
+    const filename = path.join(path.dirname(fromFile), assetPath)
+    if (!filename.startsWith(clientDir)) {
+      throw new Error('Access denied')
+    }
+    return filename
+  }
+  let filename = assetPath.startsWith('/files/')
     ? path.join(filesDir, assetPath.replace('/files/', ''))
     : path.join(clientDir, assetPath)
 

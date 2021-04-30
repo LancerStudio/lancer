@@ -2,7 +2,7 @@ import path from 'path'
 import { build, buildSync } from 'esbuild'
 import { existsSync, promises as fs, statSync } from 'fs'
 
-import { requireLatestOptional, requireUserland } from './lib/fs'
+import { isExternal, requireLatestOptional, requireUserland } from './lib/fs'
 import { notNullish } from './lib/util'
 import { siteConfig } from './config'
 
@@ -22,16 +22,20 @@ export function posthtmlPlugin(options: PostHtmlOptions) {
     const tasks: Promise<any>[] = []
 
     tree.match(matchHelper('script[src]'), function(node: any) {
-      tasks.push(async function() {
-        node.attrs.src = await options.resolveScript(node.attrs.src)
-      }())
+      if (node.attrs.src && !isExternal(node.attrs.src)) {
+        tasks.push(async function() {
+          node.attrs.src = await options.resolveScript(node.attrs.src)
+        }())
+      }
       return node
     })
 
     tree.match(matchHelper('link[href]'), function(node: any) {
-      tasks.push(async function() {
-        node.attrs.href = await options.resolveStyle(node.attrs.href)
-      }())
+      if (node.attrs.href && !isExternal(node.attrs.href)) {
+        tasks.push(async function() {
+          node.attrs.href = await options.resolveStyle(node.attrs.href)
+        }())
+      }
       return node
     })
 
