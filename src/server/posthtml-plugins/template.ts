@@ -1,3 +1,4 @@
+import vm from 'vm'
 import parser from '@lancer/ihtml-parser'
 import renderTree from 'posthtml-render'
 import { siteConfig } from '../config'
@@ -36,7 +37,7 @@ export default function TemplatePlugin ({ locals }: Options) {
       delete newNode.attrs.tag
 
       tasks.push(async function() {
-        newNode.content = await render(renderTree(resolveInterpolations({ locals }, node.content) as any))
+        newNode.content = await render(renderTree(resolveInterpolations({ ctx: vm.createContext(locals) }, node.content) as any))
         if (typeof newNode.content === 'string') {
           newNode.content = [newNode.content]
         }

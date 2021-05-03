@@ -21,7 +21,7 @@ export type NodeTag = {
   content?: Node[];
 };
 
-export type Attributes = Record<string, string>;
+export type Attributes = Record<string, string | true>;
 
 export type RenderInterpolationFn = (fn: RunFn) => any
 export type RunFn = (code: string) => any
@@ -114,14 +114,16 @@ export const parseIHTML = (html: string, options: Options = {}): Node[] => {
       }
     },
 
-    onopentag(tag, attrs) {
-      // console.log("TAG", tag, attrs)
+    onopentag(tag, attrs, iattrs) {
       let buf: Node = {tag};
       const pending: PendingAttr[] = []
 
-      if (attrs.length > 0) {
-        buf.attrs = {} as Attributes
-        for (let [name, val] of attrs) {
+      if (attrs) buf.attrs = attrs
+
+      if (iattrs) {
+        if (!buf.attrs) buf.attrs = {}
+
+        for (let [name, val] of iattrs) {
           if (
             name.length === 1 && typeof name[0] === 'string' &&
             (val.length === 0 || val.length === 1 && typeof val[0] === 'string')
@@ -129,7 +131,6 @@ export const parseIHTML = (html: string, options: Options = {}): Node[] => {
             buf.attrs[name[0]] = (val[0] as string || '').replace(/&quot;/g, '"')
           }
           else {
-            // console.log("DYNAMIC", name, val)
             pending.push([
               name.length === 1 && typeof name[0] === 'string' ? name[0] : name,
               val.length === 1 && typeof val[0] === 'string' ? val[0] : val,
@@ -139,7 +140,7 @@ export const parseIHTML = (html: string, options: Options = {}): Node[] => {
       }
 
       if (pending.length) {
-        buf = new AttrInterpolationTag(tag, buf.attrs!, pending)
+        buf = new AttrInterpolationTag(tag, buf.attrs || (buf.attrs = {}), pending)
       }
 
       bufArray.push(buf);
@@ -201,21 +202,32 @@ export const parseIHTML = (html: string, options: Options = {}): Node[] => {
 
 class TextInterpolationTag {
   tag = false
-  content = [] as string[]
+  content?: string[]
   constructor(public code: string) {}
   render(fn: RunFn) {
     this.content = [fn(this.code)]
   }
+  clone() {
+    return new TextInterpolationTag(this.code)
+  }
 }
 
 class AttrInterpolationTag implements NodeTag {
-  constructor(public tag: string, public attrs: Attributes, public pendingAttrs: PendingAttr[]) {}
+  constructor(
+    public tag: string,
+    public attrs: Attributes,
+    public iattrs: PendingAttr[],
+    public content?: Node[]
+  ) {}
   render(fn: RunFn) {
-    this.pendingAttrs.forEach(([name, val]) => {
+    this.iattrs.forEach(([name, val]) => {
       const nameStr = typeof name === 'string' ? name : renderDC(fn, name)
       const valStr = typeof val === 'string' ? val : renderDC(fn, val)
       this.attrs[nameStr] = valStr
     })
+  }
+  clone() {
+    return new AttrInterpolationTag(this.tag, { ...this.attrs }, this.iattrs, this.content)
   }
 }
 
