@@ -1,8 +1,14 @@
-import parser from '@lancer/posthtml-parser'
+import vm from 'vm'
+import parser from '@lancer/ihtml-parser'
+import renderTree from 'posthtml-render'
 import { siteConfig } from '../config'
+import { resolveInterpolations } from './interpolate'
 const {match} = require('posthtml/lib/api')
 
-export default function TemplatePlugin () {
+type Options = {
+  locals: object
+}
+export default function TemplatePlugin ({ locals }: Options) {
 
   return async function posthtmlTemplate(tree: any) {
     tree.parser = tree.parser || parser
@@ -31,8 +37,13 @@ export default function TemplatePlugin () {
       delete newNode.attrs.tag
 
       tasks.push(async function() {
-        newNode.content = await render(node.content.join(''))
-      }())
+        newNode.content = await render(renderTree(resolveInterpolations({ ctx: vm.createContext(locals) }, node.content) as any))
+        if (typeof newNode.content === 'string') {
+          newNode.content = [newNode.content]
+        }
+      }().catch(err => {
+        console.error(`[Lancer] Render template type="${type}" failed\n  `, err)
+      }))
 
       return newNode
     })

@@ -1,6 +1,6 @@
 {
   "name": "@lancer/studio",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "description": "Build client websites with power and simplicity.",
   "main": "index.js",
   "repository": {
@@ -28,7 +28,7 @@
   "author": "Gilbert",
   "license": "ISC",
   "dependencies": {
-    "@lancer/posthtml-parser": "^0.7.1-fork.4",
+    "@lancer/ihtml-parser": "1.0.0",
     "@tailwindcss/forms": "^0.2.1",
     "@tailwindcss/typography": "^0.4.0",
     "argon2": "^0.27.1",
@@ -43,6 +43,7 @@
     "express": "^4.16.2",
     "express-async-errors": "^3.1.1",
     "express-session": "^1.17.1",
+    "fclone": "^1.0.11",
     "form-data": "^3.0.0",
     "glob": "^7.1.6",
     "html-frontmatter": "^1.6.1",

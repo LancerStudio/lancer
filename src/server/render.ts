@@ -12,6 +12,7 @@ import { ssr } from './lib/ssr'
 import TemplatePlugin from './posthtml-plugins/template'
 import { addLocale } from './i18n'
 import { isRelative } from './lib/fs'
+import { LancerCorePlugin } from './posthtml-plugins/core'
 
 export const validStyleBundles: Record<string, boolean> = {}
 export const validScriptBundles: Record<string, boolean> = {}
@@ -60,12 +61,9 @@ export function renderPostHtmlPlugins(locals: any, opts: {
     }),
     ...opts.prefix,
     IncludePlugin({ locals, root: clientDir, encoding: 'utf8' }),
-    TemplatePlugin(),
+    TemplatePlugin({ locals }),
 
-    require('posthtml-expressions')({
-      scopeTags: ['context'],
-      locals,
-    }),
+    LancerCorePlugin({ locals }),
 
     ...(opts.postfix || []),
   ]
@@ -126,7 +124,7 @@ export function makeLocals(ctx: PostHtmlCtx) {
             }
 
             let pageAttrs: any
-            const parser = new (require("@lancer/htmlparser2").Parser)({
+            const parser = new (require("@lancer/ihtml-parser").Parser)({
               onopentag(name: string, attrs: any) {
                 if (name === 'page') pageAttrs = attrs
               }

@@ -1,6 +1,6 @@
-import parser from '@lancer/posthtml-parser'
 import fs from 'fs'
 import path from 'path'
+import { parseIHTML } from '../lib/posthtml'
 import { clientDir, hydrateDir, sourceDir } from '../config'
 import { requireLatest, requireUserland } from '../lib/fs'
 import { POSTHTML_OPTIONS } from '../lib/posthtml'
@@ -19,7 +19,7 @@ export default (options: Options = {}) => {
   const encoding = options.encoding || 'utf-8'
 
   return async function posthtmlInclude(tree: any) {
-    tree.parser = tree.parser || parser
+    tree.parser = tree.parser || parseIHTML
     tree.match = tree.match || match
 
     const tasks: Promise<any>[] = []
@@ -40,7 +40,7 @@ export default (options: Options = {}) => {
         source = fs.readFileSync(src, encoding as BufferEncoding)
 
         if (src.match(/\.html$/)) {
-          subtree = (tree.parser as typeof parser)(source, {
+          subtree = parseIHTML(source, {
             customVoidElements: POSTHTML_OPTIONS.customVoidElements,
           }) as any
           subtree.match = tree.match
