@@ -81,7 +81,7 @@ export function ssrBuildFile(ssrFile: string) {
   return path.join(cacheDir, 'ssr', ssrFile.replace(clientDir, '')).replace(/\.ts$/, '.js')
 }
 
-export function runInContext(locals: object, code: string) {
+export function evalExpression(locals: object, code: string) {
   return vm.runInNewContext(`_$_=${code}`, locals, { microtaskMode: 'afterEvaluate' })
 }
 

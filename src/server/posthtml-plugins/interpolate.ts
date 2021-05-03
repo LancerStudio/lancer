@@ -1,7 +1,7 @@
 import vm from 'vm'
 import fclone from 'fclone'
 import { Node, NodeTag } from '../lib/posthtml'
-import { runInContext } from '../lib/ssr'
+import { evalExpression } from '../lib/ssr'
 
 type WalkOptions = {
   ctx: vm.Context
@@ -75,7 +75,7 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
       if (!cond || cond === true) {
         throw new Error(`[Lancer] <${node.tag}> tag must have a cond="..." attribute`)
       }
-      const result = runInContext(ctx, cond)
+      const result = evalExpression(ctx, cond)
       if (result) {
         m.push(newContent(node.content))
         ifElseChain = 'resolved'

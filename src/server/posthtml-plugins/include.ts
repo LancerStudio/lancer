@@ -4,7 +4,7 @@ import { parseIHTML } from '../lib/posthtml'
 import { clientDir, hydrateDir, sourceDir } from '../config'
 import { requireLatest, requireUserland } from '../lib/fs'
 import { POSTHTML_OPTIONS } from '../lib/posthtml'
-import { buildHydrateScript, buildSsrFile, runInContext } from '../lib/ssr'
+import { buildHydrateScript, buildSsrFile, evalExpression } from '../lib/ssr'
 import { checksumFile } from '../lib/util'
 const {match} = require('posthtml/lib/api')
 
@@ -84,7 +84,7 @@ async function wrapMithril(file: string, nodeAttrs: any, locals: object) {
   const m = requireUserland(sourceDir, 'mithril')
   const renderMithril = requireUserland(sourceDir, 'mithril-node-render')
 
-  const args = runInContext(locals, nodeAttrs.args || '{}')
+  const args = evalExpression(locals, nodeAttrs.args || '{}')
   delete nodeAttrs.args
 
   const html = await renderMithril.sync(m(component, args))
