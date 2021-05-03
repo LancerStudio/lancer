@@ -31,7 +31,7 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
     }
 
     const content = node.content
-    const isLoop = node.tag === 'for' && typeof node.attrs?.let === 'string'
+    const isLoop = node.tag === 'for'
 
     if (content && !isLoop) {
       // Copy node to allow loops to interpolate a tree multiple times
@@ -41,6 +41,10 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
       return m
     }
     else if (content && isLoop) {
+      const code = node.attrs?.let
+      if (!code) {
+        throw new Error(`[Lancer] <for> tag must have a let="..." attribute`)
+      }
       const loopCtx = vm.createContext(fclone(ctx))
       const loopContent: Node[] = []
       loopCtx.__recurse = () => {
@@ -48,7 +52,7 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
           ...resolveInterpolations({ ctx: loopCtx }, content)
         )
       }
-      vm.runInContext(`for (var ${node.attrs!.let}) __recurse()`, loopCtx, { microtaskMode: 'afterEvaluate' })
+      vm.runInContext(`for (var ${code}) __recurse()`, loopCtx, { microtaskMode: 'afterEvaluate' })
       m.push({
         tag: false,
         content: loopContent,
