@@ -33,4 +33,16 @@ o.spec('interpolate', () => {
     const result = await render(`<p>a{{false}}{{undefined}}{{null}}{{0}}{{''}}b</p>`, makeCtx())
     o(result).equals(`<p>a0b</p>`)
   })
+
+  o('standalone if', async () => {
+    const result = await render(`<if cond="true">yes</if><if cond="0">no</if>`, makeCtx())
+    o(result).equals(`yes`)
+  })
+
+  o('if-else', async () => {
+    const makeChain = (a,b) => `<if cond="${a}">A</if><else-if cond="${b}">B</else-if><else>C</else>`
+    o(await render(makeChain('1+1', 'true'), makeCtx())).equals('A')
+    o(await render(makeChain('null', 'true'), makeCtx())).equals('B')
+    o(await render(makeChain(`''`, 'undefined'), makeCtx())).equals('C')
+  })
 })
