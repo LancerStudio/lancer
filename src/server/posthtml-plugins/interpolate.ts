@@ -2,15 +2,6 @@ import vm from 'vm'
 import fclone from 'fclone'
 import { Node, NodeTag } from '../lib/posthtml'
 
-type Options = {
-  locals: object
-}
-export function InterpolatePlugin({ locals }: Options) {
-  return function interpolatePlugin(tree: any) {
-    return resolveInterpolations({ ctx: vm.createContext(locals) }, tree)
-  }
-}
-
 type WalkOptions = {
   ctx: vm.Context
 }

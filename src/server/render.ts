@@ -11,7 +11,7 @@ import { POSTHTML_OPTIONS } from './lib/posthtml'
 import { ssr } from './lib/ssr'
 import TemplatePlugin from './posthtml-plugins/template'
 import { addLocale } from './i18n'
-import { InterpolatePlugin } from './posthtml-plugins/interpolate'
+import { LancerCorePlugin } from './posthtml-plugins/core'
 
 export const validStyleBundles: Record<string, boolean> = {}
 export const validScriptBundles: Record<string, boolean> = {}
@@ -62,7 +62,7 @@ export function renderPostHtmlPlugins(locals: any, opts: {
     IncludePlugin({ locals, root: clientDir, encoding: 'utf8' }),
     TemplatePlugin({ locals }),
 
-    InterpolatePlugin({ locals }),
+    LancerCorePlugin({ locals }),
 
     ...(opts.postfix || []),
   ]

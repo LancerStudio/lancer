@@ -1,5 +1,5 @@
 import {Parser, ParserOptions} from '@lancer/ihtml-parser';
-import {DynamicContent} from '@lancer/ihtml-parser/lib/Parser';
+import {DynamicContent, ParsedAttribute} from '@lancer/ihtml-parser/lib/Parser';
 
 export type Directive = {
   name: string | RegExp;
@@ -25,8 +25,6 @@ export type Attributes = Record<string, string | true>;
 
 export type RenderInterpolationFn = (fn: RunFn) => any
 export type RunFn = (code: string) => any
-
-type PendingAttr = [string | DynamicContent, string | DynamicContent]
 
 const defaultOptions: ParserOptions = {
   lowerCaseTags: false,
@@ -116,7 +114,7 @@ export const parseIHTML = (html: string, options: Options = {}): Node[] => {
 
     onopentag(tag, attrs, iattrs) {
       let buf: Node = {tag};
-      const pending: PendingAttr[] = []
+      const pending: ParsedAttribute[] = []
 
       if (attrs) buf.attrs = attrs
 
@@ -131,10 +129,7 @@ export const parseIHTML = (html: string, options: Options = {}): Node[] => {
             buf.attrs[name[0]] = (val[0] as string || '').replace(/&quot;/g, '"')
           }
           else {
-            pending.push([
-              name.length === 1 && typeof name[0] === 'string' ? name[0] : name,
-              val.length === 1 && typeof val[0] === 'string' ? val[0] : val,
-            ])
+            pending.push([name, val])
           }
         }
       }
@@ -206,6 +201,9 @@ class TextInterpolationTag {
   constructor(public code: string) {}
   render(fn: RunFn) {
     this.content = [fn(this.code)]
+    if (!this.content[0] && typeof this.content[0] !== 'number') {
+      this.content = []
+    }
   }
   clone() {
     return new TextInterpolationTag(this.code)
@@ -216,14 +214,26 @@ class AttrInterpolationTag implements NodeTag {
   constructor(
     public tag: string,
     public attrs: Attributes,
-    public iattrs: PendingAttr[],
+    public iattrs: ParsedAttribute[],
     public content?: Node[]
   ) {}
   render(fn: RunFn) {
     this.iattrs.forEach(([name, val]) => {
-      const nameStr = typeof name === 'string' ? name : renderDC(fn, name)
-      const valStr = typeof val === 'string' ? val : renderDC(fn, val)
-      this.attrs[nameStr] = valStr
+      let nameParts = renderDC(fn, name)
+      let valParts = renderDC(fn, val)
+
+      if (nameParts.length === 1 && !nameParts[0]) {
+        // Ignore falsey values
+        return
+      }
+      else if (val.length === 0) {
+        // Handle <p {{foo}}> syntax
+        const parts = nameParts.join('').split('=')
+        nameParts = [parts[0] || '']
+        valParts  = [(parts[1] || '').replace(/^['"]/, '').replace(/['"]$/, '')]
+      }
+
+      this.attrs[nameParts.join('')] = valParts.join('')
     })
   }
   clone() {
@@ -234,7 +244,7 @@ class AttrInterpolationTag implements NodeTag {
 function renderDC(fn: RunFn, dc: DynamicContent) {
   return dc.map(piece => {
     return typeof piece === 'string' ? piece : fn(piece.code)
-  }).join('')
+  })
 }
 
 export const POSTHTML_OPTIONS = {
