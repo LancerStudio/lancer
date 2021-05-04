@@ -29,10 +29,15 @@ if (!env.development) {
   router.use( express.static(buildDir) )
 }
 
-mountSession(router)
+if (siteConfig().studio) {
+  mountSession(router)
+}
+
 router.use( require('body-parser').json() )
 
-Dev.mount(router)
+if (siteConfig().studio) {
+  Dev.mount(router)
+}
 
 router.post('/lrpc', async (req, res) => {
   const ns = req.body.namespace

@@ -63,6 +63,7 @@ export type PostHtmlCtx = {
 export type SiteConfig = {
   name: string
   locals: object
+  studio: boolean
   locales: string[]
   cacheCssInDev: boolean
   imagePreviews: Record<string, POJO<any>> | ((sharp: typeof import('sharp')) => Record<string, POJO<any>>)
@@ -72,6 +73,7 @@ export const siteConfig: () => SiteConfig = () => {
   const defaults: SiteConfig = {
     name: 'Missing site.config.js',
     locals: {},
+    studio: false,
     locales: ['en'],
     cacheCssInDev: true,
     imagePreviews: {},
