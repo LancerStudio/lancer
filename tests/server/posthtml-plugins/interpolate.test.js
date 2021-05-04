@@ -45,4 +45,13 @@ o.spec('interpolate', () => {
     o(await render(makeChain('null', 'true'), makeCtx())).equals('B')
     o(await render(makeChain(`''`, 'undefined'), makeCtx())).equals('C')
   })
+
+  o('nested layout page attributes', async () => {
+    const result = await render(`<page layout="_nested-page-attrs.html" title="CCC">`, makeCtx())
+    o(result).equals(
+`<!doctype HTML>
+<title>CCC | BBB | AAA</title>
+`
+    )
+  })
 })

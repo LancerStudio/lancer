@@ -6,8 +6,6 @@ import { build, Plugin } from 'esbuild'
 import { requireLatest } from './fs'
 import { cyan, green } from 'kleur'
 
-const placeholders = require('posthtml-expressions/lib/placeholders')
-
 type SsrContext = {
   ctx: PostHtmlCtx
   req?: Request
@@ -81,24 +79,8 @@ export function ssrBuildFile(ssrFile: string) {
   return path.join(cacheDir, 'ssr', ssrFile.replace(clientDir, '')).replace(/\.ts$/, '.js')
 }
 
-export function evalExpression(locals: object, code: string) {
+export function evalExpression(locals: vm.Context, code: string) {
   return vm.runInNewContext(`_$_=${code}`, locals, { microtaskMode: 'afterEvaluate' })
-}
-
-export function interpolate(locals: object, template: string) {
-  return placeholders(template, vm.createContext(locals), delimiters, { strictMode: true })
-}
-// Mirror shape in posthtml-expressions
-// NOTE: Sort these by length desc
-const delimiters = [
-  { text: ['{{{', '}}}'], regexp: new RegExp(`(?<!@)${escapeRegexpString('{{{')}(.+?)${escapeRegexpString('}}}')}`, 'g'), escape: false },
-  { text: ['{{', '}}'], regexp: new RegExp(`(?<!@)${escapeRegexpString('{{')}(.+?)${escapeRegexpString('}}')}`, 'g'), escape: true },
-]
-function escapeRegexpString (input: string) {
-  // match Operators
-  const match = /[|\\{}()[\]^$+*?.]/g
-
-  return input.replace(match, '\\$&')
 }
 
 // https://github.com/evanw/esbuild/issues/619#issuecomment-751995294

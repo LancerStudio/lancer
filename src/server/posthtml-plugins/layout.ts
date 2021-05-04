@@ -2,11 +2,12 @@
 // Taken and modified from https://github.com/posthtml/posthtml-extend
 //
 import fs from 'fs'
+import vm from 'vm'
 import path from 'path'
-import { parseIHTML } from '../lib/posthtml'
+import { parseIHTML, NodeTag } from '../lib/posthtml'
 import { clientDir } from '../config'
 import { POSTHTML_OPTIONS } from '../lib/posthtml'
-import { interpolate } from '../lib/ssr'
+import { evalExpression } from '../lib/ssr'
 
 const Api = require('posthtml/lib/api')
 const matchHelper = require('posthtml-match-helper')
@@ -23,17 +24,16 @@ type Options = {
 export default function LayoutPlugin({ locals, onPageAttrs }: Options) {
   return function layoutPlugin(this: undefined | NestedLayoutContext, tree: any) {
     let pageAttrs: any = null
-    tree.match(matchHelper('page'), function(node: any) {
+    tree.match(matchHelper('page'), (node: NodeTag) => {
+      if (node.render) {
+        node.render(code => evalExpression(vm.createContext({ ...locals, page: this?.childPageAttrs }), code))
+      }
       pageAttrs = node.attrs || {}
 
       return { tag: false }
     })
 
     if (!pageAttrs || pageAttrs.layout === 'false') return
-
-    for (let attr in pageAttrs) {
-      pageAttrs[attr] = interpolate({ ...locals, page: this?.childPageAttrs || {} }, pageAttrs[attr])
-    }
 
     if (this) pageAttrs = { ...this.childPageAttrs, ...pageAttrs }
 
