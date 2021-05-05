@@ -60,14 +60,14 @@ const _layoutHtml =
 
 <meta lancer>
 
-<link rel="stylesheet" type="text/css" bundle="/styles/global.css">
+<link rel="stylesheet" type="text/css" href="/styles/global.css">
 
 <yield>
 `
 const indexHtml =
 `<page title="HOME">
 
-<script bundle="/index.js"></script>
+<script src="/index.js"></script>
 
 <h1>Home Page</h1>
 <p>Find me in client/index.html</p>
