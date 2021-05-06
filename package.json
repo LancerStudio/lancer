@@ -39,7 +39,7 @@
     "configstore": "^5.0.1",
     "dotenv": "^8.2.0",
     "emailjs": "^3.4.0",
-    "esbuild": "^0.9.6",
+    "esbuild": "^0.11.19",
     "express": "^4.16.2",
     "express-async-errors": "^3.1.1",
     "express-session": "^1.17.1",

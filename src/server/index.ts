@@ -64,6 +64,7 @@ router.post('/lrpc', async (req, res) => {
 })
 
 router.get('/*', requireSetup(), ensureLocale(), async (req, res) => {
+  const site = siteConfig()
   const path = req.locale ? req.path.replace(`/${req.locale}`, '') : req.path
 
   try {
@@ -78,7 +79,7 @@ router.get('/*', requireSetup(), ensureLocale(), async (req, res) => {
 
   if ( validScriptBundles[filename] ) {
     console.log('         -->', filename.replace(sourceDir+'/', ''), '(bundle)')
-    const result = await Bundle.bundleScript(filename)
+    const result = await Bundle.bundleScript(filename, site)
     res.set({ 'Content-Type': 'application/javascript' })
     res.send(Buffer.from(result).toString('utf8'))
   }
@@ -90,7 +91,7 @@ router.get('/*', requireSetup(), ensureLocale(), async (req, res) => {
   }
   else if ( filename.startsWith(filesDir) ) {
     const file = await resolveFile(filename, {
-      site: siteConfig(),
+      site,
       preview: queryStringVal('preview')
     })
     if (file) {

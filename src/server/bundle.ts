@@ -46,7 +46,11 @@ export function posthtmlPlugin(options: PostHtmlOptions) {
 //
 // Script bundling
 //
-export async function bundleScript(file: string) {
+type Config = {
+  jsxFactory?: string
+  jsxFragment?: string
+}
+export async function bundleScript(file: string, config: Config) {
   const isProd = process.env.NODE_ENV === 'production'
   const result = await build({
     entryPoints: [file],
@@ -56,12 +60,14 @@ export async function bundleScript(file: string) {
     outdir: 'out',
     define: {
       'process.env.NODE_ENV': `"${isProd ? 'production' : 'development'}"`
-    }
+    },
+    jsxFactory: config.jsxFactory,
+    jsxFragment: config.jsxFragment,
   })
   return result.outputFiles[0]!.contents
 }
 
-export function bundleScriptProd(file: string, outdir: string) {
+export function bundleScriptProd(file: string, outdir: string, config: Config) {
   return buildSync({
     entryPoints: [file],
     entryNames: '[dir]/[name]-[hash]',
@@ -71,7 +77,9 @@ export function bundleScriptProd(file: string, outdir: string) {
     outdir: outdir,
     define: {
       'process.env.NODE_ENV': `"production"`
-    }
+    },
+    jsxFactory: config.jsxFactory,
+    jsxFragment: config.jsxFragment,
   })
 }
 

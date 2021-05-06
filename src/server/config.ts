@@ -68,6 +68,8 @@ export type SiteConfig = {
   cacheCssInDev: boolean
   imagePreviews: Record<string, POJO<any>> | ((sharp: typeof import('sharp')) => Record<string, POJO<any>>)
   templateTypes: Record<string, (html: string) => string | Promise<string>>
+  jsxFactory?: string
+  jsxFragment?: string
 }
 export const siteConfig: () => SiteConfig = () => {
   const defaults: SiteConfig = {

@@ -32,7 +32,7 @@ export async function buildForProduction({ goStatic }: Options = {}) {
 
       return buildCache[resolved] = async function() {
         // esbuild code splitting is still experimental, so we're only dealing with one file
-        const result = bundleScriptProd(resolved, buildDir).outputFiles[0]!
+        const result = bundleScriptProd(resolved, buildDir, site).outputFiles[0]!
 
         const publicPath = result.path.replace(buildDir, '')
         console.log(`  - ${resolved.replace(clientDir, '')}\t-> ${publicPath}`)

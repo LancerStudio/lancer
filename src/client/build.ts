@@ -62,7 +62,7 @@ async function build() {
 
   if (scope === 'js' || scope === 'assets') {
     console.log('  > lancer.js ...')
-    const lancerJs = await bundleScript(path.join(srcDir, 'client/dev/website-editor.ts'))
+    const lancerJs = await bundleScript(path.join(srcDir, 'client/dev/website-editor.ts'), {})
     await fs.writeFile(path.join(buildDir, 'lancer.js'), lancerJs)
 
     await Promise.all(
@@ -76,7 +76,7 @@ async function build() {
 
         console.log(`  > ${dest.replace(buildDir+'/', '')} ...`)
 
-        const js = await bundleScript(file)
+        const js = await bundleScript(file, {})
         await fs.mkdir(path.dirname(dest), { recursive: true })
         await fs.writeFile(dest, js)
       })

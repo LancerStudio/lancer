@@ -105,7 +105,7 @@ export function handle404(path: string) {
 
 function mountLocalDevRoutes(router: Router) {
   router.get('/lancer.js', async (_req, res) => {
-    const result = await Bundle.bundleScript(path.join(__dirname, '../../../src/client/dev/website-editor.ts'))
+    const result = await Bundle.bundleScript(path.join(__dirname, '../../../src/client/dev/website-editor.ts'), {})
     res.set({ 'Content-Type': 'application/javascript' })
     res.send( Buffer.from(result.buffer).toString('utf8') )
   })
@@ -118,7 +118,7 @@ function mountLocalDevRoutes(router: Router) {
 
     const pageName = last(route.link().split('/'))!
 
-    const result = await Bundle.bundleScript(path.join(__dirname, `../../../src/client/pages/${pageName}/index.ts`))
+    const result = await Bundle.bundleScript(path.join(__dirname, `../../../src/client/pages/${pageName}/index.ts`), {})
     res.set({ 'Content-Type': 'application/javascript' })
     res.send( Buffer.from(result) )
   })
