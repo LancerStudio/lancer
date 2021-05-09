@@ -64,6 +64,7 @@ router.post('/lrpc', async (req, res) => {
 })
 
 router.get('/*', requireSetup(), ensureLocale(), async (req, res) => {
+  console.log("GET ITT", req.originalUrl)
   const site = siteConfig()
   const path = req.locale ? req.path.replace(`/${req.locale}`, '') : req.path
 
@@ -132,7 +133,7 @@ router.get('/*', requireSetup(), ensureLocale(), async (req, res) => {
       user: req.user,
       cache: {},
       locale: req.locale || site.locales[0]!,
-      reqPath: path,
+      plainPath: path,
       filename,
     })
     res.set({ 'Content-Type': 'text/html' })

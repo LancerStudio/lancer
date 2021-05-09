@@ -93,6 +93,7 @@ const exportedColors = [
 ]
 
 module.exports = {
+  mode: 'jit',
   purge: [
     './src/client/**/*',
   ],

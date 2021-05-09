@@ -46,6 +46,8 @@ export const previewsDir = joinp(cacheDir, '/previews')
 export type PostHtmlCtx = {
   /** Not present when building static */
   req?: Request,
+  /** Information about the page location */
+  location: URL
   /** Config from the site's site.config.js file */
   site: SiteConfig
   /** The signed in user */
@@ -55,13 +57,14 @@ export type PostHtmlCtx = {
   /** The locale calculated from the request */
   locale: string
   /** The value of the relevant req.path, EXCLUDING locale */
-  reqPath: string
+  plainPath: string
   /** The html file being rendered */
   filename: string
 }
 
 export type SiteConfig = {
   name: string
+  origin?: string
   locals: object
   studio: boolean
   locales: string[]

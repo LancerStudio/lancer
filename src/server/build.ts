@@ -2,6 +2,7 @@ import glob from 'glob'
 import path from 'path'
 import { readFileSync, promises as fs, mkdirSync, readdirSync, copyFileSync, lstatSync, existsSync } from 'fs'
 import { buildSync } from 'esbuild'
+import { yellow } from 'kleur'
 
 import { bundleScriptProd, bundleStyle, posthtmlPlugin } from './bundle'
 import { clientDir, siteConfig, buildDir, sourceDir, staticDir, filesDir } from './config'
@@ -12,9 +13,11 @@ import { hashContent } from './lib/util'
 import { isRelative } from './lib/fs'
 
 type Options = {
-  goStatic?: boolean
+  staticOpts?: {
+    origin?: string
+  }
 }
-export async function buildForProduction({ goStatic }: Options = {}) {
+export async function buildForProduction({ staticOpts }: Options = {}) {
   console.log("Build dir:", buildDir)
   await fs.rmdir(buildDir, { recursive: true })
   mkdirSync(buildDir, { recursive: true })
@@ -22,6 +25,11 @@ export async function buildForProduction({ goStatic }: Options = {}) {
   const buildCache = {} as Record<string,Promise<string>>
 
   const site = siteConfig()
+  const origin = staticOpts?.origin || site.origin || null
+
+  if (!origin) {
+    console.warn(yellow(`[config] No host set`))
+  }
 
   let filename: string
 
@@ -82,20 +90,22 @@ export async function buildForProduction({ goStatic }: Options = {}) {
     if (path.basename(filename)[0] === '_') continue
     if (filename.startsWith(staticDir)) continue
 
-    const reqPath = filename
+    const plainPath = filename
       .replace(clientDir, '')
       .replace('/index.html', '/')
       .replace(/\/index\.html$/, '')
       .replace(/\.html$/, '')
 
-    console.log('\n', filename.replace(clientDir, 'client'), '->', reqPath)
+    console.log('\n', filename.replace(clientDir, 'client'), '->', plainPath)
 
+    // TODO: Generate multiple locales
     const ctx = {
+      location: new URL(`${origin || 'http://static.example.com'}${plainPath}`),
       user: null,
       cache: {},
       locale: site.locales[0]!,
       site: site,
-      reqPath,
+      plainPath,
       filename: filename,
     }
     const locals = makeLocals(ctx)
@@ -109,14 +119,14 @@ export async function buildForProduction({ goStatic }: Options = {}) {
 
     const result = await require('posthtml')(plugins).process(readFileSync(filename, 'utf8'), POSTHTML_OPTIONS)
 
-    if (goStatic) {
+    if (staticOpts) {
       const dest = path.join(buildDir, filename.replace(clientDir, ''))
       await fs.mkdir(path.dirname(dest), { recursive: true })
       await fs.writeFile(dest, result.html)
     }
   }
 
-  if (goStatic) {
+  if (staticOpts) {
     console.log("\nCopying client/public folder...")
     copyFolderSync(staticDir, buildDir)
 

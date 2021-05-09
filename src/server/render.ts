@@ -82,13 +82,14 @@ export function makeLocals(ctx: PostHtmlCtx) {
 
     page: {
       file: ctx.filename,
-      href: addLocale(ctx.reqPath, ctx.locale),
-      path: ctx.reqPath,
+      href: addLocale(ctx.plainPath, ctx.locale),
+      path: ctx.plainPath,
       locale: ctx.locale,
+      url: `${}`
     },
 
     hrefFor(locale: string, path?: string) {
-      return `/${locale}${path || ctx.reqPath}`
+      return `/${locale}${path || ctx.plainPath}`
     },
 
     getLang: i18n.getLang,
