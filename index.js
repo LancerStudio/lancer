@@ -83,15 +83,16 @@ program
 program
   .command('build')
   .option('--static', 'Build a static website (experimental)')
+  .option('--origin', 'Set an origin when building with --static')
   .action(function (options) {
-    const goStatic = !!options.static
+    const staticOpts = options.static ? { origin: options.origin || undefined } : null
     process.env.NODE_ENV = 'production'
     process.env.LANCER_BUILD = '1'
 
-    console.log(`Building ${goStatic ? 'static html and ' : ''}assets for production...`)
+    console.log(`Building ${staticOpts ? 'static html and ' : ''}assets for production...`)
 
     const { buildForProduction } = require('./dist/server/build')
-    buildForProduction({ goStatic }).then(
+    buildForProduction({ staticOpts }).then(
       () => {
         console.log("Done.")
       },
