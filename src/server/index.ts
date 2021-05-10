@@ -64,13 +64,12 @@ router.post('/lrpc', async (req, res) => {
 })
 
 router.get('/*', requireSetup(), ensureLocale(), async (req, res) => {
-  console.log("GET ITT", req.originalUrl)
   const site = siteConfig()
-  const path = req.locale ? req.path.replace(`/${req.locale}`, '') : req.path
+  const plainPath = req.locale ? req.path.replace(`/${req.locale}`, '') : req.path
 
   try {
     console.log('\n[Lancer] GET', req.url)
-    var filename = resolveAsset(path)
+    var filename = resolveAsset(plainPath)
   }
   catch (err) {
     console.log('         -->', err.message)
@@ -133,8 +132,9 @@ router.get('/*', requireSetup(), ensureLocale(), async (req, res) => {
       user: req.user,
       cache: {},
       locale: req.locale || site.locales[0]!,
-      plainPath: path,
+      plainPath,
       filename,
+      location: new URL(`${req.protocol}://${req.get('host')}${req.originalUrl}`)
     })
     res.set({ 'Content-Type': 'text/html' })
     res.send(html)
@@ -142,10 +142,10 @@ router.get('/*', requireSetup(), ensureLocale(), async (req, res) => {
 
   function notFound() {
     if (existsSync(filename)) {
-      console.log(' >> Access denied', path)
+      console.log(' >> Access denied', plainPath)
     }
     else {
-      console.log(' >> No such file', path)
+      console.log(' >> No such file', plainPath)
     }
     res.sendStatus(404)
 

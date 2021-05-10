@@ -23,7 +23,7 @@ type PostHtmlOptions = {
   ctx: PostHtmlCtx
   Translation: TranslationModel
 }
-export function posthtmlPlugin({ Translation, ctx: { user, site, reqPath, locale } }: PostHtmlOptions) {
+export function posthtmlPlugin({ Translation, ctx: { user, site, plainPath, locale } }: PostHtmlOptions) {
   return function interpolateI18n(tree: any) {
     if (!locale) throw new Error('i18n_no_locale_set')
 
@@ -105,7 +105,7 @@ export function posthtmlPlugin({ Translation, ctx: { user, site, reqPath, locale
 
     if (site.locales.length >= 2) {
       lancerHead = site.locales.filter(loc => loc !== locale).map(loc =>
-        `<link rel="alternate" hreflang="${loc}" href="/${loc}${reqPath}" />`
+        `<link rel="alternate" hreflang="${loc}" href="/${loc}${plainPath}" />`
       ).concat(lancerHead)
     }
 

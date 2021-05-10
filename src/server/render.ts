@@ -10,7 +10,6 @@ import { clientDir, env, filesDir, PostHtmlCtx, staticDir } from "./config"
 import { POSTHTML_OPTIONS } from './lib/posthtml'
 import { ssr } from './lib/ssr'
 import TemplatePlugin from './posthtml-plugins/template'
-import { addLocale } from './i18n'
 import { isRelative } from './lib/fs'
 import { LancerCorePlugin } from './posthtml-plugins/core'
 
@@ -82,14 +81,13 @@ export function makeLocals(ctx: PostHtmlCtx) {
 
     page: {
       file: ctx.filename,
-      href: addLocale(ctx.plainPath, ctx.locale),
       path: ctx.plainPath,
       locale: ctx.locale,
-      url: `${}`
+      location: ctx.location,
     },
 
-    hrefFor(locale: string, path?: string) {
-      return `/${locale}${path || ctx.plainPath}`
+    locationFor(locale: string, path?: string) {
+      return new URL(`${ctx.location.protocol}//${ctx.location.host}/${locale}${path || ctx.plainPath}`)
     },
 
     getLang: i18n.getLang,
@@ -102,11 +100,15 @@ export function makeLocals(ctx: PostHtmlCtx) {
       //
       const RL = require('n-readlines')
       return files
-        .map(file => ({
-          ...file,
-          href: addLocale(file.path.replace(/\.html$/, ''), ctx.locale),
-          path: file.path.replace(/\.html$/, ''),
-        }))
+        .map(file => {
+          const plainPath = file.path.replace(/\.html$/, '')
+          return {
+            file: file.file,
+            path: plainPath,
+            locale: ctx.locale,
+            location: new URL(`${ctx.location.protocol}//${ctx.location.host}/${ctx.locale}${plainPath}`),
+          }
+        })
         .map(file => {
           if (!file.file.endsWith('.html')) return file
 
