@@ -1,7 +1,7 @@
 {
   "name": "@lancer/studio",
-  "version": "0.8.1",
-  "description": "Build client websites with power and simplicity.",
+  "version": "0.8.2",
+  "description": "Build websites with the power of HTML.",
   "main": "index.js",
   "repository": {
     "type": "github",
