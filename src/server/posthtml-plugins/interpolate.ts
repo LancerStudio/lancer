@@ -91,11 +91,15 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
     else if (isScope) {
       if (!content) return m
 
-      const scopeLocals = node.attrs?.locals
-      if (!scopeLocals || scopeLocals === true) {
+      const scopeLocalsCode = node.attrs?.locals
+      if (!scopeLocalsCode || scopeLocalsCode === true) {
         throw new Error(`[Lancer] <${node.tag}> tag must have an locals="..." attribute`)
       }
-      const scopeCtx = vm.createContext({ ...ctx, ...evalExpression(ctx, scopeLocals) })
+      const scopeCtx = vm.createContext((() => {
+        const temp = { ...ctx, ...evalExpression(ctx, scopeLocalsCode) }
+        temp.locals = temp
+        return temp
+      })())
       const scopeContent = resolveInterpolations({ ...options, ctx: scopeCtx }, content)
       m.push(newContent(scopeContent))
       return m

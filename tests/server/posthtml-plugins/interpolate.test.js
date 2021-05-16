@@ -19,6 +19,26 @@ o.spec('interpolate', () => {
     o(result).equals(`<p class="/a/b/c">abc</p>`)
   })
 
+  o('throws on missing reference', async () => {
+    try {
+      await render(`<p>{{idontexist}}</p>`, makeCtx())
+      o(false).equals('should not get here')
+    }
+    catch(err) {
+      o(err.message).equals('idontexist is not defined')
+    }
+  })
+
+  o('locals for optional references', async () => {
+    const result = await render(`<p>{{locals.x}}</p>`, makeCtx())
+    o(result).equals(`<p></p>`)
+  })
+
+  o('locals reference', async () => {
+    const result = await render(`<p>{{locals.x}}</p>`, makeCtx({ x: 99 }))
+    o(result).equals(`<p>99</p>`)
+  })
+
   o('full attribute interpolation', async () => {
     const result = await render(`<p {{x}}></p>`, makeCtx({ x: 'aria-label="test"' }))
     o(result).equals(`<p aria-label="test"></p>`)
@@ -56,7 +76,7 @@ o.spec('interpolate', () => {
   })
 
   o('scope tag', async () => {
-    const result = await render(`<scope locals="{ x: 100, y: y+1 }"><p>{{x}},{{y}}</p></scope>`, makeCtx({ x: 10, y: 20 }))
+    const result = await render(`<scope locals="{ x: 100, y: y+1 }"><p>{{x}},{{locals.y}}</p></scope>`, makeCtx({ x: 10, y: 20 }))
     o(result).equals(`<p>100,21</p>`)
   })
 

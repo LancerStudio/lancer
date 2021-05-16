@@ -68,10 +68,10 @@ export function renderPostHtmlPlugins(locals: any, opts: {
   ]
 }
 
-export function makeLocals(ctx: PostHtmlCtx) {
+export function makeLocals(ctx: PostHtmlCtx): object {
   const globClient = globDir(clientDir, '/')
 
-  const locals = {
+  const locals: any = {
     filesDir,
     clientDir,
     publicDir: staticDir,
@@ -160,6 +160,9 @@ export function makeLocals(ctx: PostHtmlCtx) {
 
     ...ctx.site.locals,
   }
+
+  // For referencing optional values and keywords
+  locals.locals = locals
 
   return locals
 }
