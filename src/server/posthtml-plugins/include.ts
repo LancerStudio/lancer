@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { parseIHTML } from '../lib/posthtml'
+import { NodeTag, parseIHTML } from '../lib/posthtml'
 import { clientDir, hydrateDir, sourceDir } from '../config'
 import { requireLatest, requireUserland } from '../lib/fs'
 import { POSTHTML_OPTIONS } from '../lib/posthtml'
@@ -25,14 +25,15 @@ export default (options: Options = {}) => {
     const tasks: Promise<any>[] = []
 
     tree.match({tag: 'include'}, (node: any) => {
-      let src = node.attrs.src || false
-      delete node.attrs.src
+      const attrs = node.attrs || {}
+      let src = attrs.src || false
+      delete attrs.src
       let subtree
       let source
 
-      const newNode = {
+      let newNode: NodeTag = {
         tag: false,
-        content: undefined as any
+        content: undefined,
       }
 
       if (src) {
@@ -45,13 +46,29 @@ export default (options: Options = {}) => {
           }) as any
           subtree.match = tree.match
           subtree.parser = tree.parser
-          newNode.content = source.includes('include') ? posthtmlInclude(subtree) : subtree
+
+          if (source.includes('include')) {
+            tasks.push(async function() {
+              newNode.content = await posthtmlInclude(subtree)
+            }())
+          }
+          else {
+            newNode.content = subtree
+          }
+
+          if (attrs.locals) {
+            newNode = {
+              tag: 'scope',
+              attrs: { locals: attrs.locals },
+              content: [newNode],
+            }
+          }
         }
         else if (src.match(/\.(js|ts)$/)) {
           // TODO: Optimize file reading
           if (/from 'mithril'/.test(source)) {
             tasks.push(async function() {
-              newNode.content = await wrapMithril(src, node.attrs, locals)
+              newNode.content = await wrapMithril(src, attrs, locals)
             }())
           }
           else {
@@ -113,16 +130,16 @@ m.mount(document.querySelector(\`[data-mount-id=\${hash}]\`), {
     {
       tag: mountTargetTag,
       attrs: { ...nodeAttrs, 'data-mount-id': `h${hash}` },
-      content: html,
+      content: [html],
     },
     {
       tag: 'script',
-      content: `(window.C_ARGS || (window.C_ARGS={})).h${hash}=${JSON.stringify(args)}`
+      content: [`(window.C_ARGS || (window.C_ARGS={})).h${hash}=${JSON.stringify(args)}`]
     },
     {
       tag: 'script',
       attrs: {
-        async: true,
+        async: true as const,
         src: hydrateFile.replace(hydrateDir, ''),
       }
     },

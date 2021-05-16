@@ -54,4 +54,41 @@ o.spec('interpolate', () => {
 `
     )
   })
+
+  o('scope tag', async () => {
+    const result = await render(`<scope locals="{ x: 100, y: y+1 }"><p>{{x}},{{y}}</p></scope>`, makeCtx({ x: 10, y: 20 }))
+    o(result).equals(`<p>100,21</p>`)
+  })
+
+  o('include', async () => {
+    const result = await render(`<include src="_x.html" locals="{ x: 100 }">`, makeCtx({ x: 10 }))
+    o(result).equals(`<p>x:100</p>\n`)
+  })
+
+  o('nested include', async () => {
+    const result = await render(`<include src="_x-nested.html" locals="{ x: 100 }">`, makeCtx({ x: 10 }))
+    o(result).equals(`<p>x-parent1:100</p><p>x:111</p>\n<p>x-parent2:100</p>\n`)
+  })
+
+  o('if-tags work without content', async () => {
+    o(await render(`a<if cond="true"></if>b`, makeCtx())).equals('ab')
+
+    o(await render(`a<if cond="true"></if><else></else>b`, makeCtx())).equals('ab')
+    o(await render(`a<if cond="false"></if><else></else>b`, makeCtx())).equals('ab')
+
+    o(await render(`a<if cond="true"></if><else-if cond="true"></else-if><else></else>b`, makeCtx())).equals('ab')
+    o(await render(`a<if cond="false"></if><else-if cond="true"></else-if><else></else>b`, makeCtx())).equals('ab')
+    o(await render(`a<if cond="true"></if><else-if cond="false"></else-if><else></else>b`, makeCtx())).equals('ab')
+    o(await render(`a<if cond="false"></if><else-if cond="false"></else-if><else></else>b`, makeCtx())).equals('ab')
+
+    o(await render(`a<if cond="false"></if><else-if cond="true">x</else-if><else></else>b`, makeCtx())).equals('axb')
+  })
+
+  o('for-tag works without content', async () => {
+    o(await render(`a<for let="_ of [10,20,30]"></for>b`, makeCtx())).equals('ab')
+  })
+
+  o('scope-tag works without content', async () => {
+    o(await render(`a<scope locals="{}"></scope>b`, makeCtx())).equals('ab')
+  })
 })

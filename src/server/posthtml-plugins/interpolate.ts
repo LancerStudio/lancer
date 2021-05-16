@@ -27,15 +27,18 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
     }
 
     const content = node.content
-    const isLoop = node.tag === 'for'
 
-    const isCond = node.tag === 'if' || node.tag === 'else-if' || node.tag === 'else'
+    const isLoop  = node.tag === 'for'
+    const isCond  = node.tag === 'if' || node.tag === 'else-if' || node.tag === 'else'
+    const isScope = node.tag === 'scope'
 
     if (!isCond) {
       ifElseChain = 'none'
     }
 
-    if (content && isLoop) {
+    if (isLoop) {
+      if (!content) return m
+
       const code = node.attrs?.let
       if (!code || code === true) {
         throw new Error(`[Lancer] <${node.tag}> tag must have a let="..." attribute`)
@@ -51,13 +54,13 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
       m.push(newContent(loopContent))
       return m
     }
-    else if (content && isCond) {
+    else if (isCond) {
       if (node.tag === 'else') {
         if (ifElseChain === 'none') {
           throw new Error(`[Lancer] Dangling <else> tag`)
         }
         else if (ifElseChain === 'unresolved') {
-          m.push(newContent(node.content))
+          content && m.push(newContent(content))
         }
         ifElseChain = 'none'
         return m
@@ -77,12 +80,24 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
       }
       const result = evalExpression(ctx, cond)
       if (result) {
-        m.push(newContent(node.content))
+        content && m.push(newContent(content))
         ifElseChain = 'resolved'
       }
       else {
         ifElseChain = 'unresolved'
       }
+      return m
+    }
+    else if (isScope) {
+      if (!content) return m
+
+      const scopeLocals = node.attrs?.locals
+      if (!scopeLocals || scopeLocals === true) {
+        throw new Error(`[Lancer] <${node.tag}> tag must have an locals="..." attribute`)
+      }
+      const scopeCtx = vm.createContext({ ...ctx, ...evalExpression(ctx, scopeLocals) })
+      const scopeContent = resolveInterpolations({ ...options, ctx: scopeCtx }, content)
+      m.push(newContent(scopeContent))
       return m
     }
     else if (content) {
