@@ -79,6 +79,11 @@ export function makeLocals(ctx: PostHtmlCtx): object {
     site: ctx.site,
     currentUser: ctx.user,
 
+    // Shallow "copy" to stay clone-able
+    process: {
+      env: process.env
+    },
+
     page: {
       file: ctx.filename,
       path: ctx.plainPath,
