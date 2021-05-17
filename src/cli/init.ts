@@ -107,7 +107,9 @@ const tailwindConfigJs =
   purge: [
     './client/**/*.html',
     './client/**/*.js',
+    './client/**/*.jsx',
     './client/**/*.ts',
+    './client/**/*.tsx',
   ],
 }
 `
