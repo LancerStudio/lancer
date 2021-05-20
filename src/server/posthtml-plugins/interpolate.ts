@@ -28,15 +28,20 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
 
     const content = node.content
 
-    const isLoop  = node.tag === 'for'
-    const isCond  = node.tag === 'if' || node.tag === 'else-if' || node.tag === 'else'
-    const isScope = node.tag === 'scope'
+    const isLoop   = node.tag === 'for'
+    const isCond   = node.tag === 'if' || node.tag === 'else-if' || node.tag === 'else'
+    const isScope  = node.tag === 'scope'
+    const isScript = node.tag === 'script' && node.attrs?.type === 'server'
 
     if (!isCond) {
       ifElseChain = 'none'
     }
 
-    if (isLoop) {
+    if (isScript) {
+      content && vm.runInNewContext(content.join(''), { locals: ctx.locals })
+      return m
+    }
+    else if (isLoop) {
       if (!content) return m
 
       const code = node.attrs?.let

@@ -1,6 +1,7 @@
 import path from 'path'
 import glob from 'glob'
 import imageSize from 'image-size'
+import Cookies from 'universal-cookie'
 
 import * as Bundle from './bundle'
 import * as i18n from './i18n'
@@ -78,6 +79,8 @@ export function makeLocals(ctx: PostHtmlCtx): object {
 
     site: ctx.site,
     currentUser: ctx.user,
+
+    cookies: ctx.req && new Cookies(ctx.req.headers.cookie),
 
     // Shallow "copy" to stay clone-able
     process: {

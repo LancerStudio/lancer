@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { NodeTag, parseIHTML } from '../lib/posthtml'
-import { clientDir, hydrateDir, sourceDir } from '../config'
+import { clientDir, hydrateDir, PostHtmlCtx, siteConfig, sourceDir } from '../config'
 import { requireLatest, requireUserland } from '../lib/fs'
 import { POSTHTML_OPTIONS } from '../lib/posthtml'
 import { buildHydrateScript, buildSsrFile, evalExpression } from '../lib/ssr'
@@ -64,7 +64,7 @@ export default (options: Options = {}) => {
             }
           }
         }
-        else if (src.match(/\.(js|ts)$/)) {
+        else if (src.match(/\.(js|ts)x?$/)) {
           // TODO: Optimize file reading
           if (/from 'mithril'/.test(source)) {
             tasks.push(async function() {
@@ -88,40 +88,52 @@ export default (options: Options = {}) => {
       return newNode
     })
 
-    await Promise.allSettled(tasks)
+    await Promise.all(tasks)
 
     return tree
   }
 }
 
 async function wrapMithril(file: string, nodeAttrs: any, locals: object) {
-  const outfile = await buildSsrFile(file)
-  const component = requireLatest(outfile).module.default
+  // Make mithril happy
+  const g = global as any
+  if (!g.window) {
+    g.window = g.document = g.requestAnimationFrame = undefined
+  }
+
+  const site = siteConfig()
+  const outfile = await buildSsrFile(file, site)
+  const mount = requireLatest(outfile).module.default
 
   const m = requireUserland(sourceDir, 'mithril')
+  m.redraw = () => {}
+
   const renderMithril = requireUserland(sourceDir, 'mithril-node-render')
 
   const args = evalExpression(locals, nodeAttrs.args || '{}')
   delete nodeAttrs.args
 
-  const html = await renderMithril.sync(m(component, args))
+  const html = await renderMithril.sync(mount({ dom: null, args }))
   const hash = await checksumFile(file)
 
   const hydrateFile = path.join(hydrateDir, file.replace(clientDir, ''))
-    .replace(/\.ts$/, '.js')
+    .replace(/\.(ts|js)x?$/, '.js')
     .replace(/\.js$/, `-${hash}.hydrate.js`)
 
   const tmpFile = hydrateFile.replace(/\.hydrate\.js$/, '.hydrate.tmp.js')
+  fs.mkdirSync(path.dirname(tmpFile), { recursive: true })
+
   await fs.promises.writeFile(tmpFile,
 `import m from 'mithril'
-import component from '${file}'
+import mount from '${file}'
 var hash = 'h${hash}'
-m.mount(document.querySelector(\`[data-mount-id=\${hash}]\`), {
-  view: () => m(component, C_ARGS[hash])
+mount({
+  dom: document.querySelector(\`[data-mount-id=\${hash}]\`),
+  args: C_ARGS[hash]
 })
 `
   )
-  await buildHydrateScript(tmpFile, hydrateFile)
+  await buildHydrateScript(tmpFile, hydrateFile, site)
 
   const mountTargetTag = nodeAttrs.tag || 'div'
   delete nodeAttrs.tag
@@ -139,7 +151,7 @@ m.mount(document.querySelector(\`[data-mount-id=\${hash}]\`), {
     {
       tag: 'script',
       attrs: {
-        async: true as const,
+        defer: true as const,
         src: hydrateFile.replace(hydrateDir, ''),
       }
     },

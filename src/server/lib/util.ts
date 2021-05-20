@@ -33,6 +33,10 @@ export function checksumFile(file: string): Promise<string> {
   });
 }
 
+export function checksumString(str: string) {
+  return createHash('md5').update(str).digest('hex')
+}
+
 export function hashContent(buffer: BinaryLike) {
   return createHash('md5').update(buffer).digest('hex').substring(0, 10)
 }

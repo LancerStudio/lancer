@@ -1,14 +1,15 @@
 import fs from 'fs'
 import vm from 'vm'
 import path from 'path'
-import { cacheDir, clientDir, PostHtmlCtx } from "../config"
+import { building, cacheDir, clientDir, env, PostHtmlCtx, siteConfig } from "../config"
 import { build, Plugin } from 'esbuild'
 import { requireLatest } from './fs'
 import { cyan, green } from 'kleur'
+import { checksumFile, checksumString } from './util'
 
 type SsrContext = {
   ctx: PostHtmlCtx
-  req?: Request
+  req?: import('express').Request
   locals: any
 }
 type Inputs = {
@@ -21,7 +22,8 @@ export async function ssr({ctx, locals}: Inputs) {
   if (!fs.existsSync(ssrFile)) ssrFile = ctx.filename.replace(/\.html$/, '.server.ts')
   if (!fs.existsSync(ssrFile)) return false
 
-  const outfile = await buildSsrFile(ssrFile)
+  const site = siteConfig()
+  const outfile = await buildSsrFile(ssrFile, site)
 
   const ssrContext: SsrContext = {
     ctx,
@@ -31,7 +33,7 @@ export async function ssr({ctx, locals}: Inputs) {
 
   const render = requireLatest(outfile).module.default
   if (typeof render !== 'function') {
-    throw new Error(`[Lancer] Please export a default function from ${ssrFile.replace(clientDir, 'client')}`)
+    return false
   }
 
   const start = Date.now()
@@ -41,23 +43,46 @@ export async function ssr({ctx, locals}: Inputs) {
   return true
 }
 
-export async function buildSsrFile(ssrFile: string) {
+type Config = {
+  jsxFactory?: string
+  jsxFragment?: string
+}
+export async function buildSsrFile(ssrFile: string, config: Config) {
   const outfile = ssrBuildFile(ssrFile)
 
-  await build({
+  const output = await build({
     entryPoints: [ssrFile],
     outdir: path.dirname(outfile),
-    write: true,
+    write: building,
     bundle: true,
     format: 'cjs',
     sourcemap: true,
     plugins: [makeAllPackagesExternalPlugin],
+    jsxFactory: config.jsxFactory,
+    jsxFragment: config.jsxFragment,
+    platform: 'node',
   })
+
+  if (!building) {
+    // Don't write unless necessary so in-memory data structures don't get clobbered
+    const oldCheck = fs.existsSync(outfile) && await checksumFile(outfile)
+    const newCheck = checksumString(output.outputFiles!.find(out => out.path === outfile)!.text)
+
+    if (newCheck !== oldCheck) {
+      await Promise.all(
+        output.outputFiles!.map(({ path: filename, contents }) => {
+          // console.log("Writing", filename)
+          fs.mkdirSync(path.dirname(filename), { recursive: true })
+          return fs.promises.writeFile(filename, contents)
+        })
+      )
+    }
+  }
 
   return outfile
 }
 
-export async function buildHydrateScript(ssrFile: string, outfile: string) {
+export async function buildHydrateScript(ssrFile: string, outfile: string, config: Config) {
   const isProd = process.env.NODE_ENV === 'production'
 
   await build({
@@ -71,12 +96,14 @@ export async function buildHydrateScript(ssrFile: string, outfile: string) {
     plugins: [injectRpcsPlugin],
     define: {
       'process.env.NODE_ENV': `"${isProd ? 'production' : 'development'}"`
-    }
+    },
+    jsxFactory: config.jsxFactory,
+    jsxFragment: config.jsxFragment,
   })
 }
 
 export function ssrBuildFile(ssrFile: string) {
-  return path.join(cacheDir, 'ssr', ssrFile.replace(clientDir, '')).replace(/\.ts$/, '.js')
+  return path.join(cacheDir, 'ssr', ssrFile.replace(clientDir, '')).replace(/\.(js|ts)x?$/, '.js')
 }
 
 export function evalExpression(locals: vm.Context, code: string) {
@@ -96,9 +123,13 @@ const injectRpcsPlugin: Plugin = {
   name: 'inject-rpcs',
   setup(build) {
     let filter = /\.server\.(js|ts)$/
-    build.onLoad({ filter }, args => ({
-      contents: makeRpcFile(args.path, Object.keys(requireLatest(ssrBuildFile(args.path)).module))
-    }))
+    build.onLoad({ filter }, async args => {
+      // TODO: Buildtime cache
+      const outfile = await buildSsrFile(args.path, siteConfig())
+      return {
+        contents: makeRpcFile(args.path, Object.keys(requireLatest(outfile).module))
+      }
+    })
   },
 }
 

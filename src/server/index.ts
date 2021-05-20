@@ -1,8 +1,8 @@
 import 'dotenv/config'
 
-import { existsSync, promises as fs } from 'fs'
 import path from 'path'
 import express from 'express'
+import { existsSync, promises as fs } from 'fs'
 
 import * as Dev from './dev'
 import * as Bundle from './bundle'
@@ -14,6 +14,8 @@ import { ensureLocale } from './i18n'
 import { guardTempPassword, requireSetup } from './dev/setup'
 import { buildSsrFile, ssrBuildFile } from './lib/ssr'
 import { requireLatestOptional } from './lib/fs'
+
+const pathToRegexp = require('express/node_modules/path-to-regexp')
 
 require('express-async-errors')
 
@@ -52,10 +54,11 @@ router.post('/lrpc', async (req, res) => {
       return res.sendStatus(404)
     }
 
-    await buildSsrFile(ssrFile)
+    const site = siteConfig()
+    await buildSsrFile(ssrFile, site)
   }
 
-  const rpcs = requireLatestOptional(ssrBuildFile(`${ns}.js`))
+  const rpcs = requireLatestOptional(ssrBuildFile(`${ns}.js`)) // TODO: SECURITY
   const rpc = rpcs && rpcs.module[req.body.method]
   if (!rpc) return res.sendStatus(404)
 
@@ -63,13 +66,35 @@ router.post('/lrpc', async (req, res) => {
   return res.send(result)
 })
 
+type ReParams = Array<{ name: string, optional: boolean, offset: number }>
 router.get('/*', requireSetup(), ensureLocale(), async (req, res) => {
-  const site = siteConfig()
+  let filename: string = ''
+
+  const site = siteConfig({ refreshFileBasedRewrites: env.development })
   const plainPath = req.locale ? req.path.replace(`/${req.locale}`, '') : req.path
+
+  rewrite:
+  for (let [pattern, file] of Object.entries(site.rewrites)) {
+    let p1: ReParams, p2: ReParams
+    const re1 = [pathToRegexp(pattern.replace(/\.html$/, ''), p1 = []), p1] as const
+    const re2 = [pathToRegexp(pattern, p2 = []), p2] as const
+
+    for (let [re, params] of [re1, re2]) {
+      const match = req.path.match(re)
+
+      if (match) {
+        params.forEach((param, i) => {
+          req.params[param.name] = match[i+1]!
+        })
+        filename = file
+        break rewrite
+      }
+    }
+  }
 
   try {
     console.log('\n[Lancer] GET', req.url)
-    var filename = resolveAsset(plainPath)
+    filename = filename || resolveAsset(plainPath)
   }
   catch (err) {
     console.log('         -->', err.message)
@@ -128,6 +153,7 @@ router.get('/*', requireSetup(), ensureLocale(), async (req, res) => {
     const htmlSrc = await fs.readFile(filename, 'utf8')
     const site = siteConfig()
     const html = await render(htmlSrc, {
+      req,
       site,
       user: req.user,
       cache: {},

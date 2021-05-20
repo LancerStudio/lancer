@@ -62,6 +62,7 @@
     "posthtml": "^0.15.1",
     "posthtml-match-helper": "^1.0.1",
     "sharp": "^0.27.1",
+    "universal-cookie": "^4.0.4",
     "url-join": "^4.0.1",
     "yauzl": "^2.10.0",
     "yazl": "^2.5.1",

@@ -1,13 +1,15 @@
+import glob from 'glob'
 import path from 'path'
 import { existsSync, mkdirSync } from 'fs'
 
 import { read, Env } from './lib/config'
 import { requireLatest } from './lib/fs'
 import { UserRow } from './models/user'
+import { Request } from 'express'
 
 export const env = Env(['test', 'development', 'production'])
 
-const building = !!(process.env.LANCER_BUILD || process.env.LANCER_LIBRARY_BUILD)
+export const building = !!(process.env.LANCER_BUILD || process.env.LANCER_LIBRARY_BUILD)
 
 export const sessionSecret = building ? '' : env.branch(() => 'TEMP KEY', {
   production: () => read('SESSION_SECRET')
@@ -73,8 +75,15 @@ export type SiteConfig = {
   templateTypes: Record<string, (html: string) => string | Promise<string>>
   jsxFactory?: string
   jsxFragment?: string
+  rewrites: Record<string,string>
 }
-export const siteConfig: () => SiteConfig = () => {
+
+const VALID_PARAM_NAME_RE = /^[a-z_][a-z0-9_]*$/i
+
+type GetConfigOptions = {
+  refreshFileBasedRewrites?: boolean
+}
+export const siteConfig = (opts: GetConfigOptions={}) => {
   const defaults: SiteConfig = {
     name: 'Missing site.config.js',
     locals: {},
@@ -83,14 +92,33 @@ export const siteConfig: () => SiteConfig = () => {
     cacheCssInDev: true,
     imagePreviews: {},
     templateTypes: {},
+    rewrites: {},
   }
-  const config = {
+  const config: SiteConfig = {
     ...defaults,
     ...requireLatest(`${sourceDir}/site.config.js`).module
   }
 
   if (!config.locales || !Array.isArray(config.locales) || !config.locales.length) {
     throw new Error(`site.config.js must specify at least one locale.`)
+  }
+
+  if (opts.refreshFileBasedRewrites) {
+    glob.sync(`${clientDir}/**/*.html`).forEach(to => {
+      let hasParam = false
+      let from = to.replace(clientDir, '').replace(/\[([^\]]+)\](?:\.html)?/g, (_,p1) => {
+        if (!VALID_PARAM_NAME_RE.test(p1)) {
+          throw new Error(`[Lancer] Invalid param file name: '${path.basename(to)}'\n  Valid param name format: ${VALID_PARAM_NAME_RE}`)
+        }
+        hasParam = true
+        return `:${p1}`
+      })
+      if (hasParam) {
+        config.rewrites[from] = to
+        console.log("FOUND", from)
+        console.log('->', to)
+      }
+    })
   }
 
   return config
