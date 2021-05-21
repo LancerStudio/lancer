@@ -1,4 +1,9 @@
-import { statSync } from "fs"
+import path from 'path'
+import { statSync } from 'fs'
+import { fileURLToPath } from 'url'
+import { createRequire } from 'module'
+
+const require = createRequire(import.meta.url)
 
 const cache = {} as Record<string, number>
 
@@ -36,4 +41,8 @@ export function isExternal(src: string) {
 
 export function isRelative(src: string) {
 	return !isExternal(src) && !src.startsWith('/')
+}
+
+export function makeDirname(importMetaUrl: string) {
+	return path.dirname(fileURLToPath(importMetaUrl))
 }

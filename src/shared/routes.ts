@@ -1,4 +1,4 @@
-import { route } from "../server/lib/route";
+import { route } from '../server/lib/route.js'
 
 const routes = {
   pages: route('/lancer', undefined, {

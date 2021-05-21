@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-const fs = require('fs')
-const path = require('path')
 const program = require('commander')
 const port = process.env.PORT || 7272
 
@@ -55,9 +53,9 @@ program
 //
 program
   .command('dev')
-  .action(function () {
-    var devServer = require('express')()
-    devServer.use( require('./dist/server').default )
+  .action(async function () {
+    var devServer = (await import('express')).default()
+    devServer.use( (await import('./dist/server/index.js')).default )
     console.log('Starting dev server on port', port)
     devServer.listen(port)
   })

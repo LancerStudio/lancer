@@ -1,5 +1,5 @@
 import vm from 'vm'
-import { resolveInterpolations } from "./interpolate"
+import { resolveInterpolations } from './interpolate.js'
 
 
 type Options = {

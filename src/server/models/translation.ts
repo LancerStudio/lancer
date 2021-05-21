@@ -1,4 +1,4 @@
-import { DB } from "../lib/db";
+import { DB } from '../lib/db.js';
 
 const table = 'lancer_translations'
 

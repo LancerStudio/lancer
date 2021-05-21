@@ -4,27 +4,32 @@ import { existsSync, promises as fs} from 'fs'
 import { bundleScript } from '../server/bundle'
 import routes from '../shared/routes'
 
+import postcssImport from 'postcss-import'
+import postcssPrefixSelector from 'postcss-prefix-selector'
+import tailwind from 'tailwindcss'
+import autoprefixer from 'autoprefixer'
+
 const srcDir = path.join(__dirname, '../../src')
 const distDir = path.join(__dirname, '../../dist')
 const buildDir = path.join(distDir, 'build')
 
 const common = [
-  require("postcss-import")(),
-  require('tailwindcss')( path.join(srcDir, 'client/tailwind.config.js') ),
+  postcssImport(),
+  tailwind( path.join(srcDir, 'client/tailwind.config.js') ),
 ]
 
 const plugins = [
   ...common,
-  require('autoprefixer')(),
+  autoprefixer(),
 ]
 
 const pluginsScoped = [
   ...common,
-  require('postcss-prefix-selector')({
+  postcssPrefixSelector({
     prefix: '.Lancer',
     exclude: [/data-t-/, /^.Lancer/]
   }),
-  require('autoprefixer')(),
+  autoprefixer(),
 ]
 
 

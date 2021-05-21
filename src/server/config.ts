@@ -2,10 +2,12 @@ import glob from 'glob'
 import path from 'path'
 import { existsSync, mkdirSync } from 'fs'
 
-import { read, Env } from './lib/config'
-import { requireLatest } from './lib/fs'
-import { UserRow } from './models/user'
+import { read, Env } from './lib/config.js'
+import { makeDirname, requireLatest } from './lib/fs.js'
+import { UserRow } from './models/user.js'
 import { Request } from 'express'
+
+const __dirname = makeDirname(import.meta.url)
 
 export const env = Env(['test', 'development', 'production'])
 

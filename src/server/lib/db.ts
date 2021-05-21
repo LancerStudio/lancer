@@ -1,4 +1,4 @@
-import * as Semver from './semver'
+import * as Semver from './semver.js'
 import sqlite3 from 'better-sqlite3'
 
 export type DB = ReturnType<typeof connect>

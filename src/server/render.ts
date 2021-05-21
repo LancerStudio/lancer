@@ -2,25 +2,26 @@ import path from 'path'
 import glob from 'glob'
 import imageSize from 'image-size'
 import Cookies from 'universal-cookie'
+import posthtml from 'posthtml'
+import RL from 'n-readlines'
 
-import * as Bundle from './bundle'
-import * as i18n from './i18n'
-import IncludePlugin from './posthtml-plugins/include'
-import LayoutPlugin from './posthtml-plugins/layout'
-import { clientDir, env, filesDir, PostHtmlCtx, staticDir } from "./config"
-import { POSTHTML_OPTIONS } from './lib/posthtml'
-import { ssr } from './lib/ssr'
-import TemplatePlugin from './posthtml-plugins/template'
-import { isRelative } from './lib/fs'
-import { LancerCorePlugin } from './posthtml-plugins/core'
+import * as Bundle from './bundle.js'
+import * as i18n from './i18n.js'
+import IncludePlugin from './posthtml-plugins/include.js'
+import LayoutPlugin from './posthtml-plugins/layout.js'
+import { clientDir, env, filesDir, PostHtmlCtx, staticDir } from './config.js'
+import { POSTHTML_OPTIONS } from './lib/posthtml.js'
+import { ssr } from './lib/ssr.js'
+import TemplatePlugin from './posthtml-plugins/template.js'
+import { isRelative } from './lib/fs.js'
+import { LancerCorePlugin } from './posthtml-plugins/core.js'
+import { Parser } from '@lancer/ihtml-parser'
 
 export const validStyleBundles: Record<string, boolean> = {}
 export const validScriptBundles: Record<string, boolean> = {}
 
 
 export async function render(html: string, ctx: PostHtmlCtx) {
-  const { Translation } = require('./models')
-
   const locals = makeLocals(ctx)
 
   await ssr({ locals, ctx })
@@ -41,10 +42,10 @@ export async function render(html: string, ctx: PostHtmlCtx) {
       }),
     ],
     postfix: [
-      i18n.posthtmlPlugin({ Translation, ctx }),
+      // i18n.posthtmlPlugin({ Translation, ctx }),
     ]
   })
-  const result = await require('posthtml')(plugins).process(html, POSTHTML_OPTIONS)
+  const result = await posthtml(plugins).process(html, POSTHTML_OPTIONS)
   return result.html as string
 }
 
@@ -106,7 +107,6 @@ export function makeLocals(ctx: PostHtmlCtx): object {
       //
       // Read and assign page attributes for html files
       //
-      const RL = require('n-readlines')
       return files
         .map(file => {
           const plainPath = file.path.replace(/\.html$/, '')
@@ -135,7 +135,7 @@ export function makeLocals(ctx: PostHtmlCtx): object {
             }
 
             let pageAttrs: any
-            const parser = new (require("@lancer/ihtml-parser").Parser)({
+            const parser = new Parser({
               onopentag(name: string, attrs: any) {
                 if (name === 'page') pageAttrs = attrs
               }

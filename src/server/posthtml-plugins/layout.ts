@@ -4,13 +4,13 @@
 import fs from 'fs'
 import vm from 'vm'
 import path from 'path'
-import { parseIHTML, NodeTag } from '../lib/posthtml'
-import { clientDir } from '../config'
-import { POSTHTML_OPTIONS } from '../lib/posthtml'
-import { evalExpression } from '../lib/ssr'
+import { parseIHTML, NodeTag } from '../lib/posthtml.js'
+import { clientDir } from '../config.js'
+import { POSTHTML_OPTIONS } from '../lib/posthtml.js'
+import { evalExpression } from '../lib/ssr.js'
 
-const Api = require('posthtml/lib/api')
-const matchHelper = require('posthtml-match-helper')
+import Api from 'posthtml/lib/api.js'
+import matchHelper from 'posthtml-match-helper'
 
 type NestedLayoutContext = {
   childPageAttrs: object

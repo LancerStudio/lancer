@@ -2,10 +2,10 @@ import { Router } from 'express'
 import expressSession, { Store } from 'express-session'
 import events, { EventEmitter } from 'events'
 
-import { db, User } from '../models'
-import { DB } from './db'
-import { env, sessionSecret } from '../config'
-import { UserRow } from '../models/user'
+import { db, User } from '../models/index.js'
+import { DB } from './db.js'
+import { env, sessionSecret } from '../config.js'
+import { UserRow } from '../models/user.js'
 
 type Session = Record<string, any>
 

@@ -1,5 +1,5 @@
 import pathToRegexp, {Key} from 'path-to-regexp'
-const urlJoin = require('url-join') as (a: string, b: string) => string
+import urlJoin from 'url-join'
 
 //
 // Router

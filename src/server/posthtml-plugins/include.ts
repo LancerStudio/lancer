@@ -1,12 +1,12 @@
 import fs from 'fs'
 import path from 'path'
-import { NodeTag, parseIHTML } from '../lib/posthtml'
-import { clientDir, hydrateDir, PostHtmlCtx, siteConfig, sourceDir } from '../config'
-import { requireLatest, requireUserland } from '../lib/fs'
-import { POSTHTML_OPTIONS } from '../lib/posthtml'
-import { buildHydrateScript, buildSsrFile, evalExpression } from '../lib/ssr'
-import { checksumFile } from '../lib/util'
-const {match} = require('posthtml/lib/api')
+import { NodeTag, parseIHTML } from '../lib/posthtml.js'
+import { clientDir, hydrateDir, siteConfig, sourceDir } from '../config.js'
+import { requireLatest, requireUserland } from '../lib/fs.js'
+import { POSTHTML_OPTIONS } from '../lib/posthtml.js'
+import { buildHydrateScript, buildSsrFile, evalExpression } from '../lib/ssr.js'
+import { checksumFile } from '../lib/util.js'
+import { match } from 'posthtml/lib/api.js'
 
 type Options = {
   root?: string

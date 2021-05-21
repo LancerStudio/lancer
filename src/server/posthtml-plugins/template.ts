@@ -1,9 +1,9 @@
 import vm from 'vm'
 import parser from '@lancer/ihtml-parser'
 import renderTree from 'posthtml-render'
-import { siteConfig } from '../config'
-import { resolveInterpolations } from './interpolate'
-const {match} = require('posthtml/lib/api')
+import { siteConfig } from '../config.js'
+import { resolveInterpolations } from './interpolate.js'
+import { match } from 'posthtml/lib/api.js'
 
 type Options = {
   locals: object

@@ -1,10 +1,10 @@
 import path from 'path'
 import sharp from 'sharp'
-import isEqual from 'lodash/isEqual'
+import isEqual from 'lodash/isEqual.js'
 import { existsSync, promises as fs, statSync } from 'fs'
 
-import { env, filesDir, previewsDir, SiteConfig } from "./config"
-import { requireLatest } from './lib/fs'
+import { env, filesDir, previewsDir, SiteConfig } from './config.js'
+import { requireLatest } from './lib/fs.js'
 
 
 const SUPPORTED_EXTS = [

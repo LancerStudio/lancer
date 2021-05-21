@@ -1,6 +1,5 @@
-var fs = require('fs-extra')
-var fm = require('html-frontmatter')
-var Path = require('path')
+import fs from 'fs'
+import Path from 'path'
 
 exports.reshapePlugin = function (options) {
   return function layouts (ast, ctx) {

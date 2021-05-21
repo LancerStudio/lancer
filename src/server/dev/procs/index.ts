@@ -1,8 +1,8 @@
 import { existsSync, statSync } from "fs"
 
 import {z, rpc, bad, ok, allowAnonymous, RpcContext} from '../rpc'
-import { filesDir, siteConfig } from "../../config"
-import { missingFiles } from "../state"
+import { filesDir, siteConfig } from '../../config.js'
+import { missingFiles } from '../state.js'
 import { Translation, User } from "../../models"
 
 export * from './onboarding'

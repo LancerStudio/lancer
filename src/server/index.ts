@@ -1,23 +1,23 @@
-import 'dotenv/config'
+import 'dotenv/config.js'
+import 'express-async-errors'
 
 import path from 'path'
 import express from 'express'
+import bodyParser from 'body-parser'
 import { existsSync, promises as fs } from 'fs'
 
-import * as Dev from './dev'
-import * as Bundle from './bundle'
-import { staticDir, siteConfig, env, filesDir, sourceDir, buildDir, hydrateDir, clientDir } from './config'
-import { resolveFile } from './files'
-import { render, resolveAsset, validScriptBundles, validStyleBundles } from './render'
-import { mountSession } from './lib/session'
-import { ensureLocale } from './i18n'
-import { guardTempPassword, requireSetup } from './dev/setup'
-import { buildSsrFile, ssrBuildFile } from './lib/ssr'
-import { requireLatestOptional } from './lib/fs'
+import * as Dev from './dev/index.js'
+import * as Bundle from './bundle.js'
+import { staticDir, siteConfig, env, filesDir, sourceDir, buildDir, hydrateDir, clientDir } from './config.js'
+import { resolveFile } from './files.js'
+import { render, resolveAsset, validScriptBundles, validStyleBundles } from './render.js'
+import { mountSession } from './lib/session.js'
+import { ensureLocale } from './i18n.js'
+import { guardTempPassword, requireSetup } from './dev/setup.js'
+import { buildSsrFile, ssrBuildFile } from './lib/ssr.js'
+import { requireLatestOptional } from './lib/fs.js'
 
-const pathToRegexp = require('express/node_modules/path-to-regexp')
-
-require('express-async-errors')
+import pathToRegexp from 'express/node_modules/path-to-regexp/index.js'
 
 
 const router = express.Router()
@@ -35,7 +35,7 @@ if (siteConfig().studio) {
   mountSession(router)
 }
 
-router.use( require('body-parser').json() )
+router.use( bodyParser.json() )
 
 if (siteConfig().studio) {
   Dev.mount(router)

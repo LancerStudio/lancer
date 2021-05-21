@@ -2,6 +2,7 @@
   "name": "@lancer/studio",
   "version": "0.8.3",
   "description": "Build websites with the power of HTML.",
+  "type": "module",
   "main": "index.js",
   "repository": {
     "type": "github",
@@ -17,7 +18,7 @@
     "test-watch": "nodemon -w dist/server -w tests --exec ospec"
   },
   "bin": {
-    "lancer": "./index.js"
+    "lancer": "./index.cjs"
   },
   "files": [
     "dist",
@@ -46,7 +47,6 @@
     "fclone": "^1.0.11",
     "form-data": "^3.0.0",
     "glob": "^7.1.6",
-    "html-frontmatter": "^1.6.1",
     "image-size": "^0.9.3",
     "kleur": "^4.1.4",
     "langs": "^2.0.0",

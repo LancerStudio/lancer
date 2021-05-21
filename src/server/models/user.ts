@@ -1,6 +1,6 @@
 import argon2 from 'argon2'
-import { DB } from "../lib/db";
-import { makeGravatarUrl } from '../lib/util';
+import { DB } from '../lib/db.js';
+import { makeGravatarUrl } from '../lib/util.js';
 
 const table = 'lancer_users'
 const auth_table = 'lancer_auth_connections'

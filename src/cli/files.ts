@@ -3,8 +3,8 @@ import path from 'path'
 import fetch from 'node-fetch'
 import FormData from 'form-data'
 import { createReadStream, existsSync } from 'fs'
-import { createArchive } from '../server/dev/files'
-import { filesDir } from '../server/config'
+import { createArchive } from '../server/dev/files.js'
+import { filesDir } from '../server/config.js'
 
 
 export async function pushFiles(host: string, opts: { inputDir?: string }) {

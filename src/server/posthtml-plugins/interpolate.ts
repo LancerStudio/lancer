@@ -1,7 +1,7 @@
 import vm from 'vm'
 import fclone from 'fclone'
-import { Node, NodeTag } from '../lib/posthtml'
-import { evalExpression } from '../lib/ssr'
+import { Node, NodeTag } from '../lib/posthtml.js'
+import { evalExpression } from '../lib/ssr.js'
 
 type WalkOptions = {
   ctx: vm.Context
@@ -19,6 +19,11 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
       ifElseChain = 'none'
       return m
     }
+
+    // console.log("Hum", node.tag)
+    // if (node.tag==='scope') {
+    //   console.log("Ha", node)
+    // }
 
     if (node.render) {
       // Clone node to allow loops to interpolate a tree multiple times

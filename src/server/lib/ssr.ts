@@ -1,11 +1,11 @@
 import fs from 'fs'
 import vm from 'vm'
 import path from 'path'
-import { building, cacheDir, clientDir, env, PostHtmlCtx, siteConfig } from "../config"
+import { building, cacheDir, clientDir, PostHtmlCtx, siteConfig } from '../config.js'
 import { build, Plugin } from 'esbuild'
-import { requireLatest } from './fs'
-import { cyan, green } from 'kleur'
-import { checksumFile, checksumString } from './util'
+import { requireLatest } from './fs.js'
+import colors from 'kleur'
+import { checksumFile, checksumString } from './util.js'
 
 type SsrContext = {
   ctx: PostHtmlCtx
@@ -38,7 +38,7 @@ export async function ssr({ctx, locals}: Inputs) {
 
   const start = Date.now()
   await render(ssrContext)
-  console.log(`         ${cyan('run')} ${ssrFile.replace(clientDir, 'client')} - ${green(Date.now() - start + 'ms')}`)
+  console.log(`         ${colors.cyan('run')} ${ssrFile.replace(clientDir, 'client')} - ${colors.green(Date.now() - start + 'ms')}`)
 
   return true
 }

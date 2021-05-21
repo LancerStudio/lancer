@@ -1,6 +1,6 @@
-require('../../_test-helper')
-const o = require('ospec')
-const {render} = require('../../../dist/server/render')
+import '../../_test-helper.js'
+import o from 'ospec'
+import {render} from '../../../dist/server/render.js'
 
 o.spec('interpolate', () => {
 

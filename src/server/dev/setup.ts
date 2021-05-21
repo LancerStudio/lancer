@@ -1,6 +1,6 @@
 import { Handler, RequestHandler, Request, Response } from 'express'
-import routes from '../../shared/routes';
-import { knownKeys, Kv, User } from '../models';
+import routes from '../../shared/routes.js';
+import { knownKeys, Kv, User } from '../models/index.js';
 
 declare global {
   namespace Express {

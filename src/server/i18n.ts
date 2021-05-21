@@ -1,12 +1,12 @@
 import path from 'path'
+import langs from 'langs'
+import matchHelper from 'posthtml-match-helper'
 import { RequestHandler } from "express"
-import { LINK_DELIMINATOR } from "../shared/constants"
-import { shouldPrefixMailto } from "../shared/logic"
-import { PostHtmlCtx, siteConfig } from "./config"
-import { memoizeUnary } from "./lib/util"
-import { TranslationModel } from "./models/translation"
-
-const langs = require('langs')
+import { LINK_DELIMINATOR } from "../shared/constants.js"
+import { shouldPrefixMailto } from "../shared/logic.js"
+import { PostHtmlCtx, siteConfig } from "./config.js"
+import { memoizeUnary } from "./lib/util.js"
+import { TranslationModel } from "./models/translation.js"
 
 declare global {
   namespace Express {
@@ -16,8 +16,6 @@ declare global {
   }
 }
 
-
-const matchHelper = require('posthtml-match-helper')
 
 type PostHtmlOptions = {
   ctx: PostHtmlCtx

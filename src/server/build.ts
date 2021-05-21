@@ -1,15 +1,16 @@
 import glob from 'glob'
 import path from 'path'
+import posthtml from 'posthtml'
 import { readFileSync, promises as fs, mkdirSync, readdirSync, copyFileSync, lstatSync, existsSync } from 'fs'
 import { buildSync } from 'esbuild'
-import { yellow } from 'kleur'
+import colors from 'kleur'
 
-import { bundleScriptProd, bundleStyle, posthtmlPlugin } from './bundle'
-import { clientDir, siteConfig, buildDir, sourceDir, staticDir, filesDir } from './config'
-import { makeLocals, renderPostHtmlPlugins, resolveAsset } from './render'
-import { POSTHTML_OPTIONS } from './lib/posthtml'
-import { ssr } from './lib/ssr'
-import { hashContent } from './lib/util'
+import { bundleScriptProd, bundleStyle, posthtmlPlugin } from './bundle.js'
+import { clientDir, siteConfig, buildDir, sourceDir, staticDir, filesDir } from './config.js'
+import { makeLocals, renderPostHtmlPlugins, resolveAsset } from './render.js'
+import { POSTHTML_OPTIONS } from './lib/posthtml.js'
+import { ssr } from './lib/ssr.js'
+import { hashContent } from './lib/util.js'
 import { isRelative } from './lib/fs'
 
 type Options = {
@@ -28,7 +29,7 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
   const origin = staticOpts?.origin || site.origin || null
 
   if (!origin) {
-    console.warn(yellow(`[config] No host set`))
+    console.warn(colors.yellow(`[config] No host set`))
   }
 
   let filename: string
@@ -117,7 +118,7 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
 
     await ssr({ locals, ctx })
 
-    const result = await require('posthtml')(plugins).process(readFileSync(filename, 'utf8'), POSTHTML_OPTIONS)
+    const result = await posthtml(plugins).process(readFileSync(filename, 'utf8'), POSTHTML_OPTIONS)
 
     if (staticOpts) {
       const dest = path.join(buildDir, filename.replace(clientDir, ''))

@@ -1,10 +1,10 @@
 import { SqliteError } from 'better-sqlite3'
 import path from 'path'
-import { dataDir } from '../config'
-import { connect } from "../lib/db"
-import { KvModel } from './kv'
-import { TranslationModel } from './translation'
-import { UserModel } from './user'
+import { dataDir } from '../config.js'
+import { connect } from '../lib/db.js'
+import { KvModel } from './kv.js'
+import { TranslationModel } from './translation.js'
+import { UserModel } from './user.js'
 
 export const db = connect(path.join(dataDir, 'site.db'))
 

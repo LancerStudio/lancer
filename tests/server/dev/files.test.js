@@ -1,8 +1,8 @@
-const o = require('ospec')
-const fs = require('fs')
-const os = require('os')
-const path = require('path')
-const { createArchive, importArchive } = require('../../../dist/server/dev/files')
+import o  from 'ospec'
+import fs  from 'fs'
+import os  from 'os'
+import path  from 'path'
+import { createArchive, importArchive } from '../../../dist/server/dev/files.js'
 
 const tmpDir = os.tmpdir()
 
