@@ -36,7 +36,7 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
     const isLoop   = node.tag === 'for'
     const isCond   = node.tag === 'if' || node.tag === 'else-if' || node.tag === 'else'
     const isScope  = node.tag === 'scope'
-    const isScript = node.tag === 'script' && node.attrs?.type === 'server'
+    const isScript = node.tag === 'script' && !!node.attrs?.server
 
     if (!isCond) {
       ifElseChain = 'none'

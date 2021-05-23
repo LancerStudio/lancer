@@ -114,7 +114,7 @@ o.spec('interpolate', () => {
 
   o('server script scope', async () => {
     const result = await render(
-      `<script type="server">let x = 100; var y = 200; z = 300</script>{{x}},{{y}},{{z}}`,
+      `<script server>let x = 100; var y = 200; z = 300</script>{{x}},{{y}},{{z}}`,
       makeCtx({ x: 10, y: 20, z: 30 })
     )
     o(result).equals('10,20,30')
@@ -122,7 +122,7 @@ o.spec('interpolate', () => {
 
   o('server script locals', async () => {
     const result = await render(
-      `<script type="server">locals.y = locals.x + 1</script>{{x}},{{y}}`,
+      `<script server>locals.y = locals.x + 1</script>{{x}},{{y}}`,
       makeCtx({ x: 10, y: 20 })
     )
     o(result).equals('10,11')
