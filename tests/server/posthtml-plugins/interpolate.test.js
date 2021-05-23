@@ -54,6 +54,16 @@ o.spec('interpolate', () => {
     o(result).equals(`<p>a0b</p>`)
   })
 
+  o('toString attribute', async () => {
+    const result = await render(`<p class="{{obj}}"></p>`, makeCtx({ obj: { x: 10, toString(){return this.x} } }))
+    o(result).equals('<p class="10"></p>')
+  })
+
+  o('toString text', async () => {
+    const result = await render(`<p>{{obj}}</p>`, makeCtx({ obj: { x: 10, toString(){return this.x} } }))
+    o(result).equals('<p>10</p>')
+  })
+
   o('standalone if', async () => {
     const result = await render(`<if cond="true">yes</if><if cond="0">no</if>`, makeCtx())
     o(result).equals(`yes`)

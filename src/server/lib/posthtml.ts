@@ -200,9 +200,9 @@ class TextInterpolationTag {
   content?: string[]
   constructor(public code: string) {}
   render(fn: RunFn) {
-    this.content = [fn(this.code)]
-    if (!this.content[0] && typeof this.content[0] !== 'number') {
-      this.content = []
+    let text = fn(this.code)
+    if (text || typeof text === 'number') {
+      this.content = ['' + text]
     }
   }
   clone() {
