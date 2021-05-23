@@ -14,8 +14,8 @@
     "build-css": "node dist/client/build.js css",
     "build-assets": "node dist/client/build.js assets",
     "prepublishOnly": "npm test && NODE_ENV=production LANCER_LIBRARY_BUILD=1 npm run build",
-    "test": "ospec",
-    "test-watch": "nodemon -w dist/server -w tests --exec ospec"
+    "test": "ospec tests/**/*.test.js",
+    "test-watch": "nodemon -w dist/server -w tests --exec 'ospec tests/**/*.test.js'"
   },
   "bin": {
     "lancer": "./index.cjs"
