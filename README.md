@@ -48,3 +48,4 @@ $ npm build
 - [SQLite is not a toy database](https://antonz.org/sqlite-is-not-a-toy-database/)
 - [Scaling sqlite3 to 4m queries per second on a single server](https://blog.expensify.com/2018/01/08/scaling-sqlite-to-4m-qps-on-a-single-server/)
 - [How Browser Language Redirect Affects Google Indexing](https://wpml.org/documentation/getting-started-guide/language-setup/automatic-redirect-based-on-browser-language/how-browser-language-redirect-affects-google-indexing/)
+- [You might not need a static site](https://www.browserlondon.com/blog/2020/04/20/issues-with-jamstack-you-might-need-backend/)
