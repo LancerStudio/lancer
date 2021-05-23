@@ -29,7 +29,7 @@
   "author": "Gilbert",
   "license": "ISC",
   "dependencies": {
-    "@lancer/ihtml-parser": "1.0.0",
+    "@lancer/ihtml-parser": "1.0.1",
     "@tailwindcss/forms": "^0.2.1",
     "@tailwindcss/typography": "^0.4.0",
     "argon2": "^0.27.1",
