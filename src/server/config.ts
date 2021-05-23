@@ -117,8 +117,6 @@ export const siteConfig = (opts: GetConfigOptions={}) => {
       })
       if (hasParam) {
         config.rewrites[from] = to
-        console.log("FOUND", from)
-        console.log('->', to)
       }
     })
   }
