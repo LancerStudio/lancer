@@ -5,24 +5,29 @@ import fs from 'fs'
 import vm from 'vm'
 import path from 'path'
 import { parseIHTML, NodeTag } from '../lib/posthtml.js'
-import { clientDir } from '../config.js'
+import { clientDir, PostHtmlCtx } from '../config.js'
 import { POSTHTML_OPTIONS } from '../lib/posthtml.js'
 import { evalExpression } from '../lib/ssr.js'
 
 import Api from 'posthtml/lib/api.js'
 import matchHelper from 'posthtml-match-helper'
+import { isRelative } from '../lib/fs.js'
 
 type NestedLayoutContext = {
   childPageAttrs: object
   onPageAttrs: Options['onPageAttrs']
+  filename: string
 }
 
 type Options = {
+  ctx: PostHtmlCtx
   locals: object
   onPageAttrs(attrs: Record<string,string>): void
 }
-export default function LayoutPlugin({ locals, onPageAttrs }: Options) {
+export default function LayoutPlugin({ ctx, locals, onPageAttrs }: Options) {
   return function layoutPlugin(this: undefined | NestedLayoutContext, tree: any) {
+    const currentFile = this ? this.filename : ctx.filename
+
     let pageAttrs: any = null
     tree.match(matchHelper('page'), (node: NodeTag) => {
       if (node.render) {
@@ -37,10 +42,13 @@ export default function LayoutPlugin({ locals, onPageAttrs }: Options) {
 
     if (this) pageAttrs = { ...this.childPageAttrs, ...pageAttrs }
 
-    const layoutName = ['', undefined, true].includes(pageAttrs.layout) ? '_layout.html' : pageAttrs.layout
-    const layoutFile = path.join(clientDir, layoutName)
+    const layoutName = ['', undefined, true].includes(pageAttrs.layout) ? '/_layout.html' : pageAttrs.layout
+    const layoutFile = isRelative(layoutName)
+      ? path.join(path.dirname(currentFile), layoutName)
+      : path.join(clientDir, layoutName)
+
     if (!layoutFile || !fs.existsSync(layoutFile)) {
-      throw new Error(`No such layout file: '${layoutName}'`)
+      throw new Error(`No such layout file: '${layoutName}'\n  from ${currentFile}`)
     }
     if (!layoutFile.startsWith(clientDir)) {
       throw new Error(`Security: Cannot use layout file outside client/ folder: '${layoutName}'`)
@@ -72,7 +80,7 @@ export default function LayoutPlugin({ locals, onPageAttrs }: Options) {
         node.content && contentFor[attrs.name]!.push(...node.content)
       }
       else {
-        console.warn(`No <yield> tag found for <content-for name="${attrs.name}">`)
+        console.warn(`WARNING: No <yield> tag found for <content-for name="${attrs.name}">`)
       }
       return { tag: false }
     })
@@ -86,10 +94,10 @@ export default function LayoutPlugin({ locals, onPageAttrs }: Options) {
     tree.length = 0
     tree.push(...layout)
 
-    if (layoutName !== '_layout.html') {
+    if (layoutName !== '/_layout.html') {
       // This may be a nested layout. Recurse.
       const {layout, ...childPageAttrs} = pageAttrs
-      layoutPlugin.call({ childPageAttrs, onPageAttrs }, tree)
+      layoutPlugin.call({ childPageAttrs, onPageAttrs, filename: layoutFile }, tree)
     }
     else {
       onPageAttrs(pageAttrs)

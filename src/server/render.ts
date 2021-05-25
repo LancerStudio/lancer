@@ -26,7 +26,7 @@ export async function render(html: string, ctx: PostHtmlCtx) {
 
   await ssr({ locals, ctx })
 
-  const plugins = renderPostHtmlPlugins(locals, {
+  const plugins = renderPostHtmlPlugins(ctx, locals, {
     prefix: [
       Bundle.posthtmlPlugin({
         resolveScript: async function (scriptPath: string) {
@@ -49,12 +49,13 @@ export async function render(html: string, ctx: PostHtmlCtx) {
   return result.html as string
 }
 
-export function renderPostHtmlPlugins(locals: any, opts: {
+export function renderPostHtmlPlugins(ctx: PostHtmlCtx, locals: any, opts: {
   prefix: ((tree: any) => void)[],
   postfix?: ((tree: any) => void)[],
 }) {
   return [
     LayoutPlugin({
+      ctx,
       locals,
       onPageAttrs(attrs) {
         locals.page = { ...attrs, ...locals.page }

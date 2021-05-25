@@ -110,7 +110,7 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
       filename: filename,
     }
     const locals = makeLocals(ctx)
-    const plugins = renderPostHtmlPlugins(locals, {
+    const plugins = renderPostHtmlPlugins(ctx, locals, {
       prefix: [
         bundlePlugin
       ]
