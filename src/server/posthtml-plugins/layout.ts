@@ -4,6 +4,7 @@
 import fs from 'fs'
 import vm from 'vm'
 import path from 'path'
+import colors from 'kleur'
 import { parseIHTML, NodeTag } from '../lib/posthtml.js'
 import { clientDir, PostHtmlCtx } from '../config.js'
 import { POSTHTML_OPTIONS } from '../lib/posthtml.js'
@@ -80,7 +81,7 @@ export default function LayoutPlugin({ ctx, locals, onPageAttrs }: Options) {
         node.content && contentFor[attrs.name]!.push(...node.content)
       }
       else {
-        console.warn(`WARNING: No <yield> tag found for <content-for name="${attrs.name}">`)
+        console.warn(colors.yellow(`WARNING: No <yield> tag found for <content-for name="${attrs.name}">`))
       }
       return { tag: false }
     })
