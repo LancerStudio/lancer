@@ -1,11 +1,11 @@
 import { existsSync, statSync } from "fs"
 
-import {z, rpc, bad, ok, allowAnonymous, RpcContext} from '../rpc'
+import {z, rpc, bad, ok, allowAnonymous, RpcContext} from '../rpc.js'
 import { filesDir, siteConfig } from '../../config.js'
 import { missingFiles } from '../state.js'
 import { Translation, User } from "../../models"
 
-export * from './onboarding'
+export * from './onboarding.js'
 
 export const getDevStatus = rpc(
   z.object({}),

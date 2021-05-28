@@ -1,7 +1,7 @@
 import fs from 'fs'
 import vm from 'vm'
 import path from 'path'
-import { building, cacheDir, clientDir, PostHtmlCtx, siteConfig } from '../config.js'
+import { building, clientDir, env, PostHtmlCtx, siteConfig, sourceDir, ssrDir } from '../config.js'
 import { build, Plugin } from 'esbuild'
 import { requireLatest } from './fs.js'
 import colors from 'kleur'
@@ -15,8 +15,9 @@ type SsrContext = {
 type Inputs = {
   ctx: PostHtmlCtx
   locals: any
+  dryRun?: boolean
 }
-export async function ssr({ctx, locals}: Inputs) {
+export async function ssr({ctx, locals, dryRun}: Inputs) {
   let ssrFile = ctx.filename.replace(/\.html$/, '.server.js')
 
   if (!fs.existsSync(ssrFile)) ssrFile = ctx.filename.replace(/\.html$/, '.server.ts')
@@ -36,11 +37,13 @@ export async function ssr({ctx, locals}: Inputs) {
     return false
   }
 
-  const start = Date.now()
-  await render(ssrContext)
-  console.log(`         ${colors.cyan('run')} ${ssrFile.replace(clientDir, 'client')} - ${colors.green(Date.now() - start + 'ms')}`)
+  if (dryRun !== true) {
+    const start = Date.now()
+    await render(ssrContext)
+    console.log(`         ${colors.cyan('run')} ${ssrFile.replace(clientDir, 'client')} - ${colors.green(Date.now() - start + 'ms')}`)
+  }
 
-  return true
+  return { buildFile: outfile }
 }
 
 type Config = {
@@ -49,6 +52,10 @@ type Config = {
 }
 export async function buildSsrFile(ssrFile: string, config: Config) {
   const outfile = ssrBuildFile(ssrFile)
+
+  if (env.production && !building) {
+    return outfile
+  }
 
   const output = await build({
     entryPoints: [ssrFile],
@@ -71,7 +78,6 @@ export async function buildSsrFile(ssrFile: string, config: Config) {
     if (newCheck !== oldCheck) {
       await Promise.all(
         output.outputFiles!.map(({ path: filename, contents }) => {
-          // console.log("Writing", filename)
           fs.mkdirSync(path.dirname(filename), { recursive: true })
           return fs.promises.writeFile(filename, contents)
         })
@@ -82,11 +88,15 @@ export async function buildSsrFile(ssrFile: string, config: Config) {
   return outfile
 }
 
-export async function buildHydrateScript(ssrFile: string, outfile: string, config: Config) {
+export async function buildHydrateScript(hydrateSource: string, outfile: string, config: Config) {
   const isProd = process.env.NODE_ENV === 'production'
 
   await build({
-    entryPoints: [ssrFile],
+    stdin: {
+      contents: hydrateSource,
+      loader: 'js',
+      resolveDir: sourceDir,
+    },
     entryNames: path.basename(outfile).replace(/\.js$/, ''),
     outdir: path.dirname(outfile),
     write: true,
@@ -103,7 +113,7 @@ export async function buildHydrateScript(ssrFile: string, outfile: string, confi
 }
 
 export function ssrBuildFile(ssrFile: string) {
-  return path.join(cacheDir, 'ssr', ssrFile.replace(clientDir, '')).replace(/\.(js|ts)x?$/, '.js')
+  return path.join(ssrDir, ssrFile.replace(clientDir, '')).replace(/\.(js|ts)x?$/, '.js')
 }
 
 export function evalExpression(locals: vm.Context, code: string) {

@@ -6,12 +6,12 @@ import { buildSync } from 'esbuild'
 import colors from 'kleur'
 
 import { bundleScriptProd, bundleStyle, posthtmlPlugin } from './bundle.js'
-import { clientDir, siteConfig, buildDir, sourceDir, staticDir, filesDir } from './config.js'
+import { clientDir, siteConfig, buildDir, sourceDir, staticDir, filesDir, hydrateDir, ssrDir, cacheDir } from './config.js'
 import { makeLocals, renderPostHtmlPlugins, resolveAsset } from './render.js'
 import { POSTHTML_OPTIONS } from './lib/posthtml.js'
 import { ssr } from './lib/ssr.js'
 import { hashContent } from './lib/util.js'
-import { isRelative } from './lib/fs'
+import { FILENAME_REWRITE_RE } from './lib/rewrites.js'
 
 type Options = {
   staticOpts?: {
@@ -20,13 +20,18 @@ type Options = {
 }
 export async function buildForProduction({ staticOpts }: Options = {}) {
   console.log("Build dir:", buildDir)
-  await fs.rmdir(buildDir, { recursive: true })
+  await Promise.all([
+    fs.rmdir(buildDir, { recursive: true }),
+    fs.rmdir(hydrateDir, { recursive: true }),
+    fs.rmdir(ssrDir, { recursive: true }),
+  ])
   mkdirSync(buildDir, { recursive: true })
 
   const buildCache = {} as Record<string,Promise<string>>
 
-  const site = siteConfig()
+  const site = siteConfig({ scanRewrites: true })
   const origin = staticOpts?.origin || site.origin || null
+  const detectedRewrites = {} as typeof site.rewrites
 
   if (!origin) {
     console.warn(colors.yellow(`[config] No host set`))
@@ -43,14 +48,15 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
         // esbuild code splitting is still experimental, so we're only dealing with one file
         const result = bundleScriptProd(resolved, buildDir, site).outputFiles[0]!
 
-        const publicPath = result.path.replace(buildDir, '')
-        console.log(`  - ${resolved.replace(clientDir, '')}\t-> ${publicPath}`)
+        const publicName = path.basename(result.path.replace(buildDir, ''))
+        const publicPath = path.join(path.dirname(resolved), publicName).replace(clientDir, '')
+        console.log(`  + ${colors.green(resolved.replace(clientDir, ''))}\t-> ${publicPath}`)
 
         const dest = path.join(buildDir, publicPath)
         await fs.mkdir(path.dirname(dest), { recursive: true })
         await fs.writeFile(dest, result.contents)
 
-        return isRelative(scriptPath) ? path.join(path.dirname(scriptPath), path.basename(publicPath)) : publicPath
+        return publicPath
       }()
     },
     resolveStyle: function (stylePath: string) {
@@ -75,14 +81,14 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
           path.dirname(resolved.replace(clientDir, '')),
           path.basename(resolved).replace('.css', `-${hashContent(minifiedCss)}.css`)
         )
-        console.log(`  - ${resolved.replace(clientDir, '')}\t-> ${publicPath}`)
+        console.log(`  + ${colors.green(resolved.replace(clientDir, ''))}\t-> ${publicPath}`)
 
         const dest = path.join(buildDir, publicPath)
         await fs.mkdir(path.dirname(dest), { recursive: true })
 
         await fs.writeFile(dest, minifiedCss)
 
-        return isRelative(stylePath) ? path.join(path.dirname(stylePath), path.basename(publicPath)) : publicPath
+        return publicPath
       }()
     },
   })
@@ -91,13 +97,15 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
     if (path.basename(filename)[0] === '_') continue
     if (filename.startsWith(staticDir)) continue
 
-    const plainPath = filename
+    let plainPath = filename
       .replace(clientDir, '')
       .replace('/index.html', '/')
       .replace(/\/index\.html$/, '')
       .replace(/\.html$/, '')
 
-    console.log('\n', filename.replace(clientDir, 'client'), '->', plainPath)
+    if (site.rewriteOptions.removeTrailingSlashes === false && plainPath[plainPath.length - 1] === '/' && plainPath.length > 1) {
+      plainPath = plainPath.slice(0, plainPath.length - 1)
+    }
 
     // TODO: Generate multiple locales
     const ctx = {
@@ -116,11 +124,23 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
       ]
     })
 
-    await ssr({ locals, ctx })
+    const ssrBuild = await ssr({ locals, ctx, dryRun: true })
+    const clientPath = filename.replace(clientDir, '')
 
+    if (ssrBuild) {
+      console.log('\n' + colors.blue('client' + clientPath), '(SSR, no build)', '\n ├─ GET', plainPath)
+    }
+    else {
+      if (!FILENAME_REWRITE_RE.test(clientPath)) {
+        detectedRewrites[plainPath] = clientPath
+      }
+      console.log('\n' + colors.green('client' + clientPath), '\n ├─ GET', plainPath)
+    }
+
+    // Render no matter what to catch all scripts and styles
     const result = await posthtml(plugins).process(readFileSync(filename, 'utf8'), POSTHTML_OPTIONS)
 
-    if (staticOpts) {
+    if (!ssrBuild) {
       const dest = path.join(buildDir, filename.replace(clientDir, ''))
       await fs.mkdir(path.dirname(dest), { recursive: true })
       await fs.writeFile(dest, result.html)
@@ -135,6 +155,14 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
       console.log("\nCopying data/files folder...")
       copyFolderSync(filesDir, path.join(buildDir, 'files'))
     }
+  }
+  else {
+    const dest = path.join(cacheDir, 'rewrites.json')
+    fs.writeFile(dest, JSON.stringify({
+      ...detectedRewrites,
+      ...site.rewrites,
+    }))
+    console.log('\n+ ' + colors.green(dest.replace(sourceDir, '')))
   }
 }
 

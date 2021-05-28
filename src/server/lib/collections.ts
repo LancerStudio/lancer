@@ -1,70 +1,63 @@
 import fs from 'fs'
 import path from 'path'
-import { CollectionSchema, contentDir, filesDir, siteConfig } from '../config.js'
-import { JsonNode, JsonNodeTag, nodesToJson, parseIHTML } from './posthtml.js'
+import { contentDir, filesDir, PostHtmlCtx } from '../config.js'
+import { JsonNode, nodesToJson, parseIHTML } from './posthtml.js'
+
+import { createRequire } from 'module'
+const require = createRequire(import.meta.url)
+const endent = (require('endent') as typeof import('endent')).default
 
 export class Collection {
   items: any[] = []
-  schema: CollectionSchema
-  constructor(public name: string) {
-    const schema = siteConfig().collections[name]
-    if (!schema) {
-      throw new Error(`[Lancer] No such collection: '${name}'`)
-    }
-    this.schema = schema
-
+  constructor(private ctx: PostHtmlCtx, public name: string) {
     const file = path.join(contentDir, 'collections', `${name}.html`)
     if (fs.existsSync(file)) {
-      this.items = parseItems(this.schema, nodesToJson(parseIHTML(fs.readFileSync(file, 'utf8'))))
-      console.log("Got it", this.items)
+      this.items = parseItems(this.ctx, nodesToJson(parseIHTML(fs.readFileSync(file, 'utf8'))))
     }
-    // fs.mkdirSync(path.dirname(file), { recursive: true })
-  }
-
-  [Symbol.iterator]() {
-    let i = 0
-    return {
-      next: () => {
-        if (i < this.items.length) {
-          return { value: this.items[i++], done: false };
-        }
-        return { value: undefined, done: true };
-      }
+    else {
+      throw new Error(`[Lancer] No such collection: ${file}`)
     }
   }
 }
 
-function parseItems(schema: CollectionSchema, items: JsonNode[]) {
+function parseItems(ctx: PostHtmlCtx, items: JsonNode[]) {
   return items
     .map(item => {
       if (typeof item === 'string' || item.tag !== 'item') return
 
       const {children, attrs} = item
       return {
-        attrs,
-        ...children.filter((child: any) => child.tag === 'field').reduce((fields, child) => {
+        ...attrs,
+        fields: (children as any[]).filter(child => child.tag === 'field').reduce((fields, child) => {
           if (typeof child === 'string') return fields
           const name = child.attrs.name
           if (typeof name === 'string') {
-            const val = child.children.join('')
-            if (schema.fields[name] === 'file') {
-              const file = path.join(filesDir, val.replace('/files/', ''))
+            const value = endent(child.children.join(''))
+            if (value.startsWith('/files/')) {
+              const file = path.join(filesDir, value.replace('/files/', ''))
               fields[name] = {
+                ...child.attrs,
                 file,
-                href: val,
-                exists: fs.existsSync(file)
+                value,
+                exists: fs.existsSync(file),
+                location: new URL(`${ctx.location.protocol}//${ctx.location.host}${value}`),
+                toString() {
+                  return this.value
+                }
               }
             }
             else {
-              fields[name] = val
+              fields[name] = {
+                ...child.attrs,
+                value,
+                toString() {
+                  return this.value
+                }
+              }
             }
           }
           return fields
         }, {} as Record<string, any>)
       }
     })
-}
-
-function isTag(node: JsonNode): node is JsonNodeTag {
-  return typeof node !== 'string'
 }

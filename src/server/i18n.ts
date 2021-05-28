@@ -1,12 +1,10 @@
+import fs from 'fs'
 import path from 'path'
 import langs from 'langs'
 import matchHelper from 'posthtml-match-helper'
 import { RequestHandler } from "express"
-import { LINK_DELIMINATOR } from "../shared/constants.js"
-import { shouldPrefixMailto } from "../shared/logic.js"
-import { PostHtmlCtx, siteConfig } from "./config.js"
+import { contentDir, PostHtmlCtx, siteConfig } from "./config.js"
 import { memoizeUnary } from "./lib/util.js"
-import { TranslationModel } from "./models/translation.js"
 
 declare global {
   namespace Express {
@@ -19,11 +17,16 @@ declare global {
 
 type PostHtmlOptions = {
   ctx: PostHtmlCtx
-  Translation: TranslationModel
 }
-export function posthtmlPlugin({ Translation, ctx: { user, site, plainPath, locale } }: PostHtmlOptions) {
+export function posthtmlPlugin({ ctx: { user, site, plainPath, locale, cache } }: PostHtmlOptions) {
   return function interpolateI18n(tree: any) {
     if (!locale) throw new Error('i18n_no_locale_set')
+
+    const tset = new TranslationSet(
+      cache,
+      locale,
+      site.locales[0],
+    )
 
     tree.match(matchHelper('t'), function(node: any) {
       node.attrs = node.attrs || {}
@@ -33,10 +36,9 @@ export function posthtmlPlugin({ Translation, ctx: { user, site, plainPath, loca
       delete node.attrs.rich
       delete node.attrs.multiline
 
-      node.tag = multiline ? 'div' : 'span'
+      node.tag = node.tag || (multiline ? 'div' : 'span')
 
-      const name = node.content[0].trim()
-      const t = Translation.get(name, locale, { fallback: site.locales[0] })
+      const t = tset.get(node.content[0].trim())
 
       node.content = tree.parser(t?.value || `<u style="cursor: pointer">${name}</u>`)
       if (user) {
@@ -46,44 +48,6 @@ export function posthtmlPlugin({ Translation, ctx: { user, site, plainPath, loca
         node.attrs['data-t-multiline'] = multiline
         node.attrs['data-t-rich'] = rich
       }
-      return node
-    })
-
-    tree.match(matchHelper('a[t]'), function(node: any) {
-      const name = node.attrs.t.trim()
-
-      const rich = node.attrs.rich == null ? false : true
-      delete node.attrs.rich
-
-      const t = Translation.get(name, locale, { fallback: site.locales[0] })
-      if (t && t.meta.link) {
-        const parts = t.value.split(LINK_DELIMINATOR)
-        const href = parts[0] || '#'
-        const text = parts[1] || name
-
-        node.content = t.meta.rich ? tree.parser(text) : text
-
-        // Auto-detect email
-        node.attrs.href = shouldPrefixMailto(href) ? `mailto:${href}` : href
-      }
-      else if (t) {
-        node.attrs.href = '#'
-        node.content = t.meta.rich ? tree.parser(t.value) : t.value
-      }
-      else {
-        node.content = name
-      }
-
-      delete node.attrs.t
-
-      if (user) {
-        node.attrs.onclick = `Lancer.onTranslationClick(event)`
-        node.attrs['data-t-name'] = name
-        node.attrs['data-t-locale'] = locale
-        node.attrs['data-t-rich'] = rich
-        node.attrs['data-t-link'] = true
-      }
-
       return node
     })
 
@@ -113,6 +77,22 @@ export function posthtmlPlugin({ Translation, ctx: { user, site, plainPath, loca
         content: tree.parser(lancerHead.join('\n'))
       }
     })
+  }
+}
+
+class TranslationSet {
+  constructor(
+    public cache: PostHtmlCtx['cache'],
+    public locale: string,
+    public fallback?: string,
+  ) {}
+
+  get(keypath: string) {
+    const key = path.basename(keypath)
+      // LAST TIME: CHECK FOR FILE AND FALL BACK
+    let localeFile = path.join(contentDir, 'translations', path.dirname(key))
+    if (fs.existsSync(localeFile)) {
+    }
   }
 }
 

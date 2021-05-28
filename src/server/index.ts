@@ -8,7 +8,7 @@ import { existsSync, promises as fs } from 'fs'
 
 import * as Dev from './dev/index.js'
 import * as Bundle from './bundle.js'
-import { staticDir, siteConfig, env, filesDir, sourceDir, buildDir, hydrateDir, clientDir } from './config.js'
+import { staticDir, siteConfig, env, filesDir, sourceDir, buildDir, hydrateDir, clientDir, SiteConfig, cacheDir } from './config.js'
 import { resolveFile } from './files.js'
 import { render, resolveAsset, validScriptBundles, validStyleBundles } from './render.js'
 import { mountSession } from './lib/session.js'
@@ -19,16 +19,36 @@ import { requireLatestOptional } from './lib/fs.js'
 
 import pathToRegexp from 'express/node_modules/path-to-regexp/index.js'
 
+import { createRequire } from 'module'
+const require = createRequire(import.meta.url)
 
-const router = express.Router()
+
+const router = express.Router({ strict: true })
 export default router
 
 
-router.use( express.static(hydrateDir) )
-router.use( express.static(staticDir) )
+let rewrites: SiteConfig['rewrites'] = {}
 
-if (!env.development) {
-  router.use( express.static(buildDir) )
+router.use( express.static(hydrateDir, { redirect: false }) )
+router.use( express.static(staticDir, { redirect: false }) )
+
+if (env.production) {
+  //
+  // For non-static sites
+  // Here we rewrite some urls to hit their generated static assets
+  //
+  rewrites = require(path.join(cacheDir, 'rewrites.json'))
+  router.use((req, _res, next) => {
+    // TODO: Support plural i18n
+    for (let [from, to] of Object.entries(rewrites)) {
+      if (req.url === from) {
+        req.url = to
+        break
+      }
+    }
+    next()
+  })
+  router.use( express.static(buildDir, { redirect: false }) )
 }
 
 if (siteConfig().studio) {
@@ -66,15 +86,21 @@ router.post('/lrpc', async (req, res) => {
   return res.send(result)
 })
 
+
 type ReParams = Array<{ name: string, optional: boolean, offset: number }>
+
 router.get('/*', requireSetup(), ensureLocale(), async (req, res) => {
   let filename: string = ''
 
-  const site = siteConfig({ refreshFileBasedRewrites: env.development })
+  const site = siteConfig({ scanRewrites: !env.production })
   const plainPath = req.locale ? req.path.replace(`/${req.locale}`, '') : req.path
 
+  if (!env.production) {
+    rewrites = site.rewrites
+  }
+
   rewrite:
-  for (let [pattern, file] of Object.entries(site.rewrites)) {
+  for (let [pattern, file] of Object.entries(rewrites)) {
     let p1: ReParams, p2: ReParams
     const re1 = [pathToRegexp(pattern.replace(/\.html$/, ''), p1 = []), p1] as const
     const re2 = [pathToRegexp(pattern, p2 = []), p2] as const
@@ -152,7 +178,7 @@ router.get('/*', requireSetup(), ensureLocale(), async (req, res) => {
     console.log('         -->', filename.replace(sourceDir+'/', ''))
     const htmlSrc = await fs.readFile(filename, 'utf8')
     const site = siteConfig()
-    const html = await render(htmlSrc, {
+    const {html} = await render(htmlSrc, {
       req,
       site,
       user: req.user,

@@ -1,4 +1,3 @@
-import glob from 'glob'
 import path from 'path'
 import { existsSync, mkdirSync } from 'fs'
 
@@ -6,6 +5,7 @@ import { read, Env } from './lib/config.js'
 import { makeDirname, requireLatest } from './lib/fs.js'
 import { UserRow } from './models/user.js'
 import { Request } from 'express'
+import { scanForRewriteFiles } from './lib/rewrites.js'
 
 const __dirname = makeDirname(import.meta.url)
 
@@ -39,9 +39,13 @@ if (!existsSync(dataDir)) {
   }
 }
 
+export const contentDir = read('LANCER_CONTENT_DIR', joinp(sourceDir, '/content', false))
+
 export const cacheDir = handleRelative( read('LANCER_CACHE_DIR', joinp(dataDir, '/cache')) )
 export const buildDir = handleRelative( read('LANCER_BUILD_DIR', joinp(cacheDir, '/build')) )
-export const filesDir = joinp(dataDir, '/files')
+
+export const ssrDir = handleRelative( read('LANCER_SSR_CACHE_DIR', joinp(cacheDir, '/ssr')) )
+export const filesDir = joinp(contentDir, '/files')
 export const clientDir = joinp(sourceDir, '/client')
 export const staticDir = handleRelative( read('LANCER_STATIC_DIR', joinp(sourceDir, '/public')) )
 export const hydrateDir = handleRelative( read('LANCER_HYDRATE_DIR', joinp(cacheDir, '/hydrate')) )
@@ -78,14 +82,15 @@ export type SiteConfig = {
   jsxFactory?: string
   jsxFragment?: string
   rewrites: Record<string,string>
+  rewriteOptions: {
+    removeTrailingSlashes?: boolean
+  }
 }
-
-const VALID_PARAM_NAME_RE = /^[a-z_][a-z0-9_]*$/i
 
 type GetConfigOptions = {
-  refreshFileBasedRewrites?: boolean
+  scanRewrites?: boolean
 }
-export const siteConfig = (opts: GetConfigOptions={}) => {
+export const siteConfig = _cacheInProd((opts: GetConfigOptions={}) => {
   const defaults: SiteConfig = {
     name: 'Missing site.config.js',
     locals: {},
@@ -95,6 +100,7 @@ export const siteConfig = (opts: GetConfigOptions={}) => {
     imagePreviews: {},
     templateTypes: {},
     rewrites: {},
+    rewriteOptions: {},
   }
   const config: SiteConfig = {
     ...defaults,
@@ -105,28 +111,16 @@ export const siteConfig = (opts: GetConfigOptions={}) => {
     throw new Error(`site.config.js must specify at least one locale.`)
   }
 
-  if (opts.refreshFileBasedRewrites) {
-    glob.sync(`${clientDir}/**/*.html`).forEach(to => {
-      let hasParam = false
-      let from = to.replace(clientDir, '').replace(/\[([^\]]+)\](?:\.html)?/g, (_,p1) => {
-        if (!VALID_PARAM_NAME_RE.test(p1)) {
-          throw new Error(`[Lancer] Invalid param file name: '${path.basename(to)}'\n  Valid param name format: ${VALID_PARAM_NAME_RE}`)
-        }
-        hasParam = true
-        return `:${p1}`
-      })
-      if (hasParam) {
-        config.rewrites[from] = to
-      }
-    })
+  if (opts.scanRewrites || env.production) {
+    config.rewrites = { ...config.rewrites, ...scanForRewriteFiles(clientDir) }
   }
 
   return config
-}
+})
 
-function joinp(dir1: string, dir2: string) {
+function joinp(dir1: string, dir2: string, ensureExists=true) {
   const dir = path.join(dir1, dir2)
-  if (!existsSync(dir) && !building) {
+  if (!existsSync(dir) && !building && ensureExists) {
     mkdirSync(dir)
   }
   return dir
@@ -134,4 +128,17 @@ function joinp(dir1: string, dir2: string) {
 
 function handleRelative(path: string) {
   return path[0] !== '/' ? joinp(sourceDir, path) : path
+}
+
+export function _cacheInProd<F extends () => any>(f: F): F {
+  if (!env.production) return f
+  let cache: any = undefined
+  let called = false
+  return (() => {
+    if (!called) {
+      cache = f()
+      called = true
+    }
+    return cache
+  }) as any
 }

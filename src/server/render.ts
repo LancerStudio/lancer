@@ -16,6 +16,7 @@ import TemplatePlugin from './posthtml-plugins/template.js'
 import { isRelative } from './lib/fs.js'
 import { LancerCorePlugin } from './posthtml-plugins/core.js'
 import { Parser } from '@lancer/ihtml-parser'
+import { Collection } from './lib/collections.js'
 
 export const validStyleBundles: Record<string, boolean> = {}
 export const validScriptBundles: Record<string, boolean> = {}
@@ -24,7 +25,7 @@ export const validScriptBundles: Record<string, boolean> = {}
 export async function render(html: string, ctx: PostHtmlCtx) {
   const locals = makeLocals(ctx)
 
-  await ssr({ locals, ctx })
+  const isSsr = await ssr({ locals, ctx })
 
   const plugins = renderPostHtmlPlugins(ctx, locals, {
     prefix: [
@@ -46,7 +47,10 @@ export async function render(html: string, ctx: PostHtmlCtx) {
     ]
   })
   const result = await posthtml(plugins).process(html, POSTHTML_OPTIONS)
-  return result.html as string
+  return {
+    isSsr,
+    html: result.html as string,
+  }
 }
 
 export function renderPostHtmlPlugins(ctx: PostHtmlCtx, locals: any, opts: {
@@ -150,10 +154,16 @@ export function makeLocals(ctx: PostHtmlCtx): object {
         })
     },
 
-    getDims(imageFile: string) {
-      const key = `getDims:${imageFile}`
+    getImageDims(imageFile: string) {
+      const key = `getImageDims:${imageFile}`
       if (!ctx.cache[key]) {
-        ctx.cache[key] = imageSize(imageFile)
+        try {
+          ctx.cache[key] = imageSize(imageFile)
+        }
+        catch(err) {
+          console.warn(`[Lancer/getImageDims] No such image file: ${imageFile}`)
+          return {}
+        }
       }
       const dims = ctx.cache[key]
       /** 6 and 8 are specified by EXIF */
@@ -168,6 +178,10 @@ export function makeLocals(ctx: PostHtmlCtx): object {
     },
 
     ...ctx.site.locals,
+
+    collection(id: string) {
+      return new Collection(ctx, id)
+    }
   }
 
   // For referencing optional values and keywords

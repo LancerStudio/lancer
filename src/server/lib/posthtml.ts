@@ -251,3 +251,25 @@ export const POSTHTML_OPTIONS = {
   parser: parseIHTML,
   customVoidElements: ['page', 'yield', 'include'],
 }
+
+export type JsonNode = string | JsonNodeTag
+export type JsonNodeTag = {
+  tag: string
+  attrs: Attributes
+  children: JsonNode[]
+}
+export function nodesToJson(nodes: Node[]): JsonNode[] {
+  return nodes.reduce((m, node) => {
+    if (typeof node === 'string') {
+      if (node.trim()) m.push(node)
+    }
+    else if (typeof node.tag === 'string') {
+      m.push({
+        tag: node.tag,
+        attrs: node.attrs || {},
+        children: node.content ? nodesToJson(node.content) : [],
+      })
+    }
+    return m
+  }, [] as JsonNode[])
+}

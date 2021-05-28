@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('dotenv').config()
 const program = require('commander')
 const port = process.env.PORT || 7272
 
@@ -12,7 +13,7 @@ program
 const validInits = ['data', 'client', 'scripts', 'tailwind', 'all']
 program
   .command('init [name]')
-  .action(function (name) {
+  .action(async function (name) {
     if (name && !validInits.includes(name)) {
       return console.log("Unknown init name:", name)
     }
@@ -28,19 +29,19 @@ program
       process.env.LANCER_INIT_DATA_DIR = '1'
     }
 
-    const { sourceDir, clientDir, dataDir } = require('./dist/server/config')
+    const { sourceDir, clientDir, dataDir } = await import('./dist/server/config.js')
 
     if (set.client) {
-      require('./dist/cli/init').initClientDir(sourceDir, clientDir)
+      (await import('./dist/cli/init.js')).initClientDir(sourceDir, clientDir)
     }
     if (set.all) {
-      require('./dist/cli/init').initConfig(sourceDir)
+      (await import('./dist/cli/init.js')).initConfig(sourceDir)
     }
     if (set.scripts) {
-      require('./dist/cli/init').initScripts(sourceDir)
+      (await import('./dist/cli/init.js')).initScripts(sourceDir)
     }
     if (set.tailwind) {
-      require('./dist/cli/init').initTailwind(sourceDir)
+      (await import('./dist/cli/init.js')).initTailwind(sourceDir)
     }
 
     if (set.data) {
@@ -65,12 +66,12 @@ program
 //
 program
   .command('production')
-  .action(function () {
+  .action(async function () {
     process.env.NODE_ENV = 'production'
 
-    var server = require('express')()
+    var server = (await import('express')).default()
     server.set('trust proxy', 1)
-    server.use( require('./dist/server').default )
+    server.use( (await import('./dist/server/index.js')).default )
     console.log('Starting production server on port', port)
     server.listen(port)
   })
@@ -82,14 +83,14 @@ program
   .command('build')
   .option('--static', 'Build a static website (experimental)')
   .option('--origin', 'Set an origin when building with --static')
-  .action(function (options) {
+  .action(async function (options) {
     const staticOpts = options.static ? { origin: options.origin || undefined } : null
     process.env.NODE_ENV = 'production'
     process.env.LANCER_BUILD = '1'
 
     console.log(`Building ${staticOpts ? 'static html and ' : ''}assets for production...`)
 
-    const { buildForProduction } = require('./dist/server/build')
+    const { buildForProduction } = await import('./dist/server/build.js')
     buildForProduction({ staticOpts }).then(
       () => {
         console.log("Done.")
@@ -99,48 +100,6 @@ program
         process.exit(1)
       }
     )
-  })
-
-//
-// User Management
-//
-program
-  .command('users:create <type> <email>')
-  .option('-p, --password <password>', 'A temporary password')
-  .option('-n, --name <name>', 'The name of the user')
-  .action((type, email, options) => {
-    if (type !== 'client' && type !== 'dev') {
-      throw new Error(`Invalid type: '${type}' (must be 'client' or 'dev')`)
-    }
-    if (!email.match(/.+@.+/)) {
-      throw new Error(`Invalid email: '${email}'`)
-    }
-    const password = options.password || new Array(10).fill(0).map(n => alpha[Math.floor(Math.random() * alpha.length)]).join('')
-    const name = options.name || capitalize(email.split('@')[0])
-    const { User } = require('./dist/server/models')
-
-    User.create(email, password, { name, type, password_temporary: 1 })
-    console.log(`User ${email} created.`)
-
-    if (!options.password) {
-      console.log("Temporary password:", password)
-    }
-  })
-
-const alpha = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ123456789'
-const capitalize = (s) => s[0].toUpperCase() + s.slice(1)
-
-//
-// Data management
-//
-program
-  .command('files:push <host>')
-  .option('-d <dir>', 'The files directory to upload')
-  .action(async (host, options) => {
-    console.log("Pushing data/files to", host, '...')
-    const { pushFiles } = require('./dist/cli/files')
-    await pushFiles(host, { inputDir: options.d })
-    console.log('Done.')
   })
 
 //

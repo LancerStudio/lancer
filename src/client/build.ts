@@ -1,14 +1,15 @@
 import postcss from 'postcss'
 import path from 'path'
 import { existsSync, promises as fs} from 'fs'
-import { bundleScript } from '../server/bundle'
-import routes from '../shared/routes'
+import { bundleScript } from '../server/bundle.js'
+import routes from '../shared/routes.js'
 
 import postcssImport from 'postcss-import'
 import postcssPrefixSelector from 'postcss-prefix-selector'
 import tailwind from 'tailwindcss'
 import autoprefixer from 'autoprefixer'
 
+const __dirname = new URL('.', import.meta.url).pathname
 const srcDir = path.join(__dirname, '../../src')
 const distDir = path.join(__dirname, '../../dist')
 const buildDir = path.join(distDir, 'build')

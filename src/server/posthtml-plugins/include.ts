@@ -120,11 +120,7 @@ async function wrapMithril(file: string, nodeAttrs: any, locals: object) {
     .replace(/\.(ts|js)x?$/, '.js')
     .replace(/\.js$/, `-${hash}.hydrate.js`)
 
-  const tmpFile = hydrateFile.replace(/\.hydrate\.js$/, '.hydrate.tmp.js')
-  fs.mkdirSync(path.dirname(tmpFile), { recursive: true })
-
-  await fs.promises.writeFile(tmpFile,
-`import m from 'mithril'
+  const hydrateSource = `import m from 'mithril'
 import mount from '${file}'
 var hash = 'h${hash}'
 mount({
@@ -132,8 +128,8 @@ mount({
   args: C_ARGS[hash]
 })
 `
-  )
-  await buildHydrateScript(tmpFile, hydrateFile, site)
+
+  await buildHydrateScript(hydrateSource, hydrateFile, site)
 
   const mountTargetTag = nodeAttrs.tag || 'div'
   delete nodeAttrs.tag

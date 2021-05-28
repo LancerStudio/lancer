@@ -14,14 +14,16 @@ o.spec('interpolate', () => {
     filename: 'interpolate-test.html',
   })
 
+  const renderHtml = (...args) => render(...args).then(result => result.html)
+
   o('basic interpolation', async () => {
-    const result = await render(`<p class="{{x}}">a{{z}}c</p>`, makeCtx({ x: '/a/b/c', y: 'aria-label="hm"', z: 'b' }))
+    const result = await renderHtml(`<p class="{{x}}">a{{z}}c</p>`, makeCtx({ x: '/a/b/c', y: 'aria-label="hm"', z: 'b' }))
     o(result).equals(`<p class="/a/b/c">abc</p>`)
   })
 
   o('throws on missing reference', async () => {
     try {
-      await render(`<p>{{idontexist}}</p>`, makeCtx())
+      await renderHtml(`<p>{{idontexist}}</p>`, makeCtx())
       o(false).equals('should not get here')
     }
     catch(err) {
@@ -30,54 +32,58 @@ o.spec('interpolate', () => {
   })
 
   o('locals for optional references', async () => {
-    const result = await render(`<p>{{locals.x}}</p>`, makeCtx())
+    const result = await renderHtml(`<p>{{locals.x}}</p>`, makeCtx())
     o(result).equals(`<p></p>`)
   })
 
   o('locals reference', async () => {
-    const result = await render(`<p>{{locals.x}}</p>`, makeCtx({ x: 99 }))
+    const result = await renderHtml(`<p>{{locals.x}}</p>`, makeCtx({ x: 99 }))
     o(result).equals(`<p>99</p>`)
   })
 
   o('full attribute interpolation', async () => {
-    const result = await render(`<p {{x}}></p>`, makeCtx({ x: 'aria-label="test"' }))
+    const result = await renderHtml(`<p {{x}}></p>`, makeCtx({ x: 'aria-label="test"' }))
     o(result).equals(`<p aria-label="test"></p>`)
   })
 
   o('omits falsey attribute names', async () => {
-    const result = await render(`<p {{false}} {{undefined}} {{null}} {{0}}="10"></p>`, makeCtx())
+    const result = await renderHtml(`<p {{false}} {{undefined}} {{null}} {{0}}="10"></p>`, makeCtx())
     o(result).equals(`<p></p>`)
   })
 
   o('omits most falsey values from text interpolation', async () => {
-    const result = await render(`<p>a{{false}}{{undefined}}{{null}}{{0}}{{''}}b</p>`, makeCtx())
+    const result = await renderHtml(`<p>a{{false}}{{undefined}}{{null}}{{0}}{{''}}b</p>`, makeCtx())
     o(result).equals(`<p>a0b</p>`)
   })
 
   o('toString attribute', async () => {
-    const result = await render(`<p class="{{obj}}"></p>`, makeCtx({ obj: { x: 10, toString(){return this.x} } }))
+    const result = await renderHtml(`<p class="{{obj}}"></p>`, makeCtx({ obj: { x: 10, toString(){return this.x} } }))
     o(result).equals('<p class="10"></p>')
   })
 
   o('toString text', async () => {
-    const result = await render(`<p>{{obj}}</p>`, makeCtx({ obj: { x: 10, toString(){return this.x} } }))
+    const result = await renderHtml(`<p>{{obj}}</p>`, makeCtx({ obj: { x: 10, toString(){return this.x} } }))
     o(result).equals('<p>10</p>')
   })
 
   o('standalone if', async () => {
-    const result = await render(`<if cond="true">yes</if><if cond="0">no</if>`, makeCtx())
+    const result = await renderHtml(`<if cond="true">yes</if><if cond="0">no</if>`, makeCtx())
     o(result).equals(`yes`)
   })
 
   o('if-else', async () => {
-    const makeChain = (a,b) => `<if cond="${a}">A</if><else-if cond="${b}">B</else-if><else>C</else>`
-    o(await render(makeChain('1+1', 'true'), makeCtx())).equals('A')
-    o(await render(makeChain('null', 'true'), makeCtx())).equals('B')
-    o(await render(makeChain(`''`, 'undefined'), makeCtx())).equals('C')
+    const renderChain = (a,b) => renderHtml(
+      `<if cond="${a}">A</if><else-if cond="${b}">B</else-if><else>C</else>`,
+      makeCtx()
+    )
+
+    o(await renderChain('1+1', 'true')).equals('A')
+    o(await renderChain('null', 'true')).equals('B')
+    o(await renderChain(`''`, 'undefined')).equals('C')
   })
 
   o('nested layout page attributes', async () => {
-    const result = await render(`<page layout="_nested-page-attrs.html" title="CCC">`, makeCtx())
+    const result = await renderHtml(`<page layout="/_nested-page-attrs.html" title="CCC">`, makeCtx())
     o(result).equals(
 `<!doctype HTML>
 <title>CCC | BBB | AAA</title>
@@ -86,44 +92,44 @@ o.spec('interpolate', () => {
   })
 
   o('scope tag', async () => {
-    const result = await render(`<scope locals="{ x: 100, y: y+1 }"><p>{{x}},{{locals.y}}</p></scope>`, makeCtx({ x: 10, y: 20 }))
+    const result = await renderHtml(`<scope locals="{ x: 100, y: y+1 }"><p>{{x}},{{locals.y}}</p></scope>`, makeCtx({ x: 10, y: 20 }))
     o(result).equals(`<p>100,21</p>`)
   })
 
   o('include', async () => {
-    const result = await render(`<include src="_x.html" locals="{ x: 100 }">`, makeCtx({ x: 10 }))
+    const result = await renderHtml(`<include src="_x.html" locals="{ x: 100 }">`, makeCtx({ x: 10 }))
     o(result).equals(`<p>x:100</p>\n`)
   })
 
   o('nested include', async () => {
-    const result = await render(`<include src="_x-nested.html" locals="{ x: 100 }">`, makeCtx({ x: 10 }))
+    const result = await renderHtml(`<include src="_x-nested.html" locals="{ x: 100 }">`, makeCtx({ x: 10 }))
     o(result).equals(`<p>x-parent1:100</p><p>x:111</p>\n<p>x-parent2:100</p>\n`)
   })
 
   o('if-tags work without content', async () => {
-    o(await render(`a<if cond="true"></if>b`, makeCtx())).equals('ab')
+    o(await renderHtml(`a<if cond="true"></if>b`, makeCtx())).equals('ab')
 
-    o(await render(`a<if cond="true"></if><else></else>b`, makeCtx())).equals('ab')
-    o(await render(`a<if cond="false"></if><else></else>b`, makeCtx())).equals('ab')
+    o(await renderHtml(`a<if cond="true"></if><else></else>b`, makeCtx())).equals('ab')
+    o(await renderHtml(`a<if cond="false"></if><else></else>b`, makeCtx())).equals('ab')
 
-    o(await render(`a<if cond="true"></if><else-if cond="true"></else-if><else></else>b`, makeCtx())).equals('ab')
-    o(await render(`a<if cond="false"></if><else-if cond="true"></else-if><else></else>b`, makeCtx())).equals('ab')
-    o(await render(`a<if cond="true"></if><else-if cond="false"></else-if><else></else>b`, makeCtx())).equals('ab')
-    o(await render(`a<if cond="false"></if><else-if cond="false"></else-if><else></else>b`, makeCtx())).equals('ab')
+    o(await renderHtml(`a<if cond="true"></if><else-if cond="true"></else-if><else></else>b`, makeCtx())).equals('ab')
+    o(await renderHtml(`a<if cond="false"></if><else-if cond="true"></else-if><else></else>b`, makeCtx())).equals('ab')
+    o(await renderHtml(`a<if cond="true"></if><else-if cond="false"></else-if><else></else>b`, makeCtx())).equals('ab')
+    o(await renderHtml(`a<if cond="false"></if><else-if cond="false"></else-if><else></else>b`, makeCtx())).equals('ab')
 
-    o(await render(`a<if cond="false"></if><else-if cond="true">x</else-if><else></else>b`, makeCtx())).equals('axb')
+    o(await renderHtml(`a<if cond="false"></if><else-if cond="true">x</else-if><else></else>b`, makeCtx())).equals('axb')
   })
 
   o('for-tag works without content', async () => {
-    o(await render(`a<for let="_ of [10,20,30]"></for>b`, makeCtx())).equals('ab')
+    o(await renderHtml(`a<for let="_ of [10,20,30]"></for>b`, makeCtx())).equals('ab')
   })
 
   o('scope-tag works without content', async () => {
-    o(await render(`a<scope locals="{}"></scope>b`, makeCtx())).equals('ab')
+    o(await renderHtml(`a<scope locals="{}"></scope>b`, makeCtx())).equals('ab')
   })
 
   o('server script scope', async () => {
-    const result = await render(
+    const result = await renderHtml(
       `<script server>let x = 100; var y = 200; z = 300</script>{{x}},{{y}},{{z}}`,
       makeCtx({ x: 10, y: 20, z: 30 })
     )
@@ -131,7 +137,7 @@ o.spec('interpolate', () => {
   })
 
   o('server script locals', async () => {
-    const result = await render(
+    const result = await renderHtml(
       `<script server>locals.y = locals.x + 1</script>{{x}},{{y}}`,
       makeCtx({ x: 10, y: 20 })
     )
