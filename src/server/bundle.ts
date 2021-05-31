@@ -59,6 +59,7 @@ type Config = {
 export async function bundleScript(file: string, config: Config) {
   const isProd = process.env.NODE_ENV === 'production'
   const result = await build({
+    platform: 'browser',
     entryPoints: [file],
     bundle: true,
     write: false,
@@ -75,6 +76,7 @@ export async function bundleScript(file: string, config: Config) {
 
 export function bundleScriptProd(file: string, outdir: string, config: Config) {
   return buildSync({
+    platform: 'browser',
     entryPoints: [file],
     entryNames: '[dir]/[name]-[hash]',
     bundle: true,
