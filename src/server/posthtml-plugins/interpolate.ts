@@ -20,11 +20,6 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
       return m
     }
 
-    // console.log("Hum", node.tag)
-    // if (node.tag==='scope') {
-    //   console.log("Ha", node)
-    // }
-
     if (node.render) {
       // Clone node to allow loops to interpolate a tree multiple times
       node = (node as any).clone() as NodeTag
@@ -61,7 +56,7 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
         )
       }
       vm.runInContext(`for (var ${code}) __recurse()`, loopCtx, { microtaskMode: 'afterEvaluate' })
-      m.push(newContent(loopContent))
+      m.push({ tag: false, content: loopContent })
       return m
     }
     else if (isCond) {
@@ -70,7 +65,7 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
           throw new Error(`[Lancer] Dangling <else> tag`)
         }
         else if (ifElseChain === 'unresolved') {
-          content && m.push(newContent(content))
+          content && m.push(newContent(options, content))
         }
         ifElseChain = 'none'
         return m
@@ -90,7 +85,7 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
       }
       const result = evalExpression(ctx, cond)
       if (result) {
-        content && m.push(newContent(content))
+        content && m.push(newContent(options, content))
         ifElseChain = 'resolved'
       }
       else {
@@ -111,7 +106,7 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
         return temp
       })())
       const scopeContent = resolveInterpolations({ ...options, ctx: scopeCtx }, content)
-      m.push(newContent(scopeContent))
+      m.push({ tag: false, content: scopeContent })
       return m
     }
     else if (content) {
@@ -128,6 +123,6 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
   }, [] as Node[])
 }
 
-function newContent(content: Node[] | undefined) {
-  return { tag: false, content }
+function newContent(options: WalkOptions, content: Node[] | undefined) {
+  return { tag: false, content: content && resolveInterpolations(options, content) }
 }

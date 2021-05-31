@@ -128,6 +128,11 @@ o.spec('interpolate', () => {
     o(await renderHtml(`a<scope locals="{}"></scope>b`, makeCtx())).equals('ab')
   })
 
+  o('if-for', async () => {
+    const result = await renderHtml(`a<if cond="true"><for let="x of xs">{{x}}</for></if>b`, makeCtx({ xs: [10,20] }))
+    o(result).equals('a1020b')
+  })
+
   o('server script scope', async () => {
     const result = await renderHtml(
       `<script server>let x = 100; var y = 200; z = 300</script>{{x}},{{y}},{{z}}`,
