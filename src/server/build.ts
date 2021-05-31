@@ -103,7 +103,7 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
       .replace(/\/index\.html$/, '')
       .replace(/\.html$/, '')
 
-    if (site.rewriteOptions.removeTrailingSlashes === false && plainPath[plainPath.length - 1] === '/' && plainPath.length > 1) {
+    if (site.rewriteOptions.removeTrailingSlashes === true && plainPath[plainPath.length - 1] === '/' && plainPath.length > 1) {
       plainPath = plainPath.slice(0, plainPath.length - 1)
     }
 

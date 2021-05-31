@@ -6,11 +6,9 @@ import * as Bundle from '../bundle.js'
 import { env, filesDir, siteConfig } from '../config.js'
 import { missingFiles } from './state.js'
 import routes from '../../shared/routes.js'
-import { checkTempPasswordMiddleware } from './setup.js'
 import { last } from '../../client/dev/lib/util.js'
 import { ProcAuthError } from './errors.js'
 import { mountDevFiles } from './files.js'
-import { checkForInitialSetupState, requireSetup } from './setup.js'
 import { makeDirname } from '../lib/fs.js'
 
 const __dirname = makeDirname(import.meta.url)
@@ -19,8 +17,6 @@ export function mount(router: Router) {
 
   router.use('/lancer', express.static(path.join(__dirname, '../../../public')) )
   router.use(express.static(path.join(__dirname, '../../../dist/build')) )
-
-  router.use(checkForInitialSetupState())
 
   if (!env.production) {
     mountLocalDevRoutes(router)
@@ -70,9 +66,6 @@ export function mount(router: Router) {
   })
 
   router.get('/lancer/:page',
-
-    requireSetup(),
-    checkTempPasswordMiddleware(),
 
     (req, res, next) => {
       const route = routes.pages.children.find(r => r.match(req.path))

@@ -3,7 +3,6 @@ import { existsSync, mkdirSync } from 'fs'
 
 import { read, Env } from './lib/config.js'
 import { makeDirname, requireLatest } from './lib/fs.js'
-import { UserRow } from './models/user.js'
 import { Request } from 'express'
 import { scanForRewriteFiles } from './lib/rewrites.js'
 
@@ -45,7 +44,7 @@ export const cacheDir = handleRelative( read('LANCER_CACHE_DIR', joinp(dataDir, 
 export const buildDir = handleRelative( read('LANCER_BUILD_DIR', joinp(cacheDir, '/build')) )
 
 export const ssrDir = handleRelative( read('LANCER_SSR_CACHE_DIR', joinp(cacheDir, '/ssr')) )
-export const filesDir = joinp(contentDir, '/files')
+export const filesDir = joinp(contentDir, '/files', false)
 export const clientDir = joinp(sourceDir, '/client')
 export const staticDir = handleRelative( read('LANCER_STATIC_DIR', joinp(sourceDir, '/public')) )
 export const hydrateDir = handleRelative( read('LANCER_HYDRATE_DIR', joinp(cacheDir, '/hydrate')) )
@@ -58,8 +57,6 @@ export type PostHtmlCtx = {
   location: URL
   /** Config from the site's site.config.js file */
   site: SiteConfig
-  /** The signed in user */
-  user: UserRow | null
   /** Simple object for caching within the request. */
   cache: Record<string, any>
   /** The locale calculated from the request */

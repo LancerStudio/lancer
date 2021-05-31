@@ -11,9 +11,7 @@ import * as Bundle from './bundle.js'
 import { staticDir, siteConfig, env, filesDir, sourceDir, buildDir, hydrateDir, clientDir, SiteConfig, cacheDir } from './config.js'
 import { resolveFile } from './files.js'
 import { render, resolveAsset, validScriptBundles, validStyleBundles } from './render.js'
-import { mountSession } from './lib/session.js'
 import { ensureLocale } from './i18n.js'
-import { guardTempPassword, requireSetup } from './dev/setup.js'
 import { buildSsrFile, ssrBuildFile } from './lib/ssr.js'
 import { requireLatestOptional } from './lib/fs.js'
 
@@ -51,15 +49,7 @@ if (env.production) {
   router.use( express.static(buildDir, { redirect: false }) )
 }
 
-if (siteConfig().studio) {
-  mountSession(router)
-}
-
 router.use( bodyParser.json() )
-
-if (siteConfig().studio) {
-  Dev.mount(router)
-}
 
 router.post('/lrpc', async (req, res) => {
   const ns = req.body.namespace
@@ -89,7 +79,7 @@ router.post('/lrpc', async (req, res) => {
 
 type ReParams = Array<{ name: string, optional: boolean, offset: number }>
 
-router.get('/*', requireSetup(), ensureLocale(), async (req, res) => {
+router.get('/*', ensureLocale(), async (req, res) => {
   let filename: string = ''
 
   const site = siteConfig({ scanRewrites: !env.production })
@@ -168,13 +158,6 @@ router.get('/*', requireSetup(), ensureLocale(), async (req, res) => {
   }
 
   async function renderHtml(filename: string) {
-    //
-    // Only check temp passwords here
-    // to avoid catching requests like favicon.io
-    //
-    if (guardTempPassword(req, res)) {
-      return
-    }
     console.log('         -->', filename.replace(sourceDir+'/', ''))
     const htmlSrc = await fs.readFile(filename, 'utf8')
     const site = siteConfig()

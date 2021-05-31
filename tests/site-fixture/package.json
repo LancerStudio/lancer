@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "start": "lancer production",
+    "build": "lancer build",
+    "init": "lancer init",
+    "dev": "lancer dev"
+  }
+}

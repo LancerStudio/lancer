@@ -1,6 +1,9 @@
 import * as fs from 'fs'
 import * as path from 'path'
-import { green, yellow, cyan } from 'kleur'
+import colors from 'kleur'
+
+import { createRequire } from 'module'
+const require = createRequire(import.meta.url)
 
 export function initScripts(sourceDir: string) {
   const file = path.join(sourceDir, 'package.json')
@@ -11,7 +14,7 @@ export function initScripts(sourceDir: string) {
   pkg.scripts.init = 'lancer init'
   pkg.scripts.dev = 'lancer dev'
   fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + '\n')
-  console.log(cyan(`[update] package.json`))
+  console.log(colors.cyan(`[update] package.json`))
 }
 
 export function initConfig(sourceDir: string) {
@@ -91,13 +94,13 @@ export function initTailwind(sourceDir: string) {
     const source = fs.readFileSync(cssFile, 'utf8')
     if (!source.match(`@import "tailwindcss/base"`)) {
       fs.writeFileSync(cssFile, tailwindImports + '\n' + source)
-      console.log(cyan(`[update] ${cssFile.replace(sourceDir+'/', '')}`))
+      console.log(colors.cyan(`[update] ${cssFile.replace(sourceDir+'/', '')}`))
     }
   }
 
   write(sourceDir, path.join(sourceDir, 'tailwind.config.js'), tailwindConfigJs)
 
-  console.log(cyan('\nInstalling tailwindcss...'))
+  console.log(colors.cyan('\nInstalling tailwindcss...'))
   require('child_process').spawnSync(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['install', 'tailwindcss'], { stdio: [0,1,2] })
 }
 
@@ -121,10 +124,10 @@ const tailwindImports =
 
 function write(sourceDir: string, file: string, content: string) {
   if (!fs.existsSync(file)) {
-    console.log(green(`   [new] ${file.replace(sourceDir+'/', '')}`))
+    console.log(colors.green(`   [new] ${file.replace(sourceDir+'/', '')}`))
     fs.writeFileSync(file, content)
   }
   else {
-    console.log(yellow(`[exists] ${file.replace(sourceDir+'/', '')}`))
+    console.log(colors.yellow(`[exists] ${file.replace(sourceDir+'/', '')}`))
   }
 }

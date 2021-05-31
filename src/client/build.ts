@@ -16,7 +16,7 @@ const buildDir = path.join(distDir, 'build')
 
 const common = [
   postcssImport(),
-  tailwind( path.join(srcDir, 'client/tailwind.config.js') ),
+  tailwind( path.join(srcDir, 'client/tailwind.config.cjs') ),
 ]
 
 const plugins = [
