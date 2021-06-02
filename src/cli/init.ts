@@ -84,7 +84,8 @@ const globalCss =
 }
 `
 const gitignore =
-`node_modules/
+`.env
+node_modules/
 data/
 `
 
