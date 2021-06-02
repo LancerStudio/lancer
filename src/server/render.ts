@@ -84,7 +84,6 @@ export function makeLocals(ctx: PostHtmlCtx): object {
     publicDir: staticDir,
 
     site: ctx.site,
-    currentUser: ctx.user,
 
     cookies: ctx.req && new Cookies(ctx.req.headers.cookie),
 

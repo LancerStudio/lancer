@@ -65,6 +65,8 @@ export type PostHtmlCtx = {
   plainPath: string
   /** The html file being rendered */
   filename: string
+  /** TODO */
+  user?: unknown
 }
 
 export type SiteConfig = {

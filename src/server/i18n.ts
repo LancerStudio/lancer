@@ -93,6 +93,7 @@ class TranslationSet {
     let localeFile = path.join(contentDir, 'translations', path.dirname(key))
     if (fs.existsSync(localeFile)) {
     }
+    return 'todo' as any
   }
 }
 

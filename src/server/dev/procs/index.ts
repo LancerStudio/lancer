@@ -1,11 +1,8 @@
 import { existsSync, statSync } from "fs"
 
-import {z, rpc, bad, ok, allowAnonymous, RpcContext} from '../rpc.js'
+import {z, rpc, allowAnonymous} from '../rpc.js'
 import { filesDir, siteConfig } from '../../config.js'
 import { missingFiles } from '../state.js'
-import { Translation, User } from "../../models"
-
-export * from './onboarding.js'
 
 export const getDevStatus = rpc(
   z.object({}),
@@ -45,9 +42,9 @@ export const getLocales = rpc(
   z.object({
     name: z.string(),
   }),
-  async function ({ name }) {
+  async function ({}) {
     const site = siteConfig()
-    const existing = await Translation.localesFor(name)
+    const existing: string[] = [] // TODO
     return site.locales.reduce((all, loc) => {
       all[loc] = existing.includes(loc)
       return all
@@ -60,8 +57,9 @@ export const getTranslation = rpc(
     name: z.string(),
     locale: z.string(),
   }),
-  async function ({ name, locale }) {
-    return Translation.get(name, locale)
+  async function ({}) {
+    // TODO
+    return {} as any
   }
 )
 
@@ -79,46 +77,9 @@ export const updateTranslations = rpc(
       }).optional(),
     }),
   ),
-  async function (updates) {
+  async function (_updates) {
     return {
-      results: updates.map((update) => {
-        const result = Translation.set(update)
-        const current = Translation.get(update.name, update.locale)!
-        if (result) {
-          return ok({ current })
-        }
-        return bad('fail', { current, failed: update })
-      })
+      results: [] as any[]
     }
-  }
-)
-
-export const signIn = rpc(
-  z.object({
-    email: z.string(),
-    password: z.string(),
-  }),
-  async function ({ email, password }, { req }: RpcContext) {
-    const user = User.findByEmail(email)
-    if (!user || !(await User.verify(user.id, password))) {
-      return bad('invalid', { message: 'Bad email/password' })
-    }
-    req.session.user_id = user.id
-    return ok(null)
-  }
-)
-allowAnonymous(signIn)
-
-export const updatePassword = rpc(
-  z.object({
-    currentPassword: z.string().optional(),
-    newPassword: z.string(),
-  }),
-  async function ({ newPassword }, { req, user }: RpcContext) {
-    if (!user.password_temporary) {
-      // TODO: Check if currentPassword is correct
-    }
-    User.updatePassword(user.id, newPassword)
-    return ok({ returnTo: req.session.returnTo || '/' })
   }
 )

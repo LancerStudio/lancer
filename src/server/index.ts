@@ -164,7 +164,6 @@ router.get('/*', ensureLocale(), async (req, res) => {
     const {html} = await render(htmlSrc, {
       req,
       site,
-      user: req.user,
       cache: {},
       locale: req.locale || site.locales[0]!,
       plainPath,
