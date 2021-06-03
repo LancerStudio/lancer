@@ -27,6 +27,10 @@ export async function render(html: string, ctx: PostHtmlCtx) {
 
   const isSsr = await ssr({ locals, ctx })
 
+  if (ctx.req && ctx.req.method === 'POST' && !isSsr) {
+    return { isSsr, html: '' }
+  }
+
   const plugins = renderPostHtmlPlugins(ctx, locals, {
     prefix: [
       Bundle.posthtmlPlugin({

@@ -2,11 +2,9 @@ import path from 'path'
 import { existsSync, mkdirSync } from 'fs'
 
 import { read, Env } from './lib/config.js'
-import { makeDirname, requireLatest } from './lib/fs.js'
+import { requireLatest } from './lib/fs.js'
 import { Request } from 'express'
 import { scanForRewriteFiles } from './lib/rewrites.js'
-
-const __dirname = makeDirname(import.meta.url)
 
 export const env = Env(['test', 'development', 'production'])
 
@@ -17,9 +15,8 @@ export const sessionSecret = building ? '' : env.branch(() => 'TEMP KEY', {
 })
 
 
-export const sourceDir = env.branch(() => read('LANCER_SOURCE_DIR', process.cwd()), {
-  test: path.join(__dirname, '../test-app')
-})
+export const sourceDir = read('LANCER_SOURCE_DIR', process.cwd())
+
 if (!existsSync(sourceDir)) {
   throw new Error(`Source directory does not exist: '${sourceDir}'`)
 }

@@ -2,8 +2,7 @@ import 'dotenv/config.js'
 import 'express-async-errors'
 
 import path from 'path'
-import express from 'express'
-import bodyParser from 'body-parser'
+import express, { NextFunction, Request, Response } from 'express'
 import { existsSync, promises as fs } from 'fs'
 
 import * as Dev from './dev/index.js'
@@ -49,9 +48,7 @@ if (env.production) {
   router.use( express.static(buildDir, { redirect: false }) )
 }
 
-router.use( bodyParser.json() )
-
-router.post('/lrpc', async (req, res) => {
+router.post('/lrpc', express.json(), async (req, res) => {
   const ns = req.body.namespace
   if (!ns.match(/\.server$/)) return res.sendStatus(404)
 
@@ -79,7 +76,13 @@ router.post('/lrpc', async (req, res) => {
 
 type ReParams = Array<{ name: string, optional: boolean, offset: number }>
 
-router.get('/*', ensureLocale(), async (req, res) => {
+router.all('/*', ensureLocale(), express.urlencoded({ extended: false }), async (req, res, next) => {
+  const isGet  = req.method === 'GET'
+  const isPost = req.method === 'POST'
+  if (!isGet && !isPost) {
+    return next()
+  }
+
   let filename: string = ''
 
   const site = siteConfig({ scanRewrites: !env.production })
@@ -109,34 +112,34 @@ router.get('/*', ensureLocale(), async (req, res) => {
   }
 
   try {
-    console.log('\n[Lancer] GET', req.url)
+    log(`\n[Lancer] ${isGet ? 'GET' : 'POST'}`, req.url)
     filename = filename || resolveAsset(plainPath)
   }
   catch (err) {
-    console.log('         -->', err.message)
+    log('         -->', err.message)
     res.sendStatus(404)
     return
   }
 
-  if ( validScriptBundles[filename] ) {
-    console.log('         -->', filename.replace(sourceDir+'/', ''), '(bundle)')
+  if ( isGet && validScriptBundles[filename] ) {
+    log('         -->', filename.replace(sourceDir+'/', ''), '(bundle)')
     const result = await Bundle.bundleScript(filename, site)
     res.set({ 'Content-Type': 'application/javascript' })
     res.send(Buffer.from(result).toString('utf8'))
   }
-  else if ( validStyleBundles[filename] ) {
-    console.log('         -->', filename.replace(sourceDir+'/', ''), '(bundle)')
+  else if ( isGet && validStyleBundles[filename] ) {
+    log('         -->', filename.replace(sourceDir+'/', ''), '(bundle)')
     const result = await Bundle.bundleStyle(sourceDir, filename)
     res.set({ 'Content-Type': 'text/css' })
     res.send(result === null ? '!error' : result)
   }
-  else if ( filename.startsWith(filesDir) ) {
+  else if ( isGet && filename.startsWith(filesDir) ) {
     const file = await resolveFile(filename, {
       site,
       preview: queryStringVal('preview')
     })
     if (file) {
-      console.log('         -->', file.replace(sourceDir+'/', ''))
+      log('         -->', file.replace(sourceDir+'/', ''))
       res.sendFile(file)
     }
     else {
@@ -144,12 +147,12 @@ router.get('/*', ensureLocale(), async (req, res) => {
     }
   }
   else if ( filename.match(/\.html$/) && existsSync(filename) ) {
-    await renderHtml(filename)
+    await renderHtml(req, res, next, { plainPath, filename })
   }
   else if ( filename.match(/\.html$/) ) {
     const folderIndex = filename.replace(/\.html$/, '/index.html')
     if (existsSync(folderIndex)) {
-      await renderHtml(folderIndex)
+      await renderHtml(req, res, next, { plainPath, filename: folderIndex })
     }
     else notFound()
   }
@@ -157,29 +160,12 @@ router.get('/*', ensureLocale(), async (req, res) => {
     notFound()
   }
 
-  async function renderHtml(filename: string) {
-    console.log('         -->', filename.replace(sourceDir+'/', ''))
-    const htmlSrc = await fs.readFile(filename, 'utf8')
-    const site = siteConfig()
-    const {html} = await render(htmlSrc, {
-      req,
-      site,
-      cache: {},
-      locale: req.locale || site.locales[0]!,
-      plainPath,
-      filename,
-      location: new URL(`${req.protocol}://${req.get('host')}${req.originalUrl}`)
-    })
-    res.set({ 'Content-Type': 'text/html' })
-    res.send(html)
-  }
-
   function notFound() {
     if (existsSync(filename)) {
-      console.log(' >> Access denied', plainPath)
+      log(' >> Access denied', plainPath)
     }
     else {
-      console.log(' >> No such file', plainPath)
+      log(' >> No such file', plainPath)
     }
     res.sendStatus(404)
 
@@ -193,3 +179,35 @@ router.get('/*', ensureLocale(), async (req, res) => {
     return typeof val === 'string' ? val : undefined
   }
 })
+
+async function renderHtml(req: Request, res: Response, next: NextFunction, { plainPath, filename }: {
+  plainPath: string
+  filename: string
+}) {
+  log('         -->', filename.replace(sourceDir+'/', ''))
+  const htmlSrc = await fs.readFile(filename, 'utf8')
+  const site = siteConfig()
+  const {isSsr, html} = await render(htmlSrc, {
+    req,
+    site,
+    cache: {},
+    locale: req.locale || site.locales[0]!,
+    plainPath,
+    filename,
+    location: new URL(`${req.protocol}://${req.get('host')}${req.originalUrl}`)
+  })
+
+  if (req.method === 'POST' && !isSsr) {
+    next()
+  }
+  else {
+    res.set({ 'Content-Type': 'text/html' })
+    res.send(html)
+  }
+}
+
+function log(...args: any[]) {
+  if (!env.test) {
+    console.log(...args)
+  }
+}

@@ -1,4 +1,6 @@
 
-export default ({ req }) => {
-  console.log("METHOD", req.method)
+export default ({ req, locals }) => {
+  if (req.method === 'POST') {
+    locals.fooField = req.body.foo
+  }
 }
