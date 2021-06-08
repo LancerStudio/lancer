@@ -72,6 +72,13 @@ o.spec('interpolate', () => {
   })
 
   o('if-else', async () => {
+    const renderChain = (a,b) => renderHtml(`<if cond="${a}">A</if>\n\n<else>B</else>`, makeCtx())
+
+    o(await renderChain('1+1', 'true')).equals('A')
+    o(await renderChain('null', 'true')).equals('B')
+  })
+
+  o('if-else-if-else', async () => {
     const renderChain = (a,b) => renderHtml(
       `<if cond="${a}">A</if><else-if cond="${b}">B</else-if><else>C</else>`,
       makeCtx()

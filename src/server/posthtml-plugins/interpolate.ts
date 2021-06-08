@@ -15,8 +15,13 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
   // Iterate through all nodes in tree.
   return nodes.slice().reduce((m, node) => {
     if (typeof node === 'string') {
-      m.push(node)
-      ifElseChain = 'none'
+      const isWhitespace = !node.trim()
+      if (ifElseChain === 'none' || !isWhitespace) {
+        m.push(node)
+      }
+      if (!isWhitespace) {
+        ifElseChain = 'none'
+      }
       return m
     }
 
