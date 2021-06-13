@@ -44,3 +44,11 @@ export function hashContent(buffer: BinaryLike) {
 export function notNullish<TValue>(value: TValue | null | undefined): value is TValue {
   return value !== null && value !== undefined;
 }
+
+export function mapValues<K extends string, T, U>(obj: Record<K, T>, f: (x: T) => U) {
+    return Object.keys(obj).reduce((ret, key) => {
+        const k = key as K;
+        ret[k] = f(obj[k]);
+        return ret
+    }, {} as Record<K, U>)
+}
