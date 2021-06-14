@@ -16,7 +16,7 @@ import TemplatePlugin from './posthtml-plugins/template.js'
 import { isRelative } from './lib/fs.js'
 import { LancerCorePlugin } from './posthtml-plugins/core.js'
 import { Parser } from '@lancer/ihtml-parser'
-import { Collection } from './lib/collections.js'
+import { loadItemsSimple } from './lib/collections.js'
 
 export const validStyleBundles: Record<string, boolean> = {}
 export const validScriptBundles: Record<string, boolean> = {}
@@ -183,7 +183,7 @@ export function makeLocals(ctx: PostHtmlCtx): object {
     ...ctx.site.locals,
 
     collection(id: string) {
-      return new Collection(ctx, id)
+      return loadItemsSimple(ctx, id)
     }
   }
 

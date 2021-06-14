@@ -16,37 +16,21 @@ type CollectionItemField =
   | { type: 'basic', attrs: Record<string, any>, value: any }
   | { type: 'file', attrs: Record<string, any>, value: any, file: string, exists: number, location: Location }
 
-export class Collection {
-  items: CollectionItem[] = []
-  constructor(private ctx: PostHtmlCtx, public name: string) {
+export function loadItemsSimple(ctx: PostHtmlCtx, name: string) {
     const file = path.join(contentDir, 'collections', `${name}.html`)
     if (fs.existsSync(file)) {
-      this.items = parseItems(this.ctx, nodesToJson(parseIHTML(fs.readFileSync(file, 'utf8'))))
+      const items = parseItems(ctx, nodesToJson(parseIHTML(fs.readFileSync(file, 'utf8'))))
+      return items.map(item => ({
+        ...item,
+        ...mapValues(item.fields, field => field.value),
+        ...item.attrs,
+      }))
     }
     else {
       throw new Error(`[Lancer] No such collection: ${file}`)
     }
   }
-  [Symbol.iterator]() {
-    let i = 0
-    return {
-      next: () => {
-        if (i < this.items.length) {
-          const item = this.items[i++]!
-          return {
-            value: {
-              ...item,
-              ...mapValues(item.fields, field => field.value),
-              ...item.attrs,
-            },
-            done: false
-          };
-        }
-        return { value: undefined, done: true };
-      }
-    }
-  }
-}
+
 
 function parseItems(ctx: PostHtmlCtx, items: JsonNode[]): CollectionItem[] {
   return items
