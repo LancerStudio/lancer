@@ -70,10 +70,10 @@ const _layoutHtml =
 const indexHtml =
 `<page title="HOME">
 
-<script src="/index.js"></script>
-
 <h1>Home Page</h1>
 <p>Find me in client/index.html</p>
+
+<script src="/index.js"></script>
 `
 const indexJs =
 `console.log("Success. Find me in client/index.js")
