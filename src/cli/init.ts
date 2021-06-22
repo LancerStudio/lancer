@@ -40,7 +40,7 @@ This is a new Lancer project. Read more at [lancer.studio](https://lancer.studio
 After cloning this project:
 
 \`\`\`bash
-$ npm
+$ npm install
 $ npm run init
 $ npm run dev
 \`\`\`
