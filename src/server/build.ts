@@ -46,7 +46,7 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
 
       return buildCache[resolved] = async function() {
         // esbuild code splitting is still experimental, so we're only dealing with one file
-        const result = bundleScriptProd(resolved, buildDir, site).outputFiles[0]!
+        const result = (await bundleScriptProd(resolved, buildDir, site)).outputFiles[0]!
 
         const publicName = path.basename(result.path.replace(buildDir, ''))
         const publicPath = path.join(path.dirname(resolved), publicName).replace(clientDir, '')

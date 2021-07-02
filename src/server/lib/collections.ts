@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { contentDir, filesDir, PostHtmlCtx } from '../config.js'
+import { contentDir, filesDir } from '../config.js'
 import { JsonNode, nodesToJson, parseIHTML } from './posthtml.js'
 
 import { createRequire } from 'module'
@@ -16,23 +16,29 @@ type CollectionItemField =
   | { type: 'basic', attrs: Record<string, any>, value: any }
   | { type: 'file', attrs: Record<string, any>, value: any, file: string, exists: number, location: Location }
 
-export function loadItemsSimple(ctx: PostHtmlCtx, name: string) {
-    const file = path.join(contentDir, 'collections', `${name}.html`)
-    if (fs.existsSync(file)) {
-      const items = parseItems(ctx, nodesToJson(parseIHTML(fs.readFileSync(file, 'utf8'))))
-      return items.map(item => ({
-        ...item,
-        ...mapValues(item.fields, field => field.value),
-        ...item.attrs,
-      }))
-    }
-    else {
-      throw new Error(`[Lancer] No such collection: ${file}`)
-    }
+
+type Options = {
+  host: string
+  protocol: string
+}
+export function loadCollectionItems(name: string, opts: Options) {
+  const file = path.join(contentDir, 'collections', `${name}.html`)
+  if (fs.existsSync(file)) {
+    return parseItems(nodesToJson(parseIHTML(fs.readFileSync(file, 'utf8'))), opts)
   }
+  else {
+    throw new Error(`[Lancer] No such collection: ${file}`)
+  }
+}
 
+export function simplifyCollectionItem(item: CollectionItem) {
+  return {
+    ...mapValues(item.fields, field => field.value),
+    ...item.attrs,
+  }
+}
 
-function parseItems(ctx: PostHtmlCtx, items: JsonNode[]): CollectionItem[] {
+function parseItems(items: JsonNode[], opts: Options): CollectionItem[] {
   return items
     .map(item => {
       if (typeof item === 'string' || item.tag !== 'item') return
@@ -53,7 +59,7 @@ function parseItems(ctx: PostHtmlCtx, items: JsonNode[]): CollectionItem[] {
                 file,
                 value,
                 exists: fs.existsSync(file),
-                location: new URL(`${ctx.location.protocol}//${ctx.location.host}${value}`),
+                location: new URL(`${opts.protocol}//${opts.host}${value}`),
               }
             }
             else {

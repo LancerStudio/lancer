@@ -1,5 +1,5 @@
 import path from 'path'
-import { build, buildSync } from 'esbuild'
+import { build, Plugin } from 'esbuild'
 import { existsSync, promises as fs, statSync } from 'fs'
 
 import { isExternal, makeDirname, requireLatestOptional, requireUserland } from './lib/fs.js'
@@ -12,6 +12,7 @@ const require = createRequire(import.meta.url)
 const isProd = process.env.NODE_ENV === 'production'
 import matchHelper from 'posthtml-match-helper'
 import PostCSS from 'postcss'
+import { loadCollectionItems, simplifyCollectionItem } from './lib/collections.js'
 
 const __dirname = makeDirname(import.meta.url)
 
@@ -65,17 +66,21 @@ export async function bundleScript(file: string, config: Config) {
     write: false,
     minify: isProd,
     outdir: 'out',
+    loader: {
+      '.html': 'js'
+    },
     define: {
       'process.env.NODE_ENV': `"${isProd ? 'production' : 'development'}"`
     },
     jsxFactory: config.jsxFactory,
     jsxFragment: config.jsxFragment,
+    plugins: [injectCollectionsPlugin],
   })
   return result.outputFiles[0]!.contents
 }
 
-export function bundleScriptProd(file: string, outdir: string, config: Config) {
-  return buildSync({
+export async function bundleScriptProd(file: string, outdir: string, config: Config) {
+  return await build({
     platform: 'browser',
     entryPoints: [file],
     entryNames: '[dir]/[name]-[hash]',
@@ -83,11 +88,15 @@ export function bundleScriptProd(file: string, outdir: string, config: Config) {
     write: false,
     minify: true,
     outdir: outdir,
+    loader: {
+      '.html': 'js'
+    },
     define: {
       'process.env.NODE_ENV': `"production"`
     },
     jsxFactory: config.jsxFactory,
     jsxFragment: config.jsxFragment,
+    plugins: [injectCollectionsPlugin],
   })
 }
 
@@ -176,4 +185,22 @@ function convertPluginsObjToArray(sourceDir: string, obj: any) {
   return Object.keys(obj).map(pluginName =>
     require( require.resolve(pluginName, { paths }) )(obj[pluginName])
   )
+}
+
+const INJECT_FILTER_RE = /\/collections\/(.+)\.html$/
+
+export const injectCollectionsPlugin: Plugin = {
+  name: 'inject-collections',
+  setup(build) {
+    const config = siteConfig()
+    const location = new URL(`${config.origin || 'http://static.example.com'}`)
+
+    build.onLoad({ filter: INJECT_FILTER_RE }, async args => {
+      const collectionName = args.path.match(INJECT_FILTER_RE)![1]!
+      const items = loadCollectionItems(collectionName, { host: location.host, protocol: location.protocol })
+      return {
+        contents: `export default ${JSON.stringify(items.map(simplifyCollectionItem))}`
+      }
+    })
+  },
 }

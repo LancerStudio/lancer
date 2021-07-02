@@ -6,6 +6,7 @@ import { build, Plugin } from 'esbuild'
 import { requireLatest } from './fs.js'
 import colors from 'kleur'
 import { checksumFile, checksumString } from './util.js'
+import { injectCollectionsPlugin } from '../bundle.js'
 
 type SsrContext = {
   ctx: PostHtmlCtx
@@ -64,7 +65,10 @@ export async function buildSsrFile(ssrFile: string, config: Config) {
     bundle: true,
     format: 'cjs',
     sourcemap: true,
-    plugins: [makeAllPackagesExternalPlugin],
+    loader: {
+      '.html': 'js'
+    },
+    plugins: [makeAllPackagesExternalPlugin, injectCollectionsPlugin],
     jsxFactory: config.jsxFactory,
     jsxFragment: config.jsxFragment,
     platform: 'node',
@@ -103,7 +107,10 @@ export async function buildHydrateScript(hydrateSource: string, outfile: string,
     bundle: true,
     minify: isProd,
     sourcemap: true,
-    plugins: [injectRpcsPlugin],
+    plugins: [injectRpcsPlugin, injectCollectionsPlugin],
+    loader: {
+      '.html': 'js'
+    },
     define: {
       'process.env.NODE_ENV': `"${isProd ? 'production' : 'development'}"`
     },
