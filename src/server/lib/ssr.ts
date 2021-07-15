@@ -161,7 +161,8 @@ const _rpc = (method) => async (...args) => {
   })
   if (res.status === 204) return
   else if (res.status === 200) {
-    return res.headers.get('Content-Type').match('application/json') ? res.json() : res.text()
+    const contentType = res.headers.get('Content-Type')
+    return contentType && contentType.match('application/json') ? res.json() : res.text()
   }
   else {
     const err = new Error(\`[\${namespace}/rpc] Status code \${res.status}\`)

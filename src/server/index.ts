@@ -4,6 +4,7 @@ import 'express-async-errors'
 import path from 'path'
 import express, { NextFunction, Request, Response } from 'express'
 import { existsSync, promises as fs } from 'fs'
+import colors from 'kleur'
 
 import * as Dev from './dev/index.js'
 import * as Bundle from './bundle.js'
@@ -48,9 +49,15 @@ if (env.production) {
   router.use( express.static(buildDir, { redirect: false }) )
 }
 
-router.post('/lrpc', express.json(), async (req, res) => {
+router.post('/lrpc', express.json(), async (req, res, next) => {
   const ns = req.body.namespace
-  if (!ns.match(/\.server$/)) return res.sendStatus(404)
+  log(`${colors.yellow('RPC')} ${ns}`)
+
+  if (!ns.match(/\.server$/)) {
+    log(' --> 404 (invalid namespace)')
+    res.sendStatus(404)
+    return
+  }
 
   if (env.development) {
     // Warning: Some logic duplicated from ssr.ts
@@ -58,19 +65,36 @@ router.post('/lrpc', express.json(), async (req, res) => {
     if (!existsSync(ssrFile)) ssrFile = path.join(clientDir, `${ns}.ts`)
     if (!existsSync(ssrFile)) {
       console.error('No such js/ts file:', `client/${ns}`)
-      return res.sendStatus(404)
+      res.sendStatus(404)
+      return
+    }
+    if (!ssrFile.startsWith(clientDir)) {
+      log(' --> 404 (security)')
+      res.sendStatus(404)
+      return
     }
 
     const site = siteConfig()
     await buildSsrFile(ssrFile, site)
   }
 
-  const rpcs = requireLatestOptional(ssrBuildFile(`${ns}.js`)) // TODO: SECURITY
+  const rpcs = requireLatestOptional(ssrBuildFile(`${ns}.js`))
   const rpc = rpcs && rpcs.module[req.body.method]
-  if (!rpc) return res.sendStatus(404)
+  if (!rpc) {
+    log(' --> 404')
+    res.sendStatus(404)
+    return
+  }
 
-  const result = await rpc(...req.body.args)
-  return res.send(result)
+  try {
+    const result = await rpc(...req.body.args)
+    res.send(result)
+    log(`--> ${colors.green(200)}`, result === '' ? '""' : result)
+  }
+  catch(err) {
+    next(err)
+    log(`--> ${colors.red(500)}`)
+  }
 })
 
 
