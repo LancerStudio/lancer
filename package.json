@@ -1,6 +1,6 @@
 {
   "name": "@lancer/studio",
-  "version": "0.10.3",
+  "version": "0.10.4",
   "description": "Build websites with the power of HTML.",
   "type": "module",
   "main": "index.js",
