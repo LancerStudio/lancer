@@ -12,6 +12,7 @@ import { POSTHTML_OPTIONS } from './lib/posthtml.js'
 import { ssr } from './lib/ssr.js'
 import { hashContent } from './lib/util.js'
 import { FILENAME_REWRITE_RE } from './lib/rewrites.js'
+import { getPageAttrs } from './lib/fs.js'
 
 type Options = {
   staticOpts?: {
@@ -138,9 +139,10 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
     }
 
     // Render no matter what to catch all scripts and styles
+    const pageAttrs = getPageAttrs(filename)
     const result = await posthtml(plugins).process(readFileSync(filename, 'utf8'), POSTHTML_OPTIONS)
 
-    if (!ssrBuild) {
+    if (staticOpts || pageAttrs?.static) {
       const dest = path.join(buildDir, filename.replace(clientDir, ''))
       await fs.mkdir(path.dirname(dest), { recursive: true })
       await fs.writeFile(dest, result.html)

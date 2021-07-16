@@ -3,7 +3,6 @@ import glob from 'glob'
 import imageSize from 'image-size'
 import Cookies from 'universal-cookie'
 import posthtml from 'posthtml'
-import RL from 'n-readlines'
 
 import * as Bundle from './bundle.js'
 import * as i18n from './i18n.js'
@@ -13,9 +12,8 @@ import { clientDir, env, filesDir, PostHtmlCtx, staticDir } from './config.js'
 import { POSTHTML_OPTIONS } from './lib/posthtml.js'
 import { ssr } from './lib/ssr.js'
 import TemplatePlugin from './posthtml-plugins/template.js'
-import { isRelative } from './lib/fs.js'
+import { getPageAttrs, isRelative } from './lib/fs.js'
 import { LancerCorePlugin } from './posthtml-plugins/core.js'
-import { Parser } from '@lancer/ihtml-parser'
 import { loadCollectionItems, simplifyCollectionItem } from './lib/collections.js'
 
 export const validStyleBundles: Record<string, boolean> = {}
@@ -128,32 +126,13 @@ export function makeLocals(ctx: PostHtmlCtx): object {
         .map(file => {
           if (!file.file.endsWith('.html')) return file
 
-          const lines = new RL(file.file)
-          let pageTag = ''
-          let rawLine: Buffer
-          while (rawLine = lines.next()) {
-            const line = rawLine.toString('utf8')
-            if (line.match(/^\w*$/)) continue
-            if (!line.match(/^\w*<page\b/)) break
-
-            pageTag = line
-            while (rawLine = lines.next()) {
-              pageTag += '\n' + rawLine.toString('utf8')
-              if (pageTag.indexOf('>') >= 0) break
-            }
-
-            let pageAttrs: any
-            const parser = new Parser({
-              onopentag(name: string, attrs: any) {
-                if (name === 'page') pageAttrs = attrs
-              }
-            })
-            parser.write(pageTag)
-            parser.end()
-
+          const pageAttrs = getPageAttrs(file.file)
+          if (pageAttrs) {
             return { ...file, attrs: pageAttrs }
           }
-          return file
+          else {
+            return file
+          }
         })
     },
 
