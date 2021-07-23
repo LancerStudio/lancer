@@ -98,6 +98,7 @@ export function makeLocals(ctx: PostHtmlCtx): object {
       file: ctx.filename,
       path: ctx.plainPath,
       locale: ctx.locale,
+      params: ctx.req ? ctx.req.params || {} : null,
       location: ctx.location,
     },
 
