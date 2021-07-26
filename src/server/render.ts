@@ -6,12 +6,10 @@ import posthtml from 'posthtml'
 
 import * as Bundle from './bundle.js'
 import * as i18n from './i18n.js'
-import IncludePlugin from './posthtml-plugins/include.js'
 import LayoutPlugin from './posthtml-plugins/layout.js'
 import { clientDir, env, filesDir, PostHtmlCtx, staticDir } from './config.js'
 import { POSTHTML_OPTIONS } from './lib/posthtml.js'
 import { ssr } from './lib/ssr.js'
-import TemplatePlugin from './posthtml-plugins/template.js'
 import { getPageAttrs, isRelative } from './lib/fs.js'
 import { LancerCorePlugin } from './posthtml-plugins/core.js'
 import { loadCollectionItems, simplifyCollectionItem } from './lib/collections.js'
@@ -68,10 +66,7 @@ export function renderPostHtmlPlugins(ctx: PostHtmlCtx, locals: any, opts: {
       }
     }),
     ...opts.prefix,
-    IncludePlugin({ locals, root: clientDir, encoding: 'utf8' }),
-    TemplatePlugin({ locals }),
-
-    LancerCorePlugin({ locals }),
+    LancerCorePlugin({ locals, site: ctx.site, includeRoot: clientDir }),
 
     ...(opts.postfix || []),
   ]

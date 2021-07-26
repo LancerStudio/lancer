@@ -66,6 +66,13 @@ export type PostHtmlCtx = {
   user?: unknown
 }
 
+type Attributes = { [name: string]: string | true }
+
+export type TemplateRenderConfig = {
+  /** Setting this to true will cause Lancer to parse and render the return value of your template render function. */
+  recurse: boolean
+}
+
 export type SiteConfig = {
   name: string
   origin?: string
@@ -74,7 +81,7 @@ export type SiteConfig = {
   locales: string[]
   cacheCssInDev: boolean
   imagePreviews: Record<string, POJO<any>> | ((sharp: typeof import('sharp')) => Record<string, POJO<any>>)
-  templateTypes: Record<string, (html: string) => string | Promise<string>>
+  templateTypes: Record<string, (html: string, attrs: Attributes, config?: TemplateRenderConfig) => string | Promise<string>>
   jsxFactory?: string
   jsxFragment?: string
   rewrites: Record<string,string>

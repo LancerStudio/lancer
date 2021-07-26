@@ -1,96 +1,19 @@
 import fs from 'fs'
 import path from 'path'
-import { NodeTag, parseIHTML } from '../lib/posthtml.js'
 import { clientDir, hydrateDir, siteConfig, sourceDir } from '../config.js'
 import { requireLatest, requireUserland } from '../lib/fs.js'
-import { POSTHTML_OPTIONS } from '../lib/posthtml.js'
 import { buildHydrateScript, buildSsrFile, evalExpression } from '../lib/ssr.js'
 import { checksumFile } from '../lib/util.js'
-import { match } from 'posthtml/lib/api.js'
-
-type Options = {
-  root?: string
-  locals?: object
-  encoding?: string
-}
-export default (options: Options = {}) => {
-  const root = options.root || './'
-  const locals = options.locals || {}
-  const encoding = options.encoding || 'utf-8'
-
-  return async function posthtmlInclude(tree: any) {
-    tree.parser = tree.parser || parseIHTML
-    tree.match = tree.match || match
-
-    const tasks: Promise<any>[] = []
-
-    tree.match({tag: 'include'}, (node: any) => {
-      const attrs = node.attrs || {}
-      let src = attrs.src || false
-      delete attrs.src
-      let subtree
-      let source
-
-      let newNode: NodeTag = {
-        tag: false,
-        content: undefined,
-      }
-
-      if (src) {
-        src = path.resolve(root, src)
-        source = fs.readFileSync(src, encoding as BufferEncoding)
-
-        if (src.match(/\.html$/)) {
-          subtree = parseIHTML(source, {
-            customVoidElements: POSTHTML_OPTIONS.customVoidElements,
-          }) as any
-          subtree.match = tree.match
-          subtree.parser = tree.parser
-
-          if (source.includes('include')) {
-            tasks.push(async function() {
-              newNode.content = await posthtmlInclude(subtree)
-            }())
-          }
-          else {
-            newNode.content = subtree
-          }
-
-          if (attrs.locals) {
-            newNode = {
-              tag: 'scope',
-              attrs: { locals: attrs.locals },
-              content: [newNode],
-            }
-          }
-        }
-        else if (src.match(/\.(js|ts)x?$/)) {
-          // TODO: Optimize file reading
-          if (/from 'mithril'/.test(source)) {
-            tasks.push(async function() {
-              newNode.content = await wrapMithril(src, attrs, locals)
-            }())
-          }
-          else {
-            throw new Error(`[Lancer] Could not detect JS runtime for ${src}`)
-          }
-        }
 
 
-        if (tree.messages) {
-          tree.messages.push({
-            type: 'dependency',
-            file: src
-          })
-        }
-      }
-
-      return newNode
-    })
-
-    await Promise.all(tasks)
-
-    return tree
+export async function renderUniversalJs(src: string, attrs: object, locals: object) {
+  // TODO: Optimize file reading
+  const source = fs.readFileSync(src, 'utf-8')
+  if (/from 'mithril'/.test(source)) {
+    return await wrapMithril(src, attrs, locals)
+  }
+  else {
+    throw new Error(`[Lancer] Could not detect JS runtime for ${src}`)
   }
 }
 

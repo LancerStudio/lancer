@@ -4,9 +4,9 @@ import {render} from '../../../dist/server/render.js'
 
 o.spec('interpolate', () => {
 
-  let makeCtx = (locals) => ({
+  let makeCtx = (locals, site) => ({
     // req: {},
-    site: { locals, locales: ['en'] },
+    site: { locals, locales: ['en'], ...site },
     user: null,
     cache: {},
     locale: 'en',
@@ -111,6 +111,35 @@ o.spec('interpolate', () => {
   o('nested include', async () => {
     const result = await renderHtml(`<include src="_x-nested.html" locals="{ x: 100 }">`, makeCtx({ x: 10 }))
     o(result).equals(`<p>x-parent1:100</p><p>x:111</p>\n<p>x-parent2:100</p>\n`)
+  })
+
+  o('template include', async () => {
+    const result = await renderHtml(
+      `<template type="foo">_x.html</template>`,
+      makeCtx({ x: 11 }, {
+        templateTypes: {
+          foo(content, _attrs, config) {
+            config.recurse = true
+            return `<include src="${content}">`
+          }
+        }
+      })
+    )
+    o(result).equals('<p>x:11</p>\n')
+  })
+
+  o('template no include', async () => {
+    const result = await renderHtml(
+      `<template type="foo">_x.html</template>`,
+      makeCtx({ x: 11 }, {
+        templateTypes: {
+          foo(content) {
+            return `<include src="${content}">`
+          }
+        }
+      })
+    )
+    o(result).equals(`<include src="_x.html">`)
   })
 
   o('if-tags work without content', async () => {

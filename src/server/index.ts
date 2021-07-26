@@ -129,7 +129,7 @@ router.all('/*', ensureLocale(), express.urlencoded({ extended: false }), async 
         params.forEach((param, i) => {
           req.params[param.name] = match[i+1]!
         })
-        filename = file
+        filename = file.startsWith('/') ? file : path.join(clientDir, file)
         break rewrite
       }
     }

@@ -1,19 +1,28 @@
+import fs from 'fs'
 import vm from 'vm'
+import path from 'path'
 import fclone from 'fclone'
-import { Node, NodeTag } from '../lib/posthtml.js'
+import renderTree from 'posthtml-render'
+import { Node, NodeTag, parseIHTML, POSTHTML_OPTIONS } from '../lib/posthtml.js'
 import { evalExpression } from '../lib/ssr.js'
+import { SiteConfig } from '../config.js'
+import { renderUniversalJs } from './include.js'
 
 type WalkOptions = {
   ctx: vm.Context
+  site: SiteConfig
+  includeRoot: string
 }
-export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
+export async function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
   // The context in which expressions are evaluated.
   const {ctx} = options
 
   let ifElseChain: 'none' | 'resolved' | 'unresolved' = 'none'
 
   // Iterate through all nodes in tree.
-  return nodes.slice().reduce((m, node) => {
+  const m = [] as Node[]
+
+  for (let node of nodes.slice()) {
     if (typeof node === 'string') {
       const isWhitespace = !node.trim()
       if (ifElseChain === 'none' || !isWhitespace) {
@@ -22,7 +31,7 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
       if (!isWhitespace) {
         ifElseChain = 'none'
       }
-      return m
+      continue
     }
 
     if (node.render) {
@@ -33,10 +42,12 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
 
     const content = node.content
 
-    const isLoop   = node.tag === 'for'
-    const isCond   = node.tag === 'if' || node.tag === 'else-if' || node.tag === 'else'
-    const isScope  = node.tag === 'scope'
-    const isScript = node.tag === 'script' && !!node.attrs?.server
+    const isLoop     = node.tag === 'for'
+    const isCond     = node.tag === 'if' || node.tag === 'else-if' || node.tag === 'else'
+    const isScope    = node.tag === 'scope'
+    const isScript   = node.tag === 'script' && !!node.attrs?.server
+    const isInclude  = node.tag === 'include'
+    const isTemplate = node.tag === 'template' && !!node.attrs?.type && node.attrs?.type !== true
 
     if (!isCond) {
       ifElseChain = 'none'
@@ -44,10 +55,10 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
 
     if (isScript) {
       content && vm.runInNewContext(content.join(''), { locals: ctx.locals })
-      return m
+      continue
     }
     else if (isLoop) {
-      if (!content) return m
+      if (!content) continue
 
       const code = node.attrs?.let
       if (!code || code === true) {
@@ -55,14 +66,23 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
       }
       const loopCtx = vm.createContext(fclone(ctx))
       const loopContent: Node[] = []
-      loopCtx.__recurse = () => {
+      loopCtx.__recurse = async () => {
         loopContent.push(
-          ...resolveInterpolations({ ctx: loopCtx }, content)
+          ...(await resolveInterpolations({ ...options, ctx: loopCtx }, content))
         )
       }
-      vm.runInContext(`for (var ${code}) __recurse()`, loopCtx, { microtaskMode: 'afterEvaluate' })
+      const loopDone = new Promise((resolve, reject) => {
+        loopCtx.__done = resolve
+        loopCtx.__err = reject
+      })
+      vm.runInContext(
+        `async function __go() { for (${code}) await __recurse() }; __go().then(__done,__err)`,
+        loopCtx,
+        { microtaskMode: 'afterEvaluate' }
+      )
+      await loopDone
       m.push({ tag: false, content: loopContent })
-      return m
+      continue
     }
     else if (isCond) {
       if (node.tag === 'else') {
@@ -70,17 +90,17 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
           throw new Error(`[Lancer] Dangling <else> tag`)
         }
         else if (ifElseChain === 'unresolved') {
-          content && m.push(newContent(options, content))
+          content && m.push(await newContent(options, content))
         }
         ifElseChain = 'none'
-        return m
+        continue
       }
       else if (node.tag === 'else-if') {
         if (ifElseChain === 'none') {
           throw new Error(`[Lancer] Dangling <else-if> tag`)
         }
         else if (ifElseChain === 'resolved') {
-          return m
+          continue
         }
       }
 
@@ -90,16 +110,16 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
       }
       const result = evalExpression(ctx, cond)
       if (result) {
-        content && m.push(newContent(options, content))
+        content && m.push(await newContent(options, content))
         ifElseChain = 'resolved'
       }
       else {
         ifElseChain = 'unresolved'
       }
-      return m
+      continue
     }
     else if (isScope) {
-      if (!content) return m
+      if (!content) continue
 
       const scopeLocalsCode = node.attrs?.locals
       if (!scopeLocalsCode || scopeLocalsCode === true) {
@@ -110,24 +130,81 @@ export function resolveInterpolations(options: WalkOptions, nodes: Node[]) {
         temp.locals = temp
         return temp
       })())
-      const scopeContent = resolveInterpolations({ ...options, ctx: scopeCtx }, content)
+      const scopeContent = await resolveInterpolations({ ...options, ctx: scopeCtx }, content)
       m.push({ tag: false, content: scopeContent })
-      return m
+      continue
+    }
+    else if (isInclude) {
+      const attrs = node.attrs || {}
+      const root = options.includeRoot
+
+      let src = attrs.src
+      if (!src || src === true) {
+        throw new Error(`[Lancer] <${node.tag}> tag must have a src="..." attribute`)
+      }
+      src = path.resolve(root, src)
+
+      if (src.match(/\.(js|ts)x?$/)) {
+        m.push({
+          tag: false,
+          content: await renderUniversalJs(src, attrs, ctx)
+        })
+      }
+      else {
+        const source = fs.readFileSync(src, 'utf-8')
+        const subtree = parseIHTML(source, {
+          customVoidElements: POSTHTML_OPTIONS.customVoidElements,
+        }) as any
+
+        if (attrs.locals) {
+          m.push(await newContent(options, [{
+            tag: 'scope',
+            attrs: { locals: attrs.locals },
+            content: subtree
+          }]))
+        }
+        else {
+          m.push(await newContent(options, subtree))
+        }
+      }
+    }
+    else if (isTemplate) {
+      const attrs = node.attrs!
+      const type = attrs.type as string
+
+      const render = options.site.templateTypes[type]
+      if (!render) {
+        throw new Error(`[Lancer] No such template type: '${type}'`)
+      }
+      const opts = { recurse: false }
+      const html = await render(await renderTree(node.content as any || []), attrs, opts)
+      if (opts.recurse) {
+        const subtree = parseIHTML(html, {
+          customVoidElements: POSTHTML_OPTIONS.customVoidElements,
+        }) as any
+        const content = await resolveInterpolations({ ...options, ctx: vm.createContext(fclone(ctx)) }, subtree)
+        m.push({ tag: false, content })
+      }
+      else {
+        m.push({ tag: false, content: [html] })
+      }
     }
     else if (content) {
       // Copy node to allow loops to interpolate a tree multiple times
       const newNode = { ...node }
-      newNode.content = resolveInterpolations(options, content)
+      newNode.content = await resolveInterpolations(options, content)
       m.push(newNode)
-      return m
+      continue
     }
     else {
       m.push(node)
-      return m
+      continue
     }
-  }, [] as Node[])
+  }
+
+  return m
 }
 
-function newContent(options: WalkOptions, content: Node[] | undefined) {
-  return { tag: false, content: content && resolveInterpolations(options, content) }
+async function newContent(options: WalkOptions, content: Node[] | undefined) {
+  return { tag: false, content: content && await resolveInterpolations(options, content) }
 }
