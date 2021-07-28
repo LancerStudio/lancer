@@ -3,6 +3,7 @@ import glob from 'glob'
 import imageSize from 'image-size'
 import Cookies from 'universal-cookie'
 import posthtml from 'posthtml'
+import { Response } from 'express'
 
 import * as Bundle from './bundle.js'
 import * as i18n from './i18n.js'
@@ -18,13 +19,16 @@ export const validStyleBundles: Record<string, boolean> = {}
 export const validScriptBundles: Record<string, boolean> = {}
 
 
-export async function render(html: string, ctx: PostHtmlCtx) {
+export async function render(html: string, ctx: PostHtmlCtx, res: Response) {
   const locals = makeLocals(ctx)
 
-  const isSsr = await ssr({ locals, ctx })
+  const ssrResult = await ssr({ locals, ctx, res })
 
-  if (ctx.req && ctx.req.method === 'POST' && !isSsr) {
-    return { isSsr, html: '' }
+  if (
+    ssrResult.halted ||
+    ctx.req && ctx.req.method === 'POST' && !ssrResult.isSsr
+  ) {
+    return { isSsr: false, html: '', halted: false }
   }
 
   const plugins = renderPostHtmlPlugins(ctx, locals, {
@@ -48,7 +52,7 @@ export async function render(html: string, ctx: PostHtmlCtx) {
   })
   const result = await posthtml(plugins).process(html, POSTHTML_OPTIONS)
   return {
-    isSsr,
+    isSsr: ssrResult.isSsr,
     html: result.html as string,
   }
 }

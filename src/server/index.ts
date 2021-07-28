@@ -211,7 +211,7 @@ async function renderHtml(req: Request, res: Response, next: NextFunction, { pla
   log('         -->', filename.replace(sourceDir+'/', ''))
   const htmlSrc = await fs.readFile(filename, 'utf8')
   const site = siteConfig()
-  const {isSsr, html} = await render(htmlSrc, {
+  const {isSsr, html, halted} = await render(htmlSrc, {
     req,
     site,
     cache: {},
@@ -219,9 +219,12 @@ async function renderHtml(req: Request, res: Response, next: NextFunction, { pla
     plainPath,
     filename,
     location: new URL(`${req.protocol}://${req.get('host')}${req.originalUrl}`)
-  })
+  }, res)
 
-  if (req.method === 'POST' && !isSsr) {
+  if (halted) {
+    // Do nothing
+  }
+  else if (req.method === 'POST' && !isSsr) {
     next()
   }
   else {

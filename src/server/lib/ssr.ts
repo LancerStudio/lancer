@@ -1,6 +1,7 @@
 import fs from 'fs'
 import vm from 'vm'
 import path from 'path'
+import { Request, Response } from 'express'
 import { building, clientDir, env, PostHtmlCtx, siteConfig, sourceDir, ssrDir } from '../config.js'
 import { build, Plugin } from 'esbuild'
 import { requireLatest } from './fs.js'
@@ -10,19 +11,23 @@ import { injectCollectionsPlugin } from '../bundle.js'
 
 type SsrContext = {
   ctx: PostHtmlCtx
-  req?: import('express').Request
+  req?: Request
+  halt?: (handler: (res: Response) => void) => void
   locals: any
 }
 type Inputs = {
   ctx: PostHtmlCtx
+  res: Response
   locals: any
   dryRun?: boolean
 }
-export async function ssr({ctx, locals, dryRun}: Inputs) {
+export async function ssr({ctx, res, locals, dryRun}: Inputs) {
   let ssrFile = ctx.filename.replace(/\.html$/, '.server.js')
 
   if (!fs.existsSync(ssrFile)) ssrFile = ctx.filename.replace(/\.html$/, '.server.ts')
-  if (!fs.existsSync(ssrFile)) return false
+  if (!fs.existsSync(ssrFile)) return { isSsr: false, halted: false }
+
+  let halted = false
 
   const site = siteConfig()
   const outfile = await buildSsrFile(ssrFile, site)
@@ -30,12 +35,17 @@ export async function ssr({ctx, locals, dryRun}: Inputs) {
   const ssrContext: SsrContext = {
     ctx,
     req: ctx.req,
+    halt: (f) => {
+      if (halted) throw new Error(`[Lancer] Already halted`)
+      halted = true
+      f(res)
+    },
     locals,
   }
 
   const render = requireLatest(outfile).module.default
   if (typeof render !== 'function') {
-    return false
+    return { isSsr: false, halted }
   }
 
   if (dryRun !== true) {
@@ -44,7 +54,7 @@ export async function ssr({ctx, locals, dryRun}: Inputs) {
     console.log(`         ${colors.cyan('run')} ${ssrFile.replace(clientDir, 'client')} - ${colors.green(Date.now() - start + 'ms')}`)
   }
 
-  return { buildFile: outfile }
+  return { isSsr: true, buildFile: outfile, halted }
 }
 
 type Config = {
