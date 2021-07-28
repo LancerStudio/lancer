@@ -45,11 +45,7 @@ async function wrapMithril(file: string, nodeAttrs: any, locals: object) {
 
   const hydrateSource = `import m from 'mithril'
 import mount from '${file}'
-var hash = 'h${hash}'
-mount({
-  dom: document.querySelector(\`[data-mount-id=\${hash}]\`),
-  args: C_ARGS[hash]
-})
+window.mount_h${hash} = mount
 `
 
   await buildHydrateScript(hydrateSource, hydrateFile, site)
@@ -65,14 +61,27 @@ mount({
     },
     {
       tag: 'script',
-      content: [`(window.C_ARGS || (window.C_ARGS={})).h${hash}=${JSON.stringify(args)}`]
+      attrs: { src: hydrateFile.replace(hydrateDir, '') }
     },
     {
       tag: 'script',
-      attrs: {
-        defer: true as const,
-        src: hydrateFile.replace(hydrateDir, ''),
-      }
+      content: [
+`(function() {
+  let hash  = 'h${hash}'
+  let hashi = (() => {
+    let k = hash+'__i'
+    if (!(k in window)) window[k] = -1
+    window[k] += 1
+    return window[k]
+  })()
+  console.log("HASH", 'mount_'+hash)
+  window['mount_'+hash]({
+    dom: document.querySelectorAll(\`[data-mount-id=\${hash}]\`)[hashi],
+    args: ${JSON.stringify(args)}
+  })
+})()
+`
+      ]
     },
   ]
 }
