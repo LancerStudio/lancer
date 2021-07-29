@@ -7,7 +7,7 @@ import { Response } from 'express'
 
 import * as i18n from './i18n.js'
 import LayoutPlugin from './posthtml-plugins/layout.js'
-import { cacheDir, clientDir, env, filesDir, PostHtmlCtx, staticDir } from './config.js'
+import { building, cacheDir, clientDir, env, filesDir, PostHtmlCtx, staticDir } from './config.js'
 import { POSTHTML_OPTIONS } from './lib/posthtml.js'
 import { ssr } from './lib/ssr.js'
 import { getPageAttrs, isRelative } from './lib/fs.js'
@@ -21,7 +21,7 @@ const require = createRequire(import.meta.url)
 
 let publicAssetPaths = {}
 
-if (env.production) {
+if (env.production && !building) {
   publicAssetPaths = require(path.join(cacheDir, 'public-asset-paths.json'))
 }
 
