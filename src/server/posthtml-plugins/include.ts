@@ -1,10 +1,11 @@
 import fs from 'fs'
 import path from 'path'
-import { clientDir, hydrateDir, siteConfig, sourceDir } from '../config.js'
+import { building, clientDir, env, hydrateDir, SiteConfig, siteConfig, sourceDir } from '../config.js'
 import { requireLatest, requireUserland } from '../lib/fs.js'
-import { buildHydrateScript, buildSsrFile, evalExpression } from '../lib/ssr.js'
+import { bundleHydrateScript, buildSsrFile, evalExpression } from '../lib/ssr.js'
 import { checksumFile } from '../lib/util.js'
 
+export const JS_FILE_RE = /\.(js|ts)x?$/
 
 export async function renderUniversalJs(src: string, attrs: object, locals: object) {
   // TODO: Optimize file reading
@@ -15,6 +16,39 @@ export async function renderUniversalJs(src: string, attrs: object, locals: obje
   else {
     throw new Error(`[Lancer] Could not detect JS runtime for ${src}`)
   }
+}
+
+/** For use in building for production */
+export async function buildUniversalScript(file: string) {
+  const source = fs.readFileSync(file, 'utf-8')
+  if (/from 'mithril'/.test(source)) {
+    const site = siteConfig()
+    const ssrFile = await buildSsrFile(file, site)
+    const { hydrateFile } = await buildMithrilHydrateScript(file, site)
+    return { ssrFile, hydrateFile }
+  }
+  else {
+    throw new Error(`[Lancer/build] Could not detect JS runtime for ${file}`)
+  }
+}
+
+async function buildMithrilHydrateScript(file: string, site: SiteConfig) {
+  const hash = await checksumFile(file)
+  const hydrateFile = path.join(hydrateDir, file.replace(clientDir, ''))
+    .replace(/\.(ts|js)x?$/, '.js')
+    .replace(/\.js$/, `-${hash}.hydrate.js`)
+
+  const hydrateSource = `import m from 'mithril'
+import mount from '${file}'
+window.mount_h${hash} = mount
+`
+
+  const skipBuild = env.production && !building
+  if (!skipBuild) {
+    await bundleHydrateScript(hydrateSource, hydrateFile, site)
+  }
+
+  return { hash, hydrateFile }
 }
 
 async function wrapMithril(file: string, nodeAttrs: any, locals: object) {
@@ -37,18 +71,7 @@ async function wrapMithril(file: string, nodeAttrs: any, locals: object) {
   delete nodeAttrs.args
 
   const html = await renderMithril.sync(mount({ dom: null, args }))
-  const hash = await checksumFile(file)
-
-  const hydrateFile = path.join(hydrateDir, file.replace(clientDir, ''))
-    .replace(/\.(ts|js)x?$/, '.js')
-    .replace(/\.js$/, `-${hash}.hydrate.js`)
-
-  const hydrateSource = `import m from 'mithril'
-import mount from '${file}'
-window.mount_h${hash} = mount
-`
-
-  await buildHydrateScript(hydrateSource, hydrateFile, site)
+  const {hash, hydrateFile} = await buildMithrilHydrateScript(file, site)
 
   const mountTargetTag = nodeAttrs.tag || 'div'
   delete nodeAttrs.tag
@@ -74,7 +97,7 @@ window.mount_h${hash} = mount
     window[k] += 1
     return window[k]
   })()
-  console.log("HASH", 'mount_'+hash)
+
   window['mount_'+hash]({
     dom: document.querySelectorAll(\`[data-mount-id=\${hash}]\`)[hashi],
     args: ${JSON.stringify(args)}

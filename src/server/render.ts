@@ -5,19 +5,25 @@ import Cookies from 'universal-cookie'
 import posthtml from 'posthtml'
 import { Response } from 'express'
 
-import * as Bundle from './bundle.js'
 import * as i18n from './i18n.js'
 import LayoutPlugin from './posthtml-plugins/layout.js'
-import { clientDir, env, filesDir, PostHtmlCtx, staticDir } from './config.js'
+import { cacheDir, clientDir, env, filesDir, PostHtmlCtx, staticDir } from './config.js'
 import { POSTHTML_OPTIONS } from './lib/posthtml.js'
 import { ssr } from './lib/ssr.js'
 import { getPageAttrs, isRelative } from './lib/fs.js'
 import { LancerCorePlugin } from './posthtml-plugins/core.js'
 import { loadCollectionItems, simplifyCollectionItem } from './lib/collections.js'
+import { ReplaceAssetPathsPlugin } from './posthtml-plugins/assets.js'
 
-export const validStyleBundles: Record<string, boolean> = {}
-export const validScriptBundles: Record<string, boolean> = {}
+import { createRequire } from 'module'
+const require = createRequire(import.meta.url)
 
+
+let publicAssetPaths = {}
+
+if (env.production) {
+  publicAssetPaths = require(path.join(cacheDir, 'public-asset-paths.json'))
+}
 
 export async function render(html: string, ctx: PostHtmlCtx, res: Response) {
   const locals = makeLocals(ctx)
@@ -32,23 +38,9 @@ export async function render(html: string, ctx: PostHtmlCtx, res: Response) {
   }
 
   const plugins = renderPostHtmlPlugins(ctx, locals, {
-    prefix: [
-      Bundle.posthtmlPlugin({
-        resolveScript: async function (scriptPath: string) {
-          var resolved = resolveAsset(scriptPath, ctx.filename)
-          validScriptBundles[resolved] = true
-          return resolved.replace(clientDir, '')
-        },
-        resolveStyle: async function (stylePath: string) {
-          var resolved = resolveAsset(stylePath, ctx.filename)
-          validStyleBundles[resolved] = true
-          return resolved.replace(clientDir, '')
-        },
-      }),
-    ],
-    postfix: [
-      // i18n.posthtmlPlugin({ Translation, ctx }),
-    ]
+    postfix: env.production ? [
+      ReplaceAssetPathsPlugin({ publicAssetPaths, file: ctx.filename })
+    ] : []
   })
   const result = await posthtml(plugins).process(html, POSTHTML_OPTIONS)
   return {
@@ -58,9 +50,9 @@ export async function render(html: string, ctx: PostHtmlCtx, res: Response) {
 }
 
 export function renderPostHtmlPlugins(ctx: PostHtmlCtx, locals: any, opts: {
-  prefix: ((tree: any) => void)[],
+  prefix?: ((tree: any) => void)[],
   postfix?: ((tree: any) => void)[],
-}) {
+}={}) {
   return [
     LayoutPlugin({
       ctx,
@@ -69,7 +61,8 @@ export function renderPostHtmlPlugins(ctx: PostHtmlCtx, locals: any, opts: {
         locals.page = { ...attrs, ...locals.page }
       }
     }),
-    ...opts.prefix,
+    ...(opts.prefix || []),
+
     LancerCorePlugin({ locals, site: ctx.site, includeRoot: clientDir }),
 
     ...(opts.postfix || []),
@@ -217,6 +210,9 @@ export function resolveAsset (assetPath: string, fromFile?: string) {
   }
   if ( path.basename(filename)[0] === '_' && filename.endsWith('html') ) {
     throw new Error('Access denied (partial)')
+  }
+  if ( filename.replace(clientDir, '').includes('/_') ) {
+    throw new Error('Access denied (private)')
   }
   return filename
 }

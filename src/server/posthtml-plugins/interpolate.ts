@@ -6,7 +6,7 @@ import renderTree from 'posthtml-render'
 import { Node, NodeTag, parseIHTML, POSTHTML_OPTIONS } from '../lib/posthtml.js'
 import { evalExpression } from '../lib/ssr.js'
 import { SiteConfig } from '../config.js'
-import { renderUniversalJs } from './include.js'
+import { JS_FILE_RE, renderUniversalJs } from './include.js'
 
 type WalkOptions = {
   ctx: vm.Context
@@ -144,7 +144,7 @@ export async function resolveInterpolations(options: WalkOptions, nodes: Node[])
       }
       src = path.resolve(root, src)
 
-      if (src.match(/\.(js|ts)x?$/)) {
+      if (src.match(JS_FILE_RE)) {
         m.push({
           tag: false,
           content: await renderUniversalJs(src, attrs, ctx)
@@ -176,8 +176,8 @@ export async function resolveInterpolations(options: WalkOptions, nodes: Node[])
       if (!render) {
         throw new Error(`[Lancer] No such template type: '${type}'`)
       }
-      const opts = { recurse: false }
-      const html = await render(await renderTree(node.content as any || []), attrs, opts)
+      const opts = { recurse: true }
+      const html = await render(renderTree(node.content as any || []), attrs, opts)
       if (opts.recurse) {
         const subtree = parseIHTML(html, {
           customVoidElements: POSTHTML_OPTIONS.customVoidElements,

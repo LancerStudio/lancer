@@ -17,8 +17,8 @@ o.spec('interpolate', () => {
   const renderHtml = (...args) => render(...args).then(result => result.html)
 
   o('basic interpolation', async () => {
-    const result = await renderHtml(`<p class="{{x}}">a{{z}}c</p>`, makeCtx({ x: '/a/b/c', y: 'aria-label="hm"', z: 'b' }))
-    o(result).equals(`<p class="/a/b/c">abc</p>`)
+    const result = await renderHtml(`<p g class="{{x}}" h>a{{z}}c</p>`, makeCtx({ x: '/a/b/c', y: 'aria-label="hm"', z: 'b' }))
+    o(result).equals(`<p g h class="/a/b/c">abc</p>`)
   })
 
   o('throws on missing reference', async () => {
@@ -119,7 +119,6 @@ o.spec('interpolate', () => {
       makeCtx({ x: 11 }, {
         templateTypes: {
           foo(content, _attrs, config) {
-            config.recurse = true
             return `<include src="${content}">`
           }
         }
@@ -133,7 +132,8 @@ o.spec('interpolate', () => {
       `<template type="foo">_x.html</template>`,
       makeCtx({ x: 11 }, {
         templateTypes: {
-          foo(content) {
+          foo(content, _attrs, config) {
+            config.recurse = false
             return `<include src="${content}">`
           }
         }

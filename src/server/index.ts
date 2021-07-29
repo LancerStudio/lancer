@@ -10,7 +10,7 @@ import * as Dev from './dev/index.js'
 import * as Bundle from './bundle.js'
 import { staticDir, siteConfig, env, filesDir, sourceDir, buildDir, hydrateDir, clientDir, SiteConfig, cacheDir } from './config.js'
 import { resolveFile } from './files.js'
-import { render, resolveAsset, validScriptBundles, validStyleBundles } from './render.js'
+import { render, resolveAsset } from './render.js'
 import { ensureLocale } from './i18n.js'
 import { buildSsrFile, ssrBuildFile } from './lib/ssr.js'
 import { requireLatestOptional } from './lib/fs.js'
@@ -18,6 +18,7 @@ import { requireLatestOptional } from './lib/fs.js'
 import pathToRegexp from 'express/node_modules/path-to-regexp/index.js'
 
 import { createRequire } from 'module'
+import { JS_FILE_RE } from './posthtml-plugins/include.js'
 const require = createRequire(import.meta.url)
 
 
@@ -145,13 +146,13 @@ router.all('/*', ensureLocale(), express.urlencoded({ extended: false }), async 
     return
   }
 
-  if ( isGet && validScriptBundles[filename] ) {
+  if (isGet && filename.endsWith('.css')) {
     log('         -->', filename.replace(sourceDir+'/', ''), '(bundle)')
     const result = await Bundle.bundleScript(filename, site)
     res.set({ 'Content-Type': 'application/javascript' })
     res.send(Buffer.from(result).toString('utf8'))
   }
-  else if ( isGet && validStyleBundles[filename] ) {
+  else if (isGet && filename.match(JS_FILE_RE)) {
     log('         -->', filename.replace(sourceDir+'/', ''), '(bundle)')
     const result = await Bundle.bundleStyle(sourceDir, filename)
     res.set({ 'Content-Type': 'text/css' })

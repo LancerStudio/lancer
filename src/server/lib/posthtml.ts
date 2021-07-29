@@ -195,7 +195,7 @@ export const parseIHTML = (html: string, options: Options = {}): Node[] => {
   return results;
 };
 
-class TextInterpolationTag {
+export class TextInterpolationTag {
   tag = false
   content?: string[]
   constructor(public code: string) {}
@@ -210,7 +210,7 @@ class TextInterpolationTag {
   }
 }
 
-class AttrInterpolationTag implements NodeTag {
+export class AttrInterpolationTag implements NodeTag {
   constructor(
     public tag: string,
     public attrs: Attributes,

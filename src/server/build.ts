@@ -5,14 +5,16 @@ import { readFileSync, promises as fs, mkdirSync, readdirSync, copyFileSync, lst
 import { buildSync } from 'esbuild'
 import colors from 'kleur'
 
-import { bundleScriptProd, bundleStyle, posthtmlPlugin } from './bundle.js'
+import { bundleScriptProd, bundleStyle } from './bundle.js'
 import { clientDir, siteConfig, buildDir, sourceDir, staticDir, filesDir, hydrateDir, ssrDir, cacheDir } from './config.js'
-import { makeLocals, renderPostHtmlPlugins, resolveAsset } from './render.js'
+import { makeLocals, renderPostHtmlPlugins } from './render.js'
 import { POSTHTML_OPTIONS } from './lib/posthtml.js'
 import { ssr } from './lib/ssr.js'
 import { hashContent } from './lib/util.js'
 import { FILENAME_REWRITE_RE } from './lib/rewrites.js'
 import { getPageAttrs } from './lib/fs.js'
+import { buildUniversalScript } from './posthtml-plugins/include.js'
+import { ReplaceAssetPathsPlugin } from './posthtml-plugins/assets.js'
 
 type Options = {
   staticOpts?: {
@@ -28,7 +30,7 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
   ])
   mkdirSync(buildDir, { recursive: true })
 
-  const buildCache = {} as Record<string,Promise<string>>
+  const publicAssetPaths = {} as Record<string,string>
 
   const site = siteConfig({ scanRewrites: true })
   const origin = staticOpts?.origin || site.origin || null
@@ -38,64 +40,89 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
     console.warn(colors.yellow(`[config] No host set`))
   }
 
-  let filename: string
+  //
+  // Universal JS files
+  //
+  const universalJsFiles = glob.sync(path.join(clientDir, '/**/*.universal.{js,jsx,ts,tsx}'))
 
-  const bundlePlugin = posthtmlPlugin({
-    resolveScript: function (scriptPath: string) {
-      const resolved = resolveAsset(scriptPath, filename)
-      if (buildCache[resolved]) return buildCache[resolved]!
+  for (let [i, filename] of universalJsFiles.entries()) {
+    if (i === 0) {
+      console.log('\nBundling', colors.cyan('Universal JavaScript'), 'Files')
+    }
+    const result = await buildUniversalScript(filename)
+    console.log('  + ' + colors.green(result.ssrFile.replace(sourceDir, '')))
+    console.log('  + ' + colors.green(result.hydrateFile.replace(sourceDir, '')))
+    publicAssetPaths[filename] = result.hydrateFile.replace(hydrateDir, '')
+  }
 
-      return buildCache[resolved] = async function() {
-        // esbuild code splitting is still experimental, so we're only dealing with one file
-        const result = (await bundleScriptProd(resolved, buildDir, site)).outputFiles[0]!
+  //
+  // Client JS files
+  //
+  const clientJsFiles = glob.sync(path.join(clientDir, '/**/*.js'))
+    .filter(f => !f.replace(clientDir, '').includes('/_'))
+    .filter(f => !f.replace(clientDir, '').match(/\.server\.(js|ts)x?$/))
 
-        const publicName = path.basename(result.path.replace(buildDir, ''))
-        const publicPath = path.join(path.dirname(resolved), publicName).replace(clientDir, '')
-        console.log(`  + ${colors.green(resolved.replace(clientDir, ''))}\t-> ${publicPath}`)
+  for (let [i, filename] of clientJsFiles.entries()) {
+    if (i === 0) {
+      console.log('\nBundling', colors.yellow('Client JavaScript'), 'Files')
+    }
+    const result = (await bundleScriptProd(filename, buildDir, site)).outputFiles[0]!
 
-        const dest = path.join(buildDir, publicPath)
-        await fs.mkdir(path.dirname(dest), { recursive: true })
-        await fs.writeFile(dest, result.contents)
+    const publicName = path.basename(result.path.replace(buildDir, ''))
+    const publicPath = path.join(path.dirname(filename), publicName).replace(clientDir, '')
+    console.log(`  + ${colors.green(filename.replace(clientDir, ''))}\t-> ${publicPath}`)
 
-        return publicPath
-      }()
-    },
-    resolveStyle: function (stylePath: string) {
-      const resolved = resolveAsset(stylePath, filename)
-      if (buildCache[resolved]) return buildCache[resolved]!
+    const dest = path.join(buildDir, publicPath)
+    await fs.mkdir(path.dirname(dest), { recursive: true })
+    await fs.writeFile(dest, result.contents)
+    publicAssetPaths[filename] = publicPath
+  }
 
-      return buildCache[resolved] = async function () {
-        const css = await bundleStyle(sourceDir, resolved)
-        if (!css) {
-          throw new Error(`Failed to compile ${resolved}`)
-        }
-        const minifiedCss = buildSync({
-          stdin: {
-            contents: css,
-            loader: 'css',
-          },
-          write: false,
-          minify: true,
-        }).outputFiles[0]!.contents
+  //
+  // CSS files
+  //
+  const cssFiles = glob.sync(path.join(clientDir, '/**/*.css'))
+    .filter(f => !f.replace(clientDir, '').includes('/_'))
 
-        const publicPath = path.join(
-          path.dirname(resolved.replace(clientDir, '')),
-          path.basename(resolved).replace('.css', `-${hashContent(minifiedCss)}.css`)
-        )
-        console.log(`  + ${colors.green(resolved.replace(clientDir, ''))}\t-> ${publicPath}`)
+  for (let [i, filename] of cssFiles.entries()) {
+    if (i === 0) {
+      console.log('\nBundling', colors.magenta('CSS'), 'Files')
+    }
+    const css = await bundleStyle(sourceDir, filename)
+    if (!css) {
+      throw new Error(`Failed to compile ${filename}`)
+    }
+    const minifiedCss = buildSync({
+      stdin: {
+        contents: css,
+        loader: 'css',
+      },
+      write: false,
+      minify: true,
+    }).outputFiles[0]!.contents
 
-        const dest = path.join(buildDir, publicPath)
-        await fs.mkdir(path.dirname(dest), { recursive: true })
+    const publicPath = path.join(
+      path.dirname(filename.replace(clientDir, '')),
+      path.basename(filename).replace('.css', `-${hashContent(minifiedCss)}.css`)
+    )
+    console.log(`  + ${colors.green(filename.replace(clientDir, ''))}\t-> ${publicPath}`)
 
-        await fs.writeFile(dest, minifiedCss)
+    const dest = path.join(buildDir, publicPath)
+    await fs.mkdir(path.dirname(dest), { recursive: true })
 
-        return publicPath
-      }()
-    },
-  })
+    await fs.writeFile(dest, minifiedCss)
 
-  for (filename of glob.sync(path.join(clientDir, '/**/*.html'))) {
-    if (path.basename(filename)[0] === '_') continue
+    publicAssetPaths[filename] = publicPath
+  }
+
+
+  //
+  // HTML files
+  //
+  const htmlFiles = glob.sync(path.join(clientDir, '/**/*.html'))
+    .filter(f => !f.replace(clientDir, '').includes('/_'))
+
+  for (let filename of htmlFiles) {
     if (filename.startsWith(staticDir)) continue
 
     let plainPath = filename
@@ -119,16 +146,11 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
       filename: filename,
     }
     const locals = makeLocals(ctx)
-    const plugins = renderPostHtmlPlugins(ctx, locals, {
-      prefix: [
-        bundlePlugin
-      ]
-    })
 
-    const ssrBuild = await ssr({ locals, ctx, dryRun: true })
+    const ssrResult = await ssr({ locals, ctx, dryRun: true })
     const clientPath = filename.replace(clientDir, '')
 
-    if (ssrBuild) {
+    if (ssrResult.isSsr) {
       console.log('\n' + colors.blue('client' + clientPath), '(SSR, no build)', '\n ├─ GET', plainPath)
     }
     else {
@@ -136,16 +158,19 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
         detectedRewrites[plainPath] = clientPath
       }
       console.log('\n' + colors.green('client' + clientPath), '\n ├─ GET', plainPath)
-    }
+      const plugins = renderPostHtmlPlugins(ctx, locals, {
+        postfix: [
+          ReplaceAssetPathsPlugin({ publicAssetPaths, file: filename })
+        ]
+      })
+      const pageAttrs = getPageAttrs(filename)
+      const result = await posthtml(plugins).process(readFileSync(filename, 'utf8'), POSTHTML_OPTIONS)
 
-    // Render no matter what to catch all scripts and styles
-    const pageAttrs = getPageAttrs(filename)
-    const result = await posthtml(plugins).process(readFileSync(filename, 'utf8'), POSTHTML_OPTIONS)
-
-    if (staticOpts || pageAttrs?.static) {
-      const dest = path.join(buildDir, filename.replace(clientDir, ''))
-      await fs.mkdir(path.dirname(dest), { recursive: true })
-      await fs.writeFile(dest, result.html)
+      if (staticOpts || pageAttrs?.static) {
+        const dest = path.join(buildDir, filename.replace(clientDir, ''))
+        await fs.mkdir(path.dirname(dest), { recursive: true })
+        await fs.writeFile(dest, result.html)
+      }
     }
   }
 
@@ -159,12 +184,16 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
     }
   }
   else {
-    const dest = path.join(cacheDir, 'rewrites.json')
-    fs.writeFile(dest, JSON.stringify({
+    const rewritesDest = path.join(cacheDir, 'rewrites.json')
+    fs.writeFile(rewritesDest, JSON.stringify({
       ...detectedRewrites,
       ...site.rewrites,
     }))
-    console.log('\n+ ' + colors.green(dest.replace(sourceDir, '')))
+    console.log('\n+ ' + colors.green(rewritesDest.replace(sourceDir, '')))
+
+    const publicAssetPathsDest = path.join(cacheDir, 'public-asset-paths.json')
+    fs.writeFile(publicAssetPathsDest, JSON.stringify(publicAssetPaths))
+    console.log('\n+ ' + colors.green(publicAssetPathsDest.replace(sourceDir, '')))
   }
 }
 

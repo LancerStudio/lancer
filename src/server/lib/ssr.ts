@@ -12,12 +12,12 @@ import { injectCollectionsPlugin } from '../bundle.js'
 type SsrContext = {
   ctx: PostHtmlCtx
   req?: Request
-  halt?: (handler: (res: Response) => void) => void
+  halt: (handler: (res: Response) => void) => void
   locals: any
 }
 type Inputs = {
   ctx: PostHtmlCtx
-  res: Response
+  res?: Response
   locals: any
   dryRun?: boolean
 }
@@ -38,7 +38,7 @@ export async function ssr({ctx, res, locals, dryRun}: Inputs) {
     halt: (f) => {
       if (halted) throw new Error(`[Lancer] Already halted`)
       halted = true
-      f(res)
+      res && f(res)
     },
     locals,
   }
@@ -102,7 +102,7 @@ export async function buildSsrFile(ssrFile: string, config: Config) {
   return outfile
 }
 
-export async function buildHydrateScript(hydrateSource: string, outfile: string, config: Config) {
+export async function bundleHydrateScript(hydrateSource: string, outfile: string, config: Config) {
   const isProd = process.env.NODE_ENV === 'production'
 
   await build({
