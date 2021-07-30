@@ -36,7 +36,10 @@ export async function bundleScript(file: string, config: Config) {
       '.html': 'js'
     },
     define: {
-      'process.env.NODE_ENV': `"${isProd ? 'production' : 'development'}"`
+      ...Object.keys(process.env).reduce((all, key) => {
+        all[`process.env.${key}`] = JSON.stringify(process.env[key])
+        return all
+      }, {} as any),
     },
     jsxFactory: config.jsxFactory,
     jsxFragment: config.jsxFragment,
@@ -58,7 +61,10 @@ export async function bundleScriptProd(file: string, outdir: string, config: Con
       '.html': 'js'
     },
     define: {
-      'process.env.NODE_ENV': `"production"`
+      ...Object.keys(process.env).reduce((all, key) => {
+        all[`process.env.${key}`] = JSON.stringify(process.env[key])
+        return all
+      }, {} as any),
     },
     jsxFactory: config.jsxFactory,
     jsxFragment: config.jsxFragment,
