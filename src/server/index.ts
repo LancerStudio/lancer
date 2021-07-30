@@ -146,13 +146,13 @@ router.all('/*', ensureLocale(), express.urlencoded({ extended: false }), async 
     return
   }
 
-  if (isGet && filename.endsWith('.css')) {
+  if (isGet && filename.match(JS_FILE_RE)) {
     log('         -->', filename.replace(sourceDir+'/', ''), '(bundle)')
     const result = await Bundle.bundleScript(filename, site)
     res.set({ 'Content-Type': 'application/javascript' })
     res.send(Buffer.from(result).toString('utf8'))
   }
-  else if (isGet && filename.match(JS_FILE_RE)) {
+  else if (isGet && filename.endsWith('.css')) {
     log('         -->', filename.replace(sourceDir+'/', ''), '(bundle)')
     const result = await Bundle.bundleStyle(sourceDir, filename)
     res.set({ 'Content-Type': 'text/css' })
