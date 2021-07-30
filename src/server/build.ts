@@ -58,7 +58,7 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
   //
   // Client JS files
   //
-  const clientJsFiles = glob.sync(path.join(clientDir, '/**/*.js'))
+  const clientJsFiles = glob.sync(path.join(clientDir, '/**/*.{js,jsx,ts,tsx}'))
     .filter(f => !f.replace(clientDir, '').includes('/_'))
     .filter(f => !f.replace(clientDir, '').match(/\.server\.(js|ts)x?$/))
 
