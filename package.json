@@ -37,6 +37,7 @@
     "axios": "^0.21.1",
     "commander": "^7.0.0",
     "configstore": "^5.0.1",
+    "cookie-parser": "^1.4.5",
     "dotenv": "^10.0.0",
     "emailjs": "^3.4.0",
     "endent": "^2.0.1",

@@ -26,6 +26,9 @@ const router = express.Router({ strict: true })
 export default router
 
 
+router.use(require('cookie-parser')())
+
+
 let rewrites: SiteConfig['rewrites'] = {}
 
 router.use( express.static(hydrateDir, { redirect: false }) )
