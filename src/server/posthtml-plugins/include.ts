@@ -1,8 +1,9 @@
 import fs from 'fs'
 import path from 'path'
+import { buildSsrFile } from '../bundle.js'
 import { building, clientDir, env, hydrateDir, SiteConfig, siteConfig, sourceDir } from '../config.js'
 import { requireLatest, requireUserland } from '../lib/fs.js'
-import { bundleHydrateScript, buildSsrFile, evalExpression } from '../lib/ssr.js'
+import { bundleHydrateScript, evalExpression } from '../lib/ssr.js'
 import { checksumFile } from '../lib/util.js'
 
 export const JS_FILE_RE = /\.(js|ts)x?$/

@@ -1,10 +1,10 @@
 import path from 'path'
 import { build, Plugin } from 'esbuild'
-import { existsSync, promises as fs, statSync } from 'fs'
+import { existsSync, mkdirSync, promises as fs, statSync } from 'fs'
 
-import { makeDirname, requireLatestOptional, requireUserland } from './lib/fs.js'
+import { makeDirname, requireLatest, requireLatestOptional, requireUserland } from './lib/fs.js'
 import { notNullish } from './lib/util.js'
-import { siteConfig } from './config.js'
+import { building, clientDir, env, siteConfig, ssrDir } from './config.js'
 
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
@@ -12,6 +12,7 @@ const require = createRequire(import.meta.url)
 const isProd = process.env.NODE_ENV === 'production'
 import PostCSS from 'postcss'
 import { loadCollectionItems, simplifyCollectionItem } from './lib/collections.js'
+import { checksumFile, checksumString } from './lib/util.js'
 
 const __dirname = makeDirname(import.meta.url)
 
@@ -43,7 +44,7 @@ export async function bundleScript(file: string, config: Config) {
     },
     jsxFactory: config.jsxFactory,
     jsxFragment: config.jsxFragment,
-    plugins: [injectCollectionsPlugin],
+    plugins: [injectRpcsPlugin, injectCollectionsPlugin],
   })
   return result.outputFiles[0]!.contents
 }
@@ -68,9 +69,55 @@ export async function bundleScriptProd(file: string, outdir: string, config: Con
     },
     jsxFactory: config.jsxFactory,
     jsxFragment: config.jsxFragment,
-    plugins: [injectCollectionsPlugin],
+    plugins: [injectRpcsPlugin, injectCollectionsPlugin],
   })
 }
+
+export async function buildSsrFile(ssrFile: string, config: Config) {
+  const outfile = ssrBuildFile(ssrFile)
+
+  if (env.production && !building) {
+    return outfile
+  }
+
+  const output = await build({
+    entryPoints: [ssrFile],
+    outdir: path.dirname(outfile),
+    write: building,
+    bundle: true,
+    format: 'cjs',
+    sourcemap: true,
+    loader: {
+      '.html': 'js'
+    },
+    plugins: [makeAllPackagesExternalPlugin, injectCollectionsPlugin],
+    jsxFactory: config.jsxFactory,
+    jsxFragment: config.jsxFragment,
+    platform: 'node',
+  })
+
+  if (!building) {
+    // Don't write unless necessary so in-memory data structures don't get clobbered
+    const oldCheck = existsSync(outfile) && await checksumFile(outfile)
+    const newCheck = checksumString(output.outputFiles!.find(out => out.path === outfile)!.text)
+
+    if (newCheck !== oldCheck) {
+      await Promise.all(
+        output.outputFiles!.map(({ path: filename, contents }) => {
+          mkdirSync(path.dirname(filename), { recursive: true })
+          return fs.writeFile(filename, contents)
+        })
+      )
+    }
+  }
+
+  return outfile
+}
+
+export function ssrBuildFile(ssrFile: string) {
+  return path.join(ssrDir, ssrFile.replace(clientDir, '')).replace(/\.(js|ts)x?$/, '.js')
+}
+
 
 
 //
@@ -174,5 +221,53 @@ export const injectCollectionsPlugin: Plugin = {
         contents: `export default ${JSON.stringify(items.map(simplifyCollectionItem))}`
       }
     })
+  },
+}
+
+export const injectRpcsPlugin: Plugin = {
+  name: 'inject-rpcs',
+  setup(build) {
+    let filter = /\.server\.(js|ts)$/
+    build.onLoad({ filter }, async args => {
+      // TODO: Buildtime cache
+      const outfile = await buildSsrFile(args.path, siteConfig())
+      return {
+        contents: makeRpcFile(args.path, Object.keys(requireLatest(outfile).module))
+      }
+    })
+  },
+}
+
+function makeRpcFile(sourcePath: string, methods: string[]) {
+  return (
+`export const namespace = '${sourcePath.replace(clientDir+'/', '').replace(/\.(js|ts)$/, '')}'
+const _rpc = (method) => async (...args) => {
+  const res = await fetch('/lrpc', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ namespace, method, args }),
+  })
+  if (res.status === 204) return
+  else if (res.status === 200) {
+    const contentType = res.headers.get('Content-Type')
+    return contentType && contentType.match('application/json') ? res.json() : res.text()
+  }
+  else {
+    const err = new Error(\`[\${namespace}/rpc] Status code \${res.status}\`)
+    err.res = res
+    throw err
+  }
+}
+${methods.filter(m => m !== 'default').map(m => `export const ${m} = _rpc('${m}')`).join('\n')}
+`
+  )
+}
+
+// https://github.com/evanw/esbuild/issues/619#issuecomment-751995294
+const makeAllPackagesExternalPlugin: Plugin = {
+  name: 'make-all-packages-external',
+  setup(build) {
+    let filter = /^[^.\/]|^\.[^.\/]|^\.\.[^\/]/ // Must not start with "/" or "./" or "../"
+    build.onResolve({ filter }, args => ({ path: args.path, external: true }))
   },
 }

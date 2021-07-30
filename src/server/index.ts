@@ -12,7 +12,7 @@ import { staticDir, siteConfig, env, filesDir, sourceDir, buildDir, hydrateDir, 
 import { resolveFile } from './files.js'
 import { render, resolveAsset } from './render.js'
 import { ensureLocale } from './i18n.js'
-import { buildSsrFile, ssrBuildFile } from './lib/ssr.js'
+import { buildSsrFile, ssrBuildFile } from './bundle.js'
 import { requireLatestOptional } from './lib/fs.js'
 
 import pathToRegexp from 'express/node_modules/path-to-regexp/index.js'
