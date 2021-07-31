@@ -2,6 +2,7 @@ import 'dotenv/config.js'
 import 'express-async-errors'
 
 import path from 'path'
+import querystring from 'querystring'
 import express, { NextFunction, Request, Response } from 'express'
 import { existsSync, promises as fs } from 'fs'
 import colors from 'kleur'
@@ -43,8 +44,10 @@ if (env.production) {
   router.use((req, _res, next) => {
     // TODO: Support plural i18n
     for (let [from, to] of Object.entries(rewrites)) {
-      if (req.url === from) {
-        req.url = to
+      if (req.path === from) {
+        const query = req.query
+        req.url = to + (query ? '?'+querystring.encode(query as any) : '')
+        req.query = query
         break
       }
     }
