@@ -44,7 +44,7 @@ if (env.production) {
   router.use((req, _res, next) => {
     // TODO: Support plural i18n
     for (let [from, to] of Object.entries(rewrites)) {
-      if (req.path === from) {
+      if (to[0] === '/' && req.path === from) {
         const query = req.query
         req.url = to + (query ? '?'+querystring.encode(query as any) : '')
         req.query = query
@@ -124,7 +124,9 @@ router.all('/*', ensureLocale(), express.urlencoded({ extended: false }), async 
   }
 
   rewrite:
-  for (let [pattern, file] of Object.entries(rewrites)) {
+  for (let [pattern, dest] of Object.entries(rewrites)) {
+    if (!dest.startsWith('file:')) continue
+
     let p1: ReParams, p2: ReParams
     const re1 = [pathToRegexp(pattern.replace(/\.html$/, ''), p1 = []), p1] as const
     const re2 = [pathToRegexp(pattern, p2 = []), p2] as const
@@ -136,7 +138,7 @@ router.all('/*', ensureLocale(), express.urlencoded({ extended: false }), async 
         params.forEach((param, i) => {
           req.params[param.name] = match[i+1]!
         })
-        filename = file.startsWith('/') ? file : path.join(clientDir, file)
+        filename = dest.replace('file:', '')
         break rewrite
       }
     }

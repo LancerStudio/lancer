@@ -1,10 +1,11 @@
 import path from 'path'
 import { existsSync, mkdirSync } from 'fs'
+import mapValues from 'lodash/mapValues.js'
 
 import { read, Env } from './lib/config.js'
 import { requireLatest } from './lib/fs.js'
 import { Request } from 'express'
-import { scanForRewriteFiles } from './lib/rewrites.js'
+import { scanForRewriteFiles, resolveRewriteDest } from './lib/rewrites.js'
 
 export const env = Env(['test', 'development', 'production'])
 
@@ -115,7 +116,10 @@ export const siteConfig = _cacheInProd((opts: GetConfigOptions={}) => {
   }
 
   if (opts.scanRewrites || env.production) {
-    config.rewrites = { ...config.rewrites, ...scanForRewriteFiles(clientDir) }
+    config.rewrites = {
+      ...mapValues(config.rewrites, dest => resolveRewriteDest(sourceDir, dest)),
+      ...scanForRewriteFiles(clientDir),
+    }
   }
 
   return config
