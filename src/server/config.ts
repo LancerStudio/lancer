@@ -89,6 +89,7 @@ export type SiteConfig = {
   rewriteOptions: {
     removeTrailingSlashes?: boolean
   }
+  bundleAliases: Record<string,string>
 }
 
 type GetConfigOptions = {
@@ -105,6 +106,7 @@ export const siteConfig = _cacheInProd((opts: GetConfigOptions={}) => {
     templateTypes: {},
     rewrites: {},
     rewriteOptions: {},
+    bundleAliases: {}
   }
   const config: SiteConfig = {
     ...defaults,

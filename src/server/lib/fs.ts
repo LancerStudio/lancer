@@ -35,7 +35,11 @@ export function requireLatestOptional(module: string) {
 }
 
 export function requireUserland(sourceDir: string, module: string) {
-	return require(require.resolve(module, { paths: [sourceDir] }))
+	return require(requireResolveUserland(sourceDir, module))
+}
+
+export function requireResolveUserland(sourceDir: string, module: string) {
+  return require.resolve(module, { paths: [sourceDir] })
 }
 
 export function isExternal(src: string) {

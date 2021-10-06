@@ -2,9 +2,9 @@ import path from 'path'
 import { build, Plugin } from 'esbuild'
 import { existsSync, mkdirSync, promises as fs, statSync } from 'fs'
 
-import { makeDirname, requireLatest, requireLatestOptional, requireUserland } from './lib/fs.js'
+import { makeDirname, requireLatest, requireLatestOptional, requireResolveUserland, requireUserland } from './lib/fs.js'
 import { notNullish } from './lib/util.js'
-import { building, clientDir, env, siteConfig, ssrDir } from './config.js'
+import { building, clientDir, env, siteConfig, sourceDir, ssrDir } from './config.js'
 
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
@@ -44,7 +44,7 @@ export async function bundleScript(file: string, config: Config) {
     },
     jsxFactory: config.jsxFactory,
     jsxFragment: config.jsxFragment,
-    plugins: [injectRpcsPlugin, injectCollectionsPlugin],
+    plugins: [bundleAliasesPlugin, injectRpcsPlugin, injectCollectionsPlugin],
   })
   return result.outputFiles[0]!.contents
 }
@@ -69,7 +69,7 @@ export async function bundleScriptProd(file: string, outdir: string, config: Con
     },
     jsxFactory: config.jsxFactory,
     jsxFragment: config.jsxFragment,
-    plugins: [injectRpcsPlugin, injectCollectionsPlugin],
+    plugins: [bundleAliasesPlugin, injectRpcsPlugin, injectCollectionsPlugin],
   })
 }
 
@@ -90,7 +90,7 @@ export async function buildSsrFile(ssrFile: string, config: Config) {
     loader: {
       '.html': 'js'
     },
-    plugins: [makeAllPackagesExternalPlugin, injectCollectionsPlugin],
+    plugins: [bundleAliasesPlugin, makeAllPackagesExternalPlugin, injectCollectionsPlugin],
     jsxFactory: config.jsxFactory,
     jsxFragment: config.jsxFragment,
     platform: 'node',
@@ -235,6 +235,27 @@ export const injectRpcsPlugin: Plugin = {
         contents: makeRpcFile(args.path, Object.keys(requireLatest(outfile).module))
       }
     })
+  },
+}
+
+export const bundleAliasesPlugin: Plugin = {
+  name: 'bundle-aliases',
+  setup(build) {
+    const site = siteConfig()
+    const mapping = site.bundleAliases
+    if (Object.keys(mapping).length) {
+      const filter = new RegExp(`^(${Object.keys(mapping).join('|')})$`)
+
+      build.onResolve({ filter }, args => {
+        const [type, dest] = mapping[args.path]!.split(':')
+        if (type === 'npm') {
+          return { path: requireResolveUserland(sourceDir, dest!) }
+        }
+        else {
+          throw new Error(`[Lancer] Invalid bundle alias type: ${type}`)
+        }
+      })
+    }
   },
 }
 
