@@ -90,7 +90,7 @@ export async function buildSsrFile(ssrFile: string, config: Config) {
     loader: {
       '.html': 'js'
     },
-    plugins: [bundleAliasesPlugin, makeAllPackagesExternalPlugin, injectCollectionsPlugin],
+    plugins: [makeAllPackagesExternalPlugin, injectCollectionsPlugin],
     jsxFactory: config.jsxFactory,
     jsxFragment: config.jsxFragment,
     platform: 'node',

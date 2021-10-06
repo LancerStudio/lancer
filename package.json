@@ -41,7 +41,7 @@
     "dotenv": "^10.0.0",
     "emailjs": "^3.4.0",
     "endent": "^2.0.1",
-    "esbuild": "^0.11.19",
+    "esbuild": "^0.11.23",
     "express": "^4.16.2",
     "express-async-errors": "^3.1.1",
     "express-session": "^1.17.1",
