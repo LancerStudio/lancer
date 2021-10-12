@@ -11,31 +11,31 @@ const require = createRequire(import.meta.url)
 const cache = {} as Record<string, number>
 
 export function requireLatest(module: string) {
-	const file = require.resolve(module)
-	const stat = statSync(file)
-	let fresh = !cache[file] || cache[file] !== stat.mtimeMs
-	if (fresh) {
-		delete require.cache[file]
-		cache[file] = stat.mtimeMs
-	}
-	return {
-		module: require(module),
-		/** True if the file was just now loaded from disk */
-		fresh,
-	}
+  const file = require.resolve(module)
+  const stat = statSync(file)
+  let fresh = !cache[file] || cache[file] !== stat.mtimeMs
+  if (fresh) {
+    delete require.cache[file]
+    cache[file] = stat.mtimeMs
+  }
+  return {
+    module: require(module),
+    /** True if the file was just now loaded from disk */
+    fresh,
+  }
 }
 
 export function requireLatestOptional(module: string) {
-	try {
-		return requireLatest(module)
-	}
-	catch(err) {
-		return null
-	}
+  try {
+    return requireLatest(module)
+  }
+  catch(err) {
+    return null
+  }
 }
 
 export function requireUserland(sourceDir: string, module: string) {
-	return require(requireResolveUserland(sourceDir, module))
+  return require(requireResolveUserland(sourceDir, module))
 }
 
 export function requireResolveUserland(sourceDir: string, module: string) {
@@ -47,18 +47,18 @@ export function isExternal(src: string) {
 }
 
 export function isRelative(src: string) {
-	return !isExternal(src) && !src.startsWith('/')
+  return !isExternal(src) && !src.startsWith('/')
 }
 
 export function makeDirname(importMetaUrl: string) {
-	return path.dirname(fileURLToPath(importMetaUrl))
+  return path.dirname(fileURLToPath(importMetaUrl))
 }
 
 // For some reason TS cannot find this type from ihtml-parser
 type Attributes = { [name: string]: string | true }
 
 export function getPageAttrs(file: string) {
-	// Read as little of the file as possible
+  // Read as little of the file as possible
   const lines = new RL(file)
   let pageTag = ''
   let rawLine: Buffer
