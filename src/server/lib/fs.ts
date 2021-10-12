@@ -30,7 +30,10 @@ export function requireLatestOptional(module: string) {
     return requireLatest(module)
   }
   catch(err) {
-    return null
+    if (err.message.startsWith(`Cannot find module '${module}'`)) {
+      return null;
+    }
+    else throw err
   }
 }
 
