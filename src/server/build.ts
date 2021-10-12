@@ -175,8 +175,10 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
   }
 
   if (staticOpts) {
-    console.log("\nCopying client/public folder...")
-    copyFolderSync(staticDir, buildDir)
+    if (existsSync(staticDir)) {
+      console.log("\nCopying client/public folder...")
+      copyFolderSync(staticDir, buildDir)
+    }
 
     if (existsSync(filesDir)) {
       console.log("\nCopying data/files folder...")
