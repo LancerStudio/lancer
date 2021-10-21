@@ -129,8 +129,8 @@ function joinp(dir1: string, dir2: string, ensureExists=true) {
   return dir
 }
 
-function handleRelative(path: string) {
-  return path[0] !== '/' ? joinp(sourceDir, path) : path
+function handleRelative(_path: string) {
+  return path.isAbsolute(_path[0]!) ? _path : joinp(sourceDir, _path);
 }
 
 export function _cacheInProd<F extends () => any>(f: F): F {
