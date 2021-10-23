@@ -114,7 +114,7 @@ function mountLocalDevRoutes(router: Router) {
 
     const pageName = last(route.link().split('/'))!
 
-    const result = await Bundle.bundleScript(path.join(__dirname, `../../../src/client/pages/${pageName}/index.ts`), {})
+    const result = await Bundle.bundleScript(path.join(__dirname, '../../../src/client/pages/', pageName, '/index.ts'), {})
     res.set({ 'Content-Type': 'application/javascript' })
     res.send( Buffer.from(result) )
   })

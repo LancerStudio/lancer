@@ -8,7 +8,7 @@ export const FILENAME_REWRITE_RE = /\[([^\]]+)\](?:\.html)?/g
 
 export function scanForRewriteFiles(clientDir: string) {
   let result = {} as Record<string, string>
-  glob.sync(`${clientDir}/**/*.html`).forEach(to => {
+  glob.sync(path.join(clientDir, '/**/*.html')).forEach(to => {
     let hasParam = false
     let from = to.replace(clientDir, '').replace(/\[([^\]]+)\](?:\.html)?/g, (_,p1) => {
       if (!VALID_PARAM_NAME_RE.test(p1)) {

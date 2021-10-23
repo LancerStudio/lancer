@@ -20,7 +20,7 @@ function interpolateContentBlocks (tree, options, ctx, layoutFile) {
       message: "Layout file names must start with an underscore ("+layoutFile+")",
       plugin: 'lancer-layouts',
       location: tree[0].location,
-      filename: '/src/' + layoutFile,
+      filename: Path.join('/src', layoutFile),
     })
   }
 

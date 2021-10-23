@@ -110,7 +110,7 @@ export const siteConfig = _cacheInProd((opts: GetConfigOptions={}) => {
   }
   const config: SiteConfig = {
     ...defaults,
-    ...requireLatest(`${sourceDir}/site.config.js`).module
+    ...requireLatest(path.join(sourceDir, 'site.config.js')).module
   }
 
   if (!config.locales || !Array.isArray(config.locales) || !config.locales.length) {
@@ -135,8 +135,8 @@ function joinp(dir1: string, dir2: string, ensureExists=true) {
   return dir
 }
 
-function handleRelative(path: string) {
-  return path[0] !== '/' ? joinp(sourceDir, path) : path
+function handleRelative(_path: string) {
+  return path.isAbsolute(_path) ? _path : joinp(sourceDir, _path);
 }
 
 export function _cacheInProd<F extends () => any>(f: F): F {
