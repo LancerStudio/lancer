@@ -264,7 +264,7 @@ export const bundleAliasesPlugin: Plugin = {
 
 function makeRpcFile(sourcePath: string, methods: string[]) {
   return (
-`export const namespace = '${sourcePath.replace(clientDir+'/', '').replace(/\.(js|ts)$/, '')}'
+`export const namespace = ${JSON.stringify(sourcePath.replace(clientDir+path.sep, '').replace(/\.(js|ts)$/, ''))}
 const _rpc = (method) => async (...args) => {
   const res = await fetch('/lrpc', {
     method: 'POST',

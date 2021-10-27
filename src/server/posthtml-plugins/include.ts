@@ -40,7 +40,7 @@ async function buildMithrilHydrateScript(file: string, site: SiteConfig) {
     .replace(/\.js$/, `-${hash}.hydrate.js`)
 
   const hydrateSource = `import m from 'mithril'
-import mount from '${file}'
+import mount from ${JSON.stringify(file)}
 window.mount_h${hash} = mount
 `
 
