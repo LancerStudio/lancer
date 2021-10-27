@@ -16,6 +16,7 @@ import { checksumFile, checksumString } from './lib/util.js'
 
 const __dirname = makeDirname(import.meta.url)
 
+const VALID_ENV_KEY_RE = /^[a-zA-Z_][a-zA-Z_0-9]*$/
 
 //
 // Script bundling
@@ -38,7 +39,9 @@ export async function bundleScript(file: string, config: Config) {
     },
     define: {
       ...Object.keys(process.env).reduce((all, key) => {
-        all[`process.env.${key}`] = JSON.stringify(process.env[key])
+        if (VALID_ENV_KEY_RE.test(key)) {
+          all[`process.env.${key}`] = JSON.stringify(process.env[key])
+        }
         return all
       }, {} as any),
     },
