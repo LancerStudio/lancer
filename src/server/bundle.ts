@@ -209,7 +209,7 @@ function convertPluginsObjToArray(sourceDir: string, obj: any) {
   )
 }
 
-const INJECT_FILTER_RE = /\/collections\/(.+)\.html$/
+const INJECT_FILTER_RE = /[\/\\]collections[\/\\](.+)\.html$/
 
 export const injectCollectionsPlugin: Plugin = {
   name: 'inject-collections',
@@ -291,7 +291,7 @@ ${methods.filter(m => m !== 'default').map(m => `export const ${m} = _rpc('${m}'
 const makeAllPackagesExternalPlugin: Plugin = {
   name: 'make-all-packages-external',
   setup(build) {
-    let filter = /^[^.\/]|^\.[^.\/]|^\.\.[^\/]/ // Must not start with "/" or "./" or "../"
+    let filter = /^[^.\/A-Z]|^\.[^.\/]|^\.\.[^\/]|^[A-Z][^:]/ // Must not start with "/" or "./" or "../" or "C:"
     build.onResolve({ filter }, args => ({ path: args.path, external: true }))
   },
 }
