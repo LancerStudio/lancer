@@ -11,7 +11,7 @@ import { buildSsrFile, injectCollectionsPlugin, injectRpcsPlugin } from '../bund
 type SsrContext = {
   ctx: PostHtmlCtx
   req?: Request
-  halt: (handler: (res: Response) => void) => void
+  halt: (handler: (res: Response) => void) => Response | null
   locals: any
 }
 type Inputs = {
@@ -37,7 +37,17 @@ export async function ssr({ctx, res, locals, dryRun}: Inputs) {
     halt: (f) => {
       if (halted) throw new Error(`[Lancer] Already halted`)
       halted = true
-      res && f(res)
+      if (f === undefined) {
+        return res || null
+      }
+      else {
+        // Backwards compatibility
+        if (res) {
+          console.warn('[Lancer][warn] halt() with callback is deprecated. Please use `let res = halt();` instead.')
+          f(res)
+        }
+        return null
+      }
     },
     locals,
   }
