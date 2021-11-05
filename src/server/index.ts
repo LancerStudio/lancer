@@ -20,8 +20,8 @@ import pathToRegexp from 'express/node_modules/path-to-regexp/index.js'
 
 import { createRequire } from 'module'
 import { JS_FILE_RE } from './posthtml-plugins/include.js'
+import { ssr } from './lib/ssr.js'
 const require = createRequire(import.meta.url)
-
 
 const router = express.Router({ strict: true })
 export default router

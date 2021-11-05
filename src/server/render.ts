@@ -34,7 +34,7 @@ export async function render(html: string, ctx: PostHtmlCtx, res: Response) {
     ssrResult.halted ||
     ctx.req && ctx.req.method === 'POST' && !ssrResult.isSsr
   ) {
-    return { isSsr: false, html: '', halted: false }
+    return { isSsr: false, html: '', halted: ssrResult.halted }
   }
 
   const plugins = renderPostHtmlPlugins(ctx, locals, {
