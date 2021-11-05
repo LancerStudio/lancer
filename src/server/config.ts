@@ -4,7 +4,7 @@ import mapValues from 'lodash/mapValues.js'
 
 import { read, Env } from './lib/config.js'
 import { requireLatest } from './lib/fs.js'
-import { Request } from 'express'
+import { Request, Router } from 'express'
 import { scanForRewriteFiles, resolveRewriteDest } from './lib/rewrites.js'
 
 export const env = Env(['test', 'development', 'production'])
@@ -90,6 +90,12 @@ export type SiteConfig = {
     removeTrailingSlashes?: boolean
   }
   bundleAliases: Record<string,string>
+
+  /**
+   * Gain access to the underlying express router.
+   * NOTE: YOU MUST RESTART YOUR SERVER FOR CHANGES TO TAKE EFFECT DURING DEV
+   * */
+  configureRouter?: (router: Router) => void
 }
 
 type GetConfigOptions = {
@@ -106,7 +112,7 @@ export const siteConfig = _cacheInProd((opts: GetConfigOptions={}) => {
     templateTypes: {},
     rewrites: {},
     rewriteOptions: {},
-    bundleAliases: {}
+    bundleAliases: {},
   }
   const config: SiteConfig = {
     ...defaults,

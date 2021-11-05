@@ -35,6 +35,8 @@ let rewrites: SiteConfig['rewrites'] = {}
 router.use( express.static(hydrateDir, { redirect: false }) )
 router.use( express.static(staticDir, { redirect: false }) )
 
+siteConfig()?.configureRouter?.(router)
+
 if (env.production) {
   //
   // For non-static sites
