@@ -189,7 +189,29 @@ router.all('/*', ensureLocale(), express.urlencoded({ extended: false }), async 
     if (existsSync(folderIndex)) {
       await renderHtml(req, res, next, { plainPath, filename: folderIndex })
     }
-    else notFound()
+    else {
+      // Attempt to run plain node js handler
+      const ssrResult = await ssr({
+        locals: {},
+        res,
+        ctx: {
+          req,
+          site,
+          cache: {},
+          locale: req.locale || site.locales[0]!,
+          plainPath,
+          filename,
+          location: new URL(`${req.protocol}://${req.get('host')}${req.originalUrl}`)
+        },
+      })
+
+      if (!ssrResult.isSsr) {
+        notFound()
+      }
+      else if (!ssrResult.halted) {
+        res.sendStatus(204)
+      }
+    }
   }
   else {
     notFound()
