@@ -5,7 +5,7 @@ import { readFileSync, promises as fs, mkdirSync, readdirSync, copyFileSync, lst
 import { buildSync } from 'esbuild'
 import colors from 'kleur'
 
-import { bundleScriptProd, bundleStyle } from './bundle.js'
+import { bundleScriptProd, bundleStyle, buildSsrFile } from './bundle.js'
 import { clientDir, siteConfig, buildDir, sourceDir, staticDir, filesDir, hydrateDir, ssrDir, cacheDir } from './config.js'
 import { makeLocals, renderPostHtmlPlugins } from './render.js'
 import { POSTHTML_OPTIONS } from './lib/posthtml.js'
@@ -119,6 +119,7 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
   //
   // HTML files
   //
+  const builtServerFiles: POJO<boolean> = {}
   const htmlFiles = glob.sync(path.join(clientDir, '/**/*.html'))
     .filter(f => !f.replace(clientDir, '').includes('/_'))
 
@@ -150,8 +151,13 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
     const ssrResult = await ssr({ locals, ctx, dryRun: true })
     const clientPath = filename.replace(clientDir, '')
 
+    if (ssrResult.buildFile) {
+      builtServerFiles[ssrResult.ssrFile] = true
+    }
+
     if (ssrResult.isSsr) {
-      console.log('\n' + colors.blue('client' + clientPath), '(SSR, no build)', '\n ├─ GET', plainPath)
+      // TODO: Compile IHTML into optimized JS code
+      console.log('\n' + colors.blue('client' + clientPath), '(SSR; no build)', '\n ├─ GET', plainPath)
     }
     else {
       if (!FILENAME_REWRITE_RE.test(clientPath)) {
@@ -186,6 +192,22 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
     }
   }
   else {
+
+    //
+    // Server Side Endpoints
+    //
+    const endpointFiles = glob.sync(path.join(clientDir, '/**/*.server.{js,ts}'))
+      .filter(f => !f.replace(clientDir, '').includes('/_'))
+      .filter(f => !builtServerFiles[f])
+
+    for (let [i, ssrFile] of endpointFiles.entries()) {
+      if (i === 0) {
+        console.log('\nBuilding', colors.blue('Server Endpoint'), 'Files')
+      }
+      await buildSsrFile(ssrFile, site)
+      console.log('  + ' + colors.green(ssrFile.replace(sourceDir, '')))
+    }
+
     const rewritesDest = path.join(cacheDir, 'rewrites.json')
     fs.writeFile(rewritesDest, JSON.stringify({
       ...detectedRewrites,

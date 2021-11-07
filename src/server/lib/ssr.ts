@@ -29,7 +29,7 @@ export async function ssr({ctx, res, locals, dryRun}: Inputs) {
   let halted = false
 
   const site = siteConfig()
-  const outfile = await buildSsrFile(ssrFile, site)
+  const buildFile = await buildSsrFile(ssrFile, site)
 
   const ssrContext: SsrContext = {
     ctx,
@@ -52,9 +52,9 @@ export async function ssr({ctx, res, locals, dryRun}: Inputs) {
     locals,
   }
 
-  const render = requireLatest(outfile).module.default
+  const render = requireLatest(buildFile).module.default
   if (typeof render !== 'function') {
-    return { isSsr: false, halted }
+    return { isSsr: false, halted, ssrFile, buildFile }
   }
 
   if (dryRun !== true) {
@@ -63,7 +63,7 @@ export async function ssr({ctx, res, locals, dryRun}: Inputs) {
     console.log(`         ${colors.cyan('run')} ${ssrFile.replace(clientDir, 'client')} - ${colors.green(Date.now() - start + 'ms')}`)
   }
 
-  return { isSsr: true, buildFile: outfile, halted }
+  return { isSsr: true, halted, ssrFile, buildFile }
 }
 
 type Config = {
