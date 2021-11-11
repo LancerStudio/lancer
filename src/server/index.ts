@@ -96,7 +96,12 @@ router.post('/lrpc', express.json(), async (req, res, next) => {
   }
 
   try {
-    const result = await rpc(...req.body.args, { req, res })
+    const rpcContext = { req, res }
+    const result = await rpc.call(
+      rpcContext, // Allow `this`` access
+      ...req.body.args,
+      rpcContext // Backwards compatibility
+    )
     res.send(result)
     log(`--> ${colors.green(200)}`, result === '' ? '""' : result)
   }
