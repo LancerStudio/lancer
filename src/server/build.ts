@@ -24,11 +24,15 @@ type Options = {
 export async function buildForProduction({ staticOpts }: Options = {}) {
   console.log("Build dir:", buildDir)
   await Promise.all([
-    fs.rm(buildDir, { recursive: true }),
-    fs.rm(hydrateDir, { recursive: true }),
-    fs.rm(ssrDir, { recursive: true }),
+    fs.rm(buildDir, { recursive: true, force: true }),
+    fs.rm(hydrateDir, { recursive: true, force: true }),
+    fs.rm(ssrDir, { recursive: true, force: true }),
   ])
-  mkdirSync(buildDir, { recursive: true })
+  await Promise.all([
+    mkdirSync(buildDir, { recursive: true }),
+    mkdirSync(hydrateDir, { recursive: true }),
+    mkdirSync(ssrDir, { recursive: true }),
+  ])
 
   const publicAssetPaths = {} as Record<string,string>
 
