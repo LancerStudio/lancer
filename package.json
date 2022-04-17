@@ -13,7 +13,7 @@
     "build-js": "node dist/client/build.js js",
     "build-css": "node dist/client/build.js css",
     "build-assets": "node dist/client/build.js assets",
-    "prepublishOnly": "npm test && NODE_ENV=production LANCER_LIBRARY_BUILD=1 npm run build",
+    "prepublishOnly": "npm test",
     "test": "git clean -f tests/site-fixture && ospec 'tests/**/*.test.js'",
     "test-watch": "nodemon -w dist/server -w tests --ignore tests/site-fixture --exec \"ospec 'tests/**/*.test.js'\""
   },
