@@ -24,9 +24,9 @@ type Options = {
 export async function buildForProduction({ staticOpts }: Options = {}) {
   console.log("Build dir:", buildDir)
   await Promise.all([
-    fs.rmdir(buildDir, { recursive: true }),
-    fs.rmdir(hydrateDir, { recursive: true }),
-    fs.rmdir(ssrDir, { recursive: true }),
+    fs.rm(buildDir, { recursive: true }),
+    fs.rm(hydrateDir, { recursive: true }),
+    fs.rm(ssrDir, { recursive: true }),
   ])
   mkdirSync(buildDir, { recursive: true })
 
