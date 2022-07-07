@@ -192,7 +192,15 @@ router.all('/*', ensureLocale(), express.urlencoded({ extended: false }), async 
   else if ( filename.match(/\.html$/) ) {
     const folderIndex = filename.replace(/\.html$/, '/index.html')
     if (existsSync(folderIndex)) {
-      await renderHtml(req, res, next, { plainPath, filename: folderIndex })
+      if (site.static) {
+        // [ASSUMPTION]
+        // We got to this point because there is no 'client/foo.html' to match to the path '/foo'.
+        // Therefore, add a slash to the url to match 'client/foo/index.html'
+        res.redirect(req.url + '/')
+      }
+      else {
+        await renderHtml(req, res, next, { plainPath, filename: folderIndex })
+      }
     }
     else {
       // Attempt to run plain node js handler

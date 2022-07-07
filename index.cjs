@@ -81,17 +81,15 @@ program
 //
 program
   .command('build')
-  .option('--static', 'Build a static website (experimental)')
-  .option('--origin', 'Set an origin when building with --static')
+  .option('--origin', 'Override site.config.js\'s origin setting')
   .action(async function (options) {
-    const staticOpts = options.static ? { origin: options.origin || undefined } : null
     process.env.NODE_ENV = 'production'
     process.env.LANCER_BUILD = '1'
 
-    console.log(`Building ${staticOpts ? 'static html and ' : ''}assets for production...`)
-
     const { buildForProduction } = await import('./dist/server/build.js')
-    buildForProduction({ staticOpts }).then(
+    buildForProduction({
+      origin: options.origin || undefined
+    }).then(
       () => {
         console.log("Done.")
       },

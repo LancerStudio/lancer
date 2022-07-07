@@ -78,6 +78,8 @@ export type SiteConfig = {
   name: string
   origin?: string
   locals: object
+  /** When true, builds html/css/js as static output (no server backend) */
+  static: boolean
   studio: boolean
   locales: string[]
   cacheCssInDev: boolean
@@ -105,6 +107,7 @@ export const siteConfig = _cacheInProd((opts: GetConfigOptions={}) => {
   const defaults: SiteConfig = {
     name: 'Missing site.config.js',
     locals: {},
+    static: false,
     studio: false,
     locales: ['en'],
     cacheCssInDev: true,

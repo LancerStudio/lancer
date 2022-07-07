@@ -28,6 +28,8 @@ const siteConfig =
 module.exports = {
   name: "My Site",
   locales: ['en'],
+
+  static: false,
 }
 `
 const readme =

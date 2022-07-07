@@ -17,11 +17,13 @@ import { buildUniversalScript } from './posthtml-plugins/include.js'
 import { ReplaceAssetPathsPlugin } from './posthtml-plugins/assets.js'
 
 type Options = {
-  staticOpts?: {
-    origin?: string
-  }
+  origin?: string
 }
-export async function buildForProduction({ staticOpts }: Options = {}) {
+export async function buildForProduction(options: Options = {}) {
+  const site = siteConfig({ scanRewrites: true })
+
+  console.log(`Building ${site.static ? 'static html and ' : ''}assets for production...`)
+
   console.log("Build dir:", buildDir)
   await Promise.all([
     fs.rm(buildDir, { recursive: true, force: true }),
@@ -36,8 +38,7 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
 
   const publicAssetPaths = {} as Record<string,string>
 
-  const site = siteConfig({ scanRewrites: true })
-  const origin = staticOpts?.origin || site.origin || null
+  const origin = options.origin || site.origin || null
   const detectedRewrites = {} as typeof site.rewrites
 
   if (!origin) {
@@ -176,7 +177,7 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
       const pageAttrs = getPageAttrs(filename)
       const result = await posthtml(plugins).process(readFileSync(filename, 'utf8'), POSTHTML_OPTIONS)
 
-      if (staticOpts || pageAttrs?.static) {
+      if (site.static || pageAttrs?.static) {
         const dest = path.join(buildDir, filename.replace(clientDir, ''))
         await fs.mkdir(path.dirname(dest), { recursive: true })
         await fs.writeFile(dest, result.html)
@@ -184,7 +185,7 @@ export async function buildForProduction({ staticOpts }: Options = {}) {
     }
   }
 
-  if (staticOpts) {
+  if (site.static) {
     if (existsSync(staticDir)) {
       console.log("\nCopying client/public folder...")
       copyFolderSync(staticDir, buildDir)
