@@ -7,7 +7,7 @@ type Options = {
 }
 export function ReplaceAssetPathsPlugin(options: Options) {
   return async function interpolatePlugin(tree: any) {
-    return replaceAssetPaths(options, tree)
+    replaceAssetPaths(options, tree)
   }
 }
 

@@ -15,6 +15,7 @@ import { FILENAME_REWRITE_RE } from './lib/rewrites.js'
 import { getPageAttrs } from './lib/fs.js'
 import { buildUniversalScript } from './posthtml-plugins/include.js'
 import { ReplaceAssetPathsPlugin } from './posthtml-plugins/assets.js'
+import { ReplaceRootPathsPlugin } from './posthtml-plugins/root-path.js'
 
 type Options = {
   origin?: string
@@ -171,7 +172,8 @@ export async function buildForProduction(options: Options = {}) {
       console.log('\n' + colors.green('client' + clientPath), '\n ├─ GET', plainPath)
       const plugins = renderPostHtmlPlugins(ctx, locals, {
         postfix: [
-          ReplaceAssetPathsPlugin({ publicAssetPaths, file: filename })
+          ReplaceAssetPathsPlugin({ publicAssetPaths, file: filename }),
+          ReplaceRootPathsPlugin({ rootPath: site.rootPath })
         ]
       })
       const pageAttrs = getPageAttrs(filename)

@@ -82,6 +82,8 @@ export type SiteConfig = {
   static: boolean
   studio: boolean
   locales: string[]
+  /** (rare) Use when hosting your website on a path other than the root of a domain. Only affects production. */
+  rootPath: string
   cacheCssInDev: boolean
   imagePreviews: Record<string, POJO<any>> | ((sharp: typeof import('sharp')) => Record<string, POJO<any>>)
   templateTypes: Record<string, (html: string, attrs: Attributes, config?: TemplateRenderConfig) => string | Promise<string>>
@@ -110,6 +112,7 @@ export const siteConfig = _cacheInProd((opts: GetConfigOptions={}) => {
     static: false,
     studio: false,
     locales: ['en'],
+    rootPath: '/',
     cacheCssInDev: true,
     imagePreviews: {},
     templateTypes: {},

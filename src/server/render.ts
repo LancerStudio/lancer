@@ -16,6 +16,7 @@ import { loadCollectionItems, simplifyCollectionItem } from './lib/collections.j
 import { ReplaceAssetPathsPlugin } from './posthtml-plugins/assets.js'
 
 import { createRequire } from 'module'
+import { ReplaceRootPathsPlugin } from './posthtml-plugins/root-path.js'
 const require = createRequire(import.meta.url)
 
 
@@ -39,7 +40,8 @@ export async function render(html: string, ctx: PostHtmlCtx, res: Response) {
 
   const plugins = renderPostHtmlPlugins(ctx, locals, {
     postfix: env.production ? [
-      ReplaceAssetPathsPlugin({ publicAssetPaths, file: ctx.filename })
+      ReplaceAssetPathsPlugin({ publicAssetPaths, file: ctx.filename }),
+      ReplaceRootPathsPlugin({ rootPath: ctx.site.rootPath })
     ] : []
   })
   const result = await posthtml(plugins).process(html, POSTHTML_OPTIONS)
