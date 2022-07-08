@@ -23,7 +23,6 @@ export function ReplaceRootPathsPlugin(options: Options) {
 async function replaceRootPaths(rootPath: string, nodes: Node[]) {
   for (let node of nodes) {
     if (typeof node === 'string') continue
-    console.log("Checking", node.tag)
 
     if (
       (node.tag === 'a' || node.tag === 'link') &&
