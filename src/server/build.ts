@@ -182,7 +182,36 @@ export async function buildForProduction(options: Options = {}) {
       if (site.static || pageAttrs?.static) {
         const dest = path.join(buildDir, filename.replace(clientDir, ''))
         await fs.mkdir(path.dirname(dest), { recursive: true })
-        await fs.writeFile(dest, result.html)
+
+        let finalHtml = result.html
+        if (pageAttrs?.passwordencrypt) {
+          let passwordKey = pageAttrs?.passwordencrypt
+          if (!passwordKey || passwordKey === true) {
+            throw new Error(`[lancer] Please set a value for passwordEncrypt`)
+          }
+          if (!passwordKey.startsWith('env:PAGE_PASS')) {
+            throw new Error(`[lancer] passwordEncrypt must begin with 'env:PAGE_PASS' (found '${passwordKey}')`)
+          }
+
+          const envKey = passwordKey.replace(/^env:/, '')
+          if (!process.env[envKey]) {
+            throw new Error(`[lancer] Please set the '${envKey}' environment variable for passwordEncrypt`)
+          }
+
+          const password = process.env[envKey]
+          try {
+            const { encryptHTML } = await import(path.join(sourceDir, 'node_modules/pagecrypt/core.js'))
+            finalHtml = await encryptHTML(finalHtml, password)
+          }
+          catch(err) {
+            if (/Cannot find module/.test(err.message)) {
+              throw new Error(`Please \`npm install pagecrypt\` to use the password encrypt feature.`)
+            }
+            else throw err
+          }
+        }
+
+        await fs.writeFile(dest, finalHtml)
       }
     }
   }
