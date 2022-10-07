@@ -258,18 +258,34 @@ export type JsonNodeTag = {
   attrs: Attributes
   children: JsonNode[]
 }
-export function nodesToJson(nodes: Node[]): JsonNode[] {
+type AcceptFn = (node: Node, parentTags: string[]) => boolean
+
+export function nodesToJson(nodes: Node[], parentTags: string[], accept: AcceptFn): JsonNode[] {
   return nodes.reduce((m, node) => {
     if (typeof node === 'string') {
-      if (node.trim()) m.push(node)
+      // console.log("Node", `<<${node}>>`)
+      if (accept(node, parentTags)) m.push(node)
     }
-    else if (typeof node.tag === 'string') {
+    else if (typeof node.tag === 'string' && accept(node, parentTags)) {
+      // console.log("Node", node)
       m.push({
         tag: node.tag,
         attrs: node.attrs || {},
-        children: node.content ? nodesToJson(node.content) : [],
+        children: node.content ? nodesToJson(node.content, parentTags.concat([node.tag]), accept) : [],
       })
     }
     return m
   }, [] as JsonNode[])
+}
+
+export function jsonNodeToHtml(node: JsonNode): string {
+  return typeof node === 'string'
+  ? node
+  : `<${
+      node.tag
+    }${
+      Object.entries(node.attrs).map(([key,val]) => ` ${key}="${val}"`).join('')
+    }>${
+      node.children.map(jsonNodeToHtml).join('')
+    }</${node.tag}>`
 }

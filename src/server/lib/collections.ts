@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { contentDir, filesDir } from '../config.js'
-import { JsonNode, nodesToJson, parseIHTML } from './posthtml.js'
+import { JsonNode, nodesToJson, jsonNodeToHtml, parseIHTML } from './posthtml.js'
 
 import { createRequire } from 'module'
 import { mapValues, notNullish } from './util.js'
@@ -24,11 +24,29 @@ type Options = {
 export function loadCollectionItems(name: string, opts: Options) {
   const file = path.join(contentDir, 'collections', `${name}.html`)
   if (fs.existsSync(file)) {
-    return parseItems(nodesToJson(parseIHTML(fs.readFileSync(file, 'utf8'))), opts)
+    return loadCollectionItemsFromContent(fs.readFileSync(file, 'utf8'), opts)
   }
   else {
     throw new Error(`[Lancer] No such collection: ${file}`)
   }
+}
+
+export function loadCollectionItemsFromContent(content: string, opts: Options) {
+  return parseItems(
+    nodesToJson(parseIHTML(content), [], function accept(node, parentTags) {
+      if (parentTags.length === 0) {
+        // Only accept <item> elements at top level
+        return typeof node !== 'string' && node.tag === 'item'
+      }
+      if (parentTags.length === 1) {
+        // Only accept <field> elements within <item> elements
+        return typeof node !== 'string' && node.tag === 'field'
+      }
+      // Accept all content within <field> elements
+      return true
+    }),
+    opts
+  )
 }
 
 export function simplifyCollectionItem(item: CollectionItem) {
@@ -50,7 +68,9 @@ function parseItems(items: JsonNode[], opts: Options): CollectionItem[] {
           if (typeof child === 'string') return fields
           const name = child.attrs.name
           if (typeof name === 'string') {
-            const value = endent(child.children.join(''))
+            const value = endent(
+              child.children.map(jsonNodeToHtml).join('')
+            )
             if (value.startsWith('/files/')) {
               const file = path.join(filesDir, value.replace('/files/', ''))
               fields[name] = {
