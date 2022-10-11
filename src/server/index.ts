@@ -102,7 +102,7 @@ router.post('/lrpc', express.json(), async (req, res, next) => {
       ...req.body.args,
       rpcContext // Backwards compatibility
     )
-    res.send(result)
+    res.json(result)
     log(`--> ${colors.green(200)}`, result === '' ? '""' : result)
   }
   catch(err) {
