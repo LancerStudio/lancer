@@ -23,7 +23,7 @@ export async function renderUniversalJs(src: string, attrs: object, locals: obje
 export async function buildUniversalScript(file: string) {
   const source = fs.readFileSync(file, 'utf-8')
   if (/from 'mithril'/.test(source)) {
-    const site = siteConfig()
+    const site = await siteConfig()
     const ssrFile = await buildSsrFile(file, site)
     const { hydrateFile } = await buildMithrilHydrateScript(file, site)
     return { ssrFile, hydrateFile }
@@ -59,7 +59,7 @@ async function wrapMithril(file: string, nodeAttrs: any, locals: object) {
     g.window = g.document = g.requestAnimationFrame = undefined
   }
 
-  const site = siteConfig()
+  const site = await siteConfig()
   const outfile = await buildSsrFile(file, site)
   const mount = requireLatest(outfile).module.default
 

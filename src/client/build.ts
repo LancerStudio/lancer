@@ -3,6 +3,7 @@ import path from 'path'
 import { existsSync, promises as fs} from 'fs'
 import { bundleScript } from '../server/bundle.js'
 import routes from '../shared/routes.js'
+import { siteConfig } from '../server/config.js'
 
 import postcssImport from 'postcss-import'
 import postcssPrefixSelector from 'postcss-prefix-selector'
@@ -68,7 +69,8 @@ async function build() {
 
   if (scope === 'js' || scope === 'assets') {
     console.log('  > lancer.js ...')
-    const lancerJs = await bundleScript(path.join(srcDir, 'client/dev/website-editor.ts'), {})
+    const site = await siteConfig()
+    const lancerJs = await bundleScript(path.join(srcDir, 'client/dev/website-editor.ts'), site)
     await fs.writeFile(path.join(buildDir, 'lancer.js'), lancerJs)
 
     await Promise.all(
@@ -82,7 +84,7 @@ async function build() {
 
         console.log(`  > ${dest.replace(buildDir+'/', '')} ...`)
 
-        const js = await bundleScript(file, {})
+        const js = await bundleScript(file, site)
         await fs.mkdir(path.dirname(dest), { recursive: true })
         await fs.writeFile(dest, js)
       })

@@ -2,7 +2,7 @@ import fs from 'fs'
 import vm from 'vm'
 import path from 'path'
 import { Request, Response } from 'express'
-import { clientDir, PostHtmlCtx, siteConfig, sourceDir } from '../config.js'
+import { clientDir, PostHtmlCtx, SiteConfig, siteConfig, sourceDir } from '../config.js'
 import { build } from 'esbuild'
 import { requireLatest } from './fs.js'
 import colors from 'kleur'
@@ -28,7 +28,7 @@ export async function ssr({ctx, res, locals, dryRun}: Inputs) {
 
   let halted = false
 
-  const site = siteConfig()
+  const site = await siteConfig()
   const buildFile = await buildSsrFile(ssrFile, site)
 
   const ssrContext: SsrContext = {
@@ -66,12 +66,7 @@ export async function ssr({ctx, res, locals, dryRun}: Inputs) {
   return { isSsr: true, halted, ssrFile, buildFile }
 }
 
-type Config = {
-  jsxFactory?: string
-  jsxFragment?: string
-}
-
-export async function bundleHydrateScript(hydrateSource: string, outfile: string, config: Config) {
+export async function bundleHydrateScript(hydrateSource: string, outfile: string, site: SiteConfig) {
   const isProd = process.env.NODE_ENV === 'production'
 
   await build({
@@ -86,15 +81,15 @@ export async function bundleHydrateScript(hydrateSource: string, outfile: string
     bundle: true,
     minify: isProd,
     sourcemap: true,
-    plugins: [injectRpcsPlugin, injectCollectionsPlugin],
+    plugins: [injectRpcsPlugin(site), injectCollectionsPlugin(site)],
     loader: {
       '.html': 'js'
     },
     define: {
       'process.env.NODE_ENV': `"${isProd ? 'production' : 'development'}"`
     },
-    jsxFactory: config.jsxFactory,
-    jsxFragment: config.jsxFragment,
+    jsxFactory: site.jsxFactory,
+    jsxFragment: site.jsxFragment,
   })
 }
 

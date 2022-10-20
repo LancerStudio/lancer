@@ -67,7 +67,7 @@ export function mount(router: Router) {
 
   router.get('/lancer/:page',
 
-    (req, res, next) => {
+    async (req, res, next) => {
       const route = routes.pages.children.find(r => r.match(req.path))
       if (!route) {
         return next()
@@ -76,7 +76,7 @@ export function mount(router: Router) {
         return res.redirect('/')
       }
 
-      const site = siteConfig()
+      const site = await siteConfig()
       const pageName = last(route.link().split('/'))!
 
       res.set({ 'Content-Type': 'text/html' })
@@ -101,7 +101,7 @@ export function handle404(path: string) {
 
 function mountLocalDevRoutes(router: Router) {
   router.get('/lancer.js', async (_req, res) => {
-    const result = await Bundle.bundleScript(path.join(__dirname, '../../../src/client/dev/website-editor.ts'), {})
+    const result = await Bundle.bundleScript(path.join(__dirname, '../../../src/client/dev/website-editor.ts'), await siteConfig())
     res.set({ 'Content-Type': 'application/javascript' })
     res.send( Buffer.from(result.buffer).toString('utf8') )
   })
@@ -114,7 +114,7 @@ function mountLocalDevRoutes(router: Router) {
 
     const pageName = last(route.link().split('/'))!
 
-    const result = await Bundle.bundleScript(path.join(__dirname, '../../../src/client/pages/', pageName, '/index.ts'), {})
+    const result = await Bundle.bundleScript(path.join(__dirname, '../../../src/client/pages/', pageName, '/index.ts'), await siteConfig())
     res.set({ 'Content-Type': 'application/javascript' })
     res.send( Buffer.from(result) )
   })

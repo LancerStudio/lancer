@@ -4,8 +4,9 @@ import mapValues from 'lodash/mapValues.js'
 
 import { read, Env } from './lib/config.js'
 import { requireLatest } from './lib/fs.js'
-import { Request, Router } from 'express'
+import { Request } from 'express'
 import { scanForRewriteFiles, resolveRewriteDest } from './lib/rewrites.js'
+import { buildSiteConfigFile } from './bundle.js'
 
 export const env = Env(['test', 'development', 'production'])
 
@@ -94,18 +95,12 @@ export type SiteConfig = {
     removeTrailingSlashes?: boolean
   }
   bundleAliases: Record<string,string>
-
-  /**
-   * Gain access to the underlying express router.
-   * NOTE: YOU MUST RESTART YOUR SERVER FOR CHANGES TO TAKE EFFECT DURING DEV
-   * */
-  configureRouter?: (router: Router) => void
 }
 
 type GetConfigOptions = {
   scanRewrites?: boolean
 }
-export const siteConfig = _cacheInProd((opts: GetConfigOptions={}) => {
+export const siteConfig = _cache(async (opts: GetConfigOptions={}) => {
   const defaults: SiteConfig = {
     name: 'Missing site.config.js',
     locals: {},
@@ -120,9 +115,12 @@ export const siteConfig = _cacheInProd((opts: GetConfigOptions={}) => {
     rewriteOptions: {},
     bundleAliases: {},
   }
+
+  const siteConfigBuildFile = await buildSiteConfigFile(path.join(sourceDir, 'site.config.js'))
+
   const config: SiteConfig = {
     ...defaults,
-    ...requireLatest(path.join(sourceDir, 'site.config.js')).module
+    ...requireLatest(siteConfigBuildFile).module.default
   }
 
   if (!config.locales || !Array.isArray(config.locales) || !config.locales.length) {
@@ -151,15 +149,23 @@ function handleRelative(_path: string) {
   return path.isAbsolute(_path) ? _path : joinp(sourceDir, _path);
 }
 
-export function _cacheInProd<F extends () => any>(f: F): F {
-  if (!env.production) return f
-  let cache: any = undefined
-  let called = false
+// [ASSUMPTION] A dev won't try to change the config more than 400ms at a time
+const CACHE_TIME = 400
+let cache: any = undefined
+let lastCalled = 0
+export function _cache<F extends () => any>(f: F): F {
   return (() => {
-    if (!called) {
+    if (
+      lastCalled === 0 ||
+      (env.development && Date.now() - lastCalled > CACHE_TIME)
+    ) {
       cache = f()
-      called = true
+      lastCalled = Date.now()
     }
     return cache
   }) as any
+}
+
+export function unsafeGetSiteCache(): SiteConfig {
+  return cache
 }

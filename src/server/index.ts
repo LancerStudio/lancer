@@ -35,8 +35,6 @@ let rewrites: SiteConfig['rewrites'] = {}
 router.use( express.static(hydrateDir, { redirect: false }) )
 router.use( express.static(staticDir, { redirect: false }) )
 
-siteConfig()?.configureRouter?.(router)
-
 if (env.production) {
   //
   // For non-static sites
@@ -83,7 +81,7 @@ router.post('/lrpc', express.json(), async (req, res, next) => {
       return
     }
 
-    const site = siteConfig()
+    const site = await siteConfig()
     await buildSsrFile(ssrFile, site)
   }
 
@@ -123,7 +121,7 @@ router.all('/*', ensureLocale(), express.urlencoded({ extended: false }), async 
 
   let filename: string = ''
 
-  const site = siteConfig({ scanRewrites: !env.production })
+  const site = await siteConfig({ scanRewrites: !env.production })
   const plainPath = req.locale ? req.path.replace(`/${req.locale}`, '') : req.path
 
   if (!env.production) {
@@ -256,7 +254,7 @@ async function renderHtml(req: Request, res: Response, next: NextFunction, { pla
 }) {
   log('         -->', filename.replace(sourceDir+'/', ''))
   const htmlSrc = await fs.readFile(filename, 'utf8')
-  const site = siteConfig()
+  const site = await siteConfig()
   const {isSsr, html, halted} = await render(htmlSrc, {
     req,
     site,

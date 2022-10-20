@@ -25,7 +25,7 @@ export function initConfig(sourceDir: string) {
 
 const siteConfig =
 `
-module.exports = {
+export default {
   name: "My Site",
   locales: ['en'],
 

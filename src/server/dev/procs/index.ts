@@ -14,7 +14,7 @@ export const getDevStatus = rpc(
 export const getSiteInfo = rpc(
   z.object({}),
   async function () {
-    const site = siteConfig()
+    const site = await siteConfig()
     return {
       name: site.name,
       locales: site.locales,
@@ -43,7 +43,7 @@ export const getLocales = rpc(
     name: z.string(),
   }),
   async function ({}) {
-    const site = siteConfig()
+    const site = await siteConfig()
     const existing: string[] = [] // TODO
     return site.locales.reduce((all, loc) => {
       all[loc] = existing.includes(loc)

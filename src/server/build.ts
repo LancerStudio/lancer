@@ -21,7 +21,7 @@ type Options = {
   origin?: string
 }
 export async function buildForProduction(options: Options = {}) {
-  const site = siteConfig({ scanRewrites: true })
+  const site = await siteConfig({ scanRewrites: true })
 
   console.log(`Building ${site.static ? 'static html and ' : ''}assets for production...`)
 

@@ -1,10 +1,10 @@
 import path from 'path'
-import { build, Plugin } from 'esbuild'
+import { build, OutputFile, Plugin } from 'esbuild'
 import { existsSync, mkdirSync, promises as fs, statSync } from 'fs'
 
 import { makeDirname, requireLatest, requireLatestOptional, requireResolveUserland, requireUserland } from './lib/fs.js'
 import { notNullish } from './lib/util.js'
-import { building, clientDir, env, siteConfig, sourceDir, ssrDir } from './config.js'
+import { building, clientDir, env, SiteConfig, siteConfig, sourceDir, ssrDir } from './config.js'
 
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
@@ -21,11 +21,7 @@ const VALID_ENV_KEY_RE = /^[a-zA-Z_][a-zA-Z_0-9]*$/
 //
 // Script bundling
 //
-type Config = {
-  jsxFactory?: string
-  jsxFragment?: string
-}
-export async function bundleScript(file: string, config: Config) {
+export async function bundleScript(file: string, site: SiteConfig) {
   const isProd = process.env.NODE_ENV === 'production'
   const result = await build({
     platform: 'browser',
@@ -45,14 +41,14 @@ export async function bundleScript(file: string, config: Config) {
         return all
       }, {} as any),
     },
-    jsxFactory: config.jsxFactory,
-    jsxFragment: config.jsxFragment,
-    plugins: [bundleAliasesPlugin, injectRpcsPlugin, injectCollectionsPlugin],
+    jsxFactory: site.jsxFactory,
+    jsxFragment: site.jsxFragment,
+    plugins: [bundleAliasesPlugin(site), injectRpcsPlugin(site), injectCollectionsPlugin(site)],
   })
   return result.outputFiles[0]!.contents
 }
 
-export async function bundleScriptProd(file: string, outdir: string, config: Config) {
+export async function bundleScriptProd(file: string, outdir: string, site: SiteConfig) {
   return await build({
     platform: 'browser',
     entryPoints: [file],
@@ -70,13 +66,13 @@ export async function bundleScriptProd(file: string, outdir: string, config: Con
         return all
       }, {} as any),
     },
-    jsxFactory: config.jsxFactory,
-    jsxFragment: config.jsxFragment,
-    plugins: [bundleAliasesPlugin, injectRpcsPlugin, injectCollectionsPlugin],
+    jsxFactory: site.jsxFactory,
+    jsxFragment: site.jsxFragment,
+    plugins: [bundleAliasesPlugin(site), injectRpcsPlugin(site), injectCollectionsPlugin(site)],
   })
 }
 
-export async function buildSsrFile(ssrFile: string, config: Config) {
+export async function buildSsrFile(ssrFile: string, site: SiteConfig) {
   const outfile = ssrBuildFile(ssrFile)
 
   if (env.production && !building) {
@@ -93,26 +89,13 @@ export async function buildSsrFile(ssrFile: string, config: Config) {
     loader: {
       '.html': 'js'
     },
-    plugins: [makeAllPackagesExternalPlugin, injectCollectionsPlugin],
-    jsxFactory: config.jsxFactory,
-    jsxFragment: config.jsxFragment,
+    plugins: [makeAllPackagesExternalPlugin, injectCollectionsPlugin(site)],
+    jsxFactory: site.jsxFactory,
+    jsxFragment: site.jsxFragment,
     platform: 'node',
   })
 
-  if (!building) {
-    // Don't write unless necessary so in-memory data structures don't get clobbered
-    const oldCheck = existsSync(outfile) && await checksumFile(outfile)
-    const newCheck = checksumString(output.outputFiles!.find(out => out.path === outfile)!.text)
-
-    if (newCheck !== oldCheck) {
-      await Promise.all(
-        output.outputFiles!.map(({ path: filename, contents }) => {
-          mkdirSync(path.dirname(filename), { recursive: true })
-          return fs.writeFile(filename, contents)
-        })
-      )
-    }
-  }
+  await writeOutputFiles(outfile, output.outputFiles!)
 
   return outfile
 }
@@ -122,6 +105,50 @@ export function ssrBuildFile(ssrFile: string) {
 }
 
 
+
+export async function buildSiteConfigFile(file: string) {
+  const outfile = ssrBuildFile(file)
+
+  if (env.production && !building) {
+    return outfile
+  }
+
+  const output = await build({
+    entryPoints: [file],
+    outdir: path.dirname(outfile),
+    write: building,
+    bundle: true,
+    format: 'cjs',
+    sourcemap: true,
+    loader: {
+      '.html': 'js'
+    },
+    plugins: [makeAllPackagesExternalPlugin],
+    platform: 'node',
+  })
+
+  await writeOutputFiles(outfile, output.outputFiles!)
+
+  return outfile
+}
+
+
+async function writeOutputFiles(outfile: string, outputFiles: OutputFile[]) {
+  if (!building) {
+    // Don't write unless necessary so in-memory data structures don't get clobbered
+    const oldCheck = existsSync(outfile) && await checksumFile(outfile)
+    const newCheck = checksumString(outputFiles!.find(out => out.path === outfile)!.text)
+
+    if (newCheck !== oldCheck) {
+      await Promise.all(
+        outputFiles!.map(({ path: filename, contents }) => {
+          mkdirSync(path.dirname(filename), { recursive: true })
+          return fs.writeFile(filename, contents)
+        })
+      )
+    }
+  }
+}
 
 //
 // Style bundling
@@ -157,7 +184,7 @@ export async function bundleStyle(sourceDir: string, file: string): Promise<stri
   const deps = styleDepRecord[file]
 
   if (
-    siteConfig().cacheCssInDev !== false &&
+    (await siteConfig()).cacheCssInDev !== false &&
     prev &&
     styleStat.mtimeMs - prev.mtimeMs === 0 &&
     (!twConfig || twConfig.fresh !== true && twConfig.module.mode !== 'jit') &&
@@ -211,11 +238,10 @@ function convertPluginsObjToArray(sourceDir: string, obj: any) {
 
 const INJECT_FILTER_RE = /[\/\\]collections[\/\\](.+)\.html$/
 
-export const injectCollectionsPlugin: Plugin = {
+export const injectCollectionsPlugin: (site: SiteConfig) => Plugin = (site) => ({
   name: 'inject-collections',
   setup(build) {
-    const config = siteConfig()
-    const location = new URL(`${config.origin || 'http://static.example.com'}`)
+    const location = new URL(`${site.origin || 'http://static.example.com'}`)
 
     build.onLoad({ filter: INJECT_FILTER_RE }, async args => {
       const collectionName = args.path.match(INJECT_FILTER_RE)![1]!
@@ -225,26 +251,25 @@ export const injectCollectionsPlugin: Plugin = {
       }
     })
   },
-}
+})
 
-export const injectRpcsPlugin: Plugin = {
+export const injectRpcsPlugin: (site: SiteConfig) => Plugin = (site) => ({
   name: 'inject-rpcs',
   setup(build) {
     let filter = /\.server\.(js|ts)$/
     build.onLoad({ filter }, async args => {
       // TODO: Buildtime cache
-      const outfile = await buildSsrFile(args.path, siteConfig())
+      const outfile = await buildSsrFile(args.path, site)
       return {
         contents: makeRpcFile(args.path, Object.keys(requireLatest(outfile).module))
       }
     })
   },
-}
+})
 
-export const bundleAliasesPlugin: Plugin = {
+export const bundleAliasesPlugin: (site: SiteConfig) => Plugin = (site) => ({
   name: 'bundle-aliases',
   setup(build) {
-    const site = siteConfig()
     const mapping = site.bundleAliases
     if (Object.keys(mapping).length) {
       const filter = new RegExp(`^(${Object.keys(mapping).join('|')})$`)
@@ -260,7 +285,7 @@ export const bundleAliasesPlugin: Plugin = {
       })
     }
   },
-}
+})
 
 function makeRpcFile(sourcePath: string, methods: string[]) {
   return (

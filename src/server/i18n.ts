@@ -3,7 +3,7 @@ import path from 'path'
 import langs from 'langs'
 import matchHelper from 'posthtml-match-helper'
 import { RequestHandler } from "express"
-import { contentDir, PostHtmlCtx, siteConfig } from "./config.js"
+import { contentDir, PostHtmlCtx, siteConfig, unsafeGetSiteCache } from "./config.js"
 import { memoizeUnary } from "./lib/util.js"
 
 declare global {
@@ -99,13 +99,13 @@ class TranslationSet {
 
 
 export function addLocale(urlPath: string, currentLocale: string) {
-  const site = siteConfig()
+  const site = unsafeGetSiteCache()
   return site.locales.length < 2 ? urlPath : path.join('/', currentLocale, urlPath)
 }
 
 export function ensureLocale(): RequestHandler {
-  return (req, res, next) => {
-    const site = siteConfig()
+  return async (req, res, next) => {
+    const site = await siteConfig()
     if (
       site.locales.length === 1 ||
       req.path.startsWith('/files/')
