@@ -113,6 +113,21 @@ o.spec('interpolate', () => {
     o(result).equals(`<p>x-parent1:100</p><p>x:111</p>\n<p>x-parent2:100</p>\n`)
   })
 
+  o('layout include', async () => {
+    const ctx = makeCtx({})
+    ctx.location = new URL(`file://abc/xyz/123`)
+
+    const result = await renderHtml(`<page layout="/_include-test-layout.html">content`, ctx)
+    o(result).equals(`<!DOCTYPE html>
+<title>Include Test Layout</title>
+<div>
+  --include-test-1: /xyz/123--
+
+  content
+</div>
+`)
+  })
+
   o('template include', async () => {
     const result = await renderHtml(
       `<template type="foo">_x.html</template>`,

@@ -64,7 +64,7 @@ export async function resolveInterpolations(options: WalkOptions, nodes: Node[])
       if (!code || code === true) {
         throw new Error(`[Lancer] <${node.tag}> tag must have a let="..." attribute`)
       }
-      const loopCtx = vm.createContext(fclone(ctx))
+      const loopCtx = vm.createContext(cloneContext(ctx))
       const loopContent: Node[] = []
       loopCtx.__recurse = async () => {
         loopContent.push(
@@ -182,7 +182,7 @@ export async function resolveInterpolations(options: WalkOptions, nodes: Node[])
         const subtree = parseIHTML(html, {
           customVoidElements: POSTHTML_OPTIONS.customVoidElements,
         }) as any
-        const content = await resolveInterpolations({ ...options, ctx: vm.createContext(fclone(ctx)) }, subtree)
+        const content = await resolveInterpolations({ ...options, ctx: vm.createContext(cloneContext(ctx)) }, subtree)
         m.push({ tag: false, content })
       }
       else {
@@ -207,4 +207,16 @@ export async function resolveInterpolations(options: WalkOptions, nodes: Node[])
 
 async function newContent(options: WalkOptions, content: Node[] | undefined) {
   return { tag: false, content: content && await resolveInterpolations(options, content) }
+}
+
+function cloneContext(ctx: vm.Context) {
+    const page = ctx.page
+    const newCtx = fclone(ctx)
+
+    // Fix URL and circular reference
+    // TODO: Use structuredClone
+    newCtx.page = page
+    newCtx.locals = newCtx
+
+    return newCtx
 }
