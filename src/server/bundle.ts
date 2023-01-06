@@ -279,6 +279,9 @@ export const bundleAliasesPlugin: (site: SiteConfig) => Plugin = (site) => ({
         if (type === 'npm') {
           return { path: requireResolveUserland(sourceDir, dest!) }
         }
+        else if (type === 'external') {
+          return { path: args.path, external: true }
+        }
         else {
           throw new Error(`[Lancer] Invalid bundle alias type: ${type}`)
         }
