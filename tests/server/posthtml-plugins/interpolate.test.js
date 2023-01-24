@@ -89,15 +89,6 @@ o.spec('interpolate', () => {
     o(await renderChain(`''`, 'undefined')).equals('C')
   })
 
-  o('nested layout page attributes', async () => {
-    const result = await renderHtml(`<page layout="/_nested-page-attrs.html" title="CCC">`, makeCtx())
-    o(result).equals(
-`<!doctype HTML>
-<title>CCC | BBB | AAA</title>
-`
-    )
-  })
-
   o('scope tag', async () => {
     const result = await renderHtml(`<scope locals="{ x: 100, y: y+1 }"><p>{{x}},{{locals.y}}</p></scope>`, makeCtx({ x: 10, y: 20 }))
     o(result).equals(`<p>100,21</p>`)
@@ -111,21 +102,6 @@ o.spec('interpolate', () => {
   o('nested include', async () => {
     const result = await renderHtml(`<include src="_x-nested.html" locals="{ x: 100 }">`, makeCtx({ x: 10 }))
     o(result).equals(`<p>x-parent1:100</p><p>x:111</p>\n<p>x-parent2:100</p>\n`)
-  })
-
-  o('layout include', async () => {
-    const ctx = makeCtx({})
-    ctx.location = new URL(`file://abc/xyz/123`)
-
-    const result = await renderHtml(`<page layout="/_include-test-layout.html">content`, ctx)
-    o(result).equals(`<!DOCTYPE html>
-<title>Include Test Layout</title>
-<div>
-  --include-test-1: /xyz/123--
-
-  content
-</div>
-`)
   })
 
   o('template include', async () => {

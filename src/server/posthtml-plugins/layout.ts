@@ -14,34 +14,37 @@ import Api from 'posthtml/lib/api.js'
 import matchHelper from 'posthtml-match-helper'
 import { isRelative } from '../lib/fs.js'
 
-type NestedLayoutContext = {
-  childPageAttrs: object
-  onPageAttrs: Options['onPageAttrs']
-  filename: string
-}
-
 type Options = {
   ctx: PostHtmlCtx
   locals: object
-  onPageAttrs(attrs: Record<string,string>): void
+  onPageAttrs(attrs: object): void
 }
 export default function LayoutPlugin({ ctx, locals, onPageAttrs }: Options) {
-  return function layoutPlugin(this: undefined | NestedLayoutContext, tree: any) {
-    const currentFile = this ? this.filename : ctx.filename
+
+  function parsePageAttrs(tree: any, childPageAttrs: object | null, currentFile: string): object | null {
 
     let pageAttrs: any = null
+
     tree.match(matchHelper('page'), (node: NodeTag) => {
       if (node.render) {
-        node.render(code => evalExpression(vm.createContext({ ...locals, page: this?.childPageAttrs }), code))
+        node.render(code => evalExpression(vm.createContext({ ...locals, page: childPageAttrs }), code))
       }
       pageAttrs = node.attrs || {}
 
+      // Remove <page> element from final output
       return { tag: false }
     })
 
-    if (!pageAttrs || pageAttrs.layout === 'false') return
+    if (!pageAttrs) {
+      return null
+    }
+    if (pageAttrs.layout === 'false') {
+      return pageAttrs
+    }
 
-    if (this) pageAttrs = { ...this.childPageAttrs, ...pageAttrs }
+    if (pageAttrs) {
+      pageAttrs = { ...childPageAttrs, ...pageAttrs }
+    }
 
     const layoutName = ['', undefined, true].includes(pageAttrs.layout) ? '/_layout.html' : pageAttrs.layout
     const layoutFile = isRelative(layoutName)
@@ -98,10 +101,20 @@ export default function LayoutPlugin({ ctx, locals, onPageAttrs }: Options) {
     if (layoutName !== '/_layout.html') {
       // This may be a nested layout. Recurse.
       const {layout, ...childPageAttrs} = pageAttrs
-      layoutPlugin.call({ childPageAttrs, onPageAttrs, filename: layoutFile }, tree)
+      const finalPageAttrs = parsePageAttrs(tree, childPageAttrs, layoutFile)
+      if (finalPageAttrs) {
+        return finalPageAttrs
+      }
     }
-    else {
-      onPageAttrs(pageAttrs)
+
+    return pageAttrs
+  }
+
+
+  return function layoutPlugin(tree: any) {
+    const attrs = parsePageAttrs(tree, null, ctx.filename)
+    if (attrs) {
+      onPageAttrs(attrs)
     }
   }
 }
