@@ -174,7 +174,8 @@ router.all('/*', ensureLocale(), express.urlencoded({ extended: false }), async 
   else if ( isGet && filename.startsWith(filesDir) ) {
     const file = await resolveFile(filename, {
       site,
-      preview: queryStringVal('preview')
+      preview: queryStringVal('preview'),
+      sourceDir,
     })
     if (file) {
       log('         -->', file.replace(sourceDir+'/', ''))

@@ -1,10 +1,9 @@
 import path from 'path'
-import sharp from 'sharp'
 import isEqual from 'lodash/isEqual.js'
 import { existsSync, promises as fs, statSync } from 'fs'
 
 import { env, filesDir, previewsDir, SiteConfig } from './config.js'
-import { requireLatest } from './lib/fs.js'
+import { requireLatest, requireUserland } from './lib/fs.js'
 
 
 const SUPPORTED_EXTS = [
@@ -23,8 +22,9 @@ const DISALLOWED_RE = new RegExp(`[${DISALLOWED_CHARS}]`)
 type Options = {
   site: SiteConfig
   preview?: string
+  sourceDir: string
 }
-export async function resolveFile(file: string, { site, preview }: Options): Promise<string | false> {
+export async function resolveFile(file: string, { site, preview, sourceDir }: Options): Promise<string | false> {
   const ext = path.extname(file).toLocaleLowerCase()
 
   if (!preview) {
@@ -39,7 +39,7 @@ export async function resolveFile(file: string, { site, preview }: Options): Pro
   }
 
   const previewConfig = typeof site.imagePreviews === 'function'
-    ? site.imagePreviews(sharp)[preview]
+    ? site.imagePreviews(requireUserland(sourceDir, 'sharp'))[preview]
     : site.imagePreviews && site.imagePreviews[preview]
 
   if (!previewConfig) {
@@ -69,7 +69,7 @@ export async function resolveFile(file: string, { site, preview }: Options): Pro
   ) {
     await fs.mkdir(path.dirname(previewFile), { recursive: true })
 
-    let plan = sharp(file).withMetadata()
+    let plan = requireUserland(sourceDir, 'sharp')(file).withMetadata()
 
     if (toFormat) {
       plan = plan.toFormat(toFormat as any)
