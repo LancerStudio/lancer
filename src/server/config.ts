@@ -76,25 +76,39 @@ export type TemplateRenderConfig = {
 }
 
 export type SiteConfig = {
+  /** The name of your site. */
   name: string
+  /** Necessary when generating static sites that work with page URLs */
   origin?: string
+  /** Any values defined here will be available globally across all files. */
   locals: object
   /** When true, builds html/css/js as static output (no server backend) */
   static: boolean
-  studio: boolean
-  locales: string[]
   /** (rare) Use when hosting your website on a path other than the root of a domain. Only affects production. */
   rootPath: string
-  cacheCssInDev: boolean
-  imagePreviews: Record<string, POJO<any>> | ((sharp: typeof import('sharp')) => Record<string, POJO<any>>)
+  /** Functions to handle template types. */
   templateTypes: Record<string, (html: string, attrs: Attributes, config?: TemplateRenderConfig) => string | Promise<string>>
-  jsxFactory?: string
-  jsxFragment?: string
+
+  /** (server sites only) Rewrite incoming requests to hit different page routes. */
   rewrites: Record<string,string>
+  /** (server sites only) */
   rewriteOptions: {
     removeTrailingSlashes?: boolean
   }
+  /** For frontend bundling, rewrite imports to hit other packages. */
   bundleAliases: Record<string,string>
+  /** Set to false to not cache. Tailwind is never cached. */
+  cacheCssInDev: boolean
+
+  /** See tsconfig's docs on jsxFactory */
+  jsxFactory?: string
+  /** See tsconfig's docs on jsxFragment */
+  jsxFragment?: string
+
+  /** (experimental) */
+  imagePreviews: Record<string, POJO<any>> | ((sharp: typeof import('sharp')) => Record<string, POJO<any>>)
+  /** (experimental) */
+  locales: string[]
 }
 
 type GetConfigOptions = {
@@ -105,7 +119,6 @@ export const siteConfig = _cache(async (opts: GetConfigOptions={}) => {
     name: 'Missing site.config.js',
     locals: {},
     static: false,
-    studio: false,
     locales: ['en'],
     rootPath: '/',
     cacheCssInDev: true,
