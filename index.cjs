@@ -101,15 +101,6 @@ program
   })
 
 //
-// Utility
-//
-program
-  .command('secret')
-  .action(() => {
-    console.log(require('crypto').randomBytes(64).toString('hex'))
-  })
-
-//
 // Begin the process
 //
 async function go() {

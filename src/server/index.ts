@@ -7,7 +7,6 @@ import express, { NextFunction, Request, Response } from 'express'
 import { existsSync, promises as fs } from 'fs'
 import colors from 'kleur'
 
-import * as Dev from './dev/index.js'
 import * as Bundle from './bundle.js'
 import { staticDir, siteConfig, env, filesDir, sourceDir, buildDir, hydrateDir, clientDir, SiteConfig, cacheDir } from './config.js'
 import { resolveFile } from './files.js'
@@ -237,10 +236,6 @@ router.all('/*', ensureLocale(), express.urlencoded({ extended: false }), async 
       log(' >> No such file', plainPath)
     }
     res.sendStatus(404)
-
-    if (env.development) {
-      Dev.handle404(filename)
-    }
   }
 
   function queryStringVal(key: string): string | undefined {
