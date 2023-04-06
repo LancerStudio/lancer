@@ -133,6 +133,20 @@ o.spec('interpolate', () => {
     o(result).equals(`<include src="_x.html">`)
   })
 
+  o('template inner interpolate', async () => {
+    const result = await renderHtml(
+      `<template type="foo">x: {{x}}</template>`,
+      makeCtx({ x: 11 }, {
+        templateTypes: {
+          foo(content) {
+            return content
+          }
+        }
+      })
+    )
+    o(result).equals(`x: 11`)
+  })
+
   o('if-tags work without content', async () => {
     o(await renderHtml(`a<if cond="true"></if>b`, makeCtx())).equals('ab')
 

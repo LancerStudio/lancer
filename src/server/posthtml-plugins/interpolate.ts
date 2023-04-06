@@ -177,7 +177,12 @@ export async function resolveInterpolations(options: WalkOptions, nodes: Node[])
         throw new Error(`[Lancer] No such template type: '${type}'`)
       }
       const opts = { recurse: true }
-      const html = await render(renderTree(node.content as any || []), attrs, opts)
+      const sourceContent = await resolveInterpolations({ ...options, ctx: vm.createContext(cloneContext(ctx)) }, node.content || [])
+      const html = await render(
+        renderTree(sourceContent as any /* Types should be compatible */),
+        attrs,
+        opts,
+      )
       if (opts.recurse) {
         const subtree = parseIHTML(html, {
           customVoidElements: POSTHTML_OPTIONS.customVoidElements,
