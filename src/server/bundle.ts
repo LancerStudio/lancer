@@ -187,7 +187,8 @@ export async function bundleStyle(sourceDir: string, file: string): Promise<stri
     (await siteConfig()).cacheCssInDev !== false &&
     prev &&
     styleStat.mtimeMs - prev.mtimeMs === 0 &&
-    (!twConfig || twConfig.fresh !== true && twConfig.module.mode !== 'jit') &&
+    // Don't cache at all if tailwind is present (v3 is fast and also we can't track deps)
+    !twConfig &&
     (!postCssConfig || !postCssConfig.fresh) &&
     (
       !deps ||

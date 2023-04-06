@@ -109,8 +109,7 @@ export function initTailwind(sourceDir: string) {
 
 const tailwindConfigJs =
 `module.exports = {
-  mode: 'jit',
-  purge: [
+  content: [
     './client/**/*.html',
     './client/**/*.js',
     './client/**/*.jsx',
