@@ -83,7 +83,7 @@ program
   .command('build')
   .option('--origin', 'Override site.config.js\'s origin setting')
   .action(async function (options) {
-    process.env.NODE_ENV = 'production'
+    process.env.NODE_ENV = process.env.NODE_ENV || 'production'
     process.env.LANCER_BUILD = '1'
 
     const { buildForProduction } = await import('./dist/server/build.js')
