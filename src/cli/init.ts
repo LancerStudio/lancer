@@ -27,6 +27,7 @@ const siteConfig =
 `
 export default {
   name: "My Site",
+  static: false,
   locales: ['en'],
 
   static: false,
