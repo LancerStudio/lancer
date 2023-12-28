@@ -16,6 +16,7 @@ import { buildSsrFile, ssrBuildFile } from './bundle.js'
 import { requireLatestOptional } from './lib/fs.js'
 
 import pathToRegexp from 'express/node_modules/path-to-regexp/index.js'
+import { compile as compilePath } from 'path-to-regexp'
 
 import { createRequire } from 'module'
 import { JS_FILE_RE } from './posthtml-plugins/include.js'
@@ -129,21 +130,56 @@ router.all('/*', ensureLocale(), express.urlencoded({ extended: false }), async 
 
   rewrite:
   for (let [pattern, dest] of Object.entries(rewrites)) {
-    if (!dest.startsWith('file:')) continue
+    const isFileRewrite = dest.startsWith('file:')
+    const isProxyRewrite = dest.match(/^http?s:\/\//)
 
+    if (!isFileRewrite && !isProxyRewrite) {
+      // Ignore invalid rewrite values
+      continue
+    }
+
+    // Attempt to match to pattern (with and without a trailing .html)
     let p1: ReParams, p2: ReParams
     const re1 = [pathToRegexp(pattern.replace(/\.html$/, ''), p1 = []), p1] as const
     const re2 = [pathToRegexp(pattern, p2 = []), p2] as const
-
-    for (let [re, params] of [re1, re2]) {
+    for (let [re, matchParams] of [re1, re2]) {
       const match = req.path.match(re)
+      if (!match) continue
 
-      if (match) {
-        params.forEach((param, i) => {
-          req.params[param.name] = match[i+1]!
-        })
+      const params: Record<string, string> = {}
+
+      matchParams.forEach((param, i) => {
+        params[param.name] = match[i+1]!
+      })
+
+      if (isFileRewrite) {
         filename = dest.replace('file:', '')
+        Object.assign(req.params, params)
         break rewrite
+      }
+      else if (isProxyRewrite) {
+        const url = compilePath(dest)(params)
+
+        try {
+          const headers = { ...req.headers } as any
+          delete headers['Host']
+          delete headers['host']
+
+          const proxied = await fetch(url, {
+            method: req.method,
+            headers,
+            body: req.method !== 'GET' && req.method !== 'HEAD' ? await getRawRequestBody(req) : undefined
+          })
+          proxied.headers.forEach((val, key) => {
+            res.setHeader(key, val)
+          })
+          res.status(proxied.status).send(await proxied.text())
+          return
+        }
+        catch (error) {
+          console.error(`Error occurred while proxying to ${url}:`, error)
+          res.status(500).send("Rewrite proxy error")
+        }
       }
     }
   }
@@ -271,6 +307,21 @@ async function renderHtml(req: Request, res: Response, next: NextFunction, { pla
     res.set({ 'Content-Type': 'text/html' })
     res.send(html)
   }
+}
+
+async function getRawRequestBody(req: Request): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let data = '';
+    req.on('data', chunk => {
+      data += chunk;
+    });
+    req.on('end', () => {
+      resolve(data);
+    });
+    req.on('error', err => {
+      reject(err);
+    });
+  });
 }
 
 function log(...args: any[]) {
